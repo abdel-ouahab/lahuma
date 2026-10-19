@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 import 'app_spacing.dart';
@@ -27,6 +28,12 @@ class AppTheme {
 
   /// Bouncing physics and no Android overscroll glow, on every platform.
   static const ScrollBehavior scrollBehavior = CupertinoScrollBehavior();
+
+  /// Transparent status bar, as on iOS (Android otherwise paints a grey scrim
+  /// behind it). Icon brightness is then set per screen by the Cupertino bars.
+  static void applySystemChrome() => SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(statusBarColor: Color(0x00000000)),
+      );
 
   static ThemeData get light => _material(Brightness.light);
   static ThemeData get dark => _material(Brightness.dark);

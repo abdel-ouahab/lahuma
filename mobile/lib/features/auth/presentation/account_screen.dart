@@ -99,10 +99,15 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                     AppTypography.body.copyWith(color: context.palette.accent),
               ),
             ),
+      // No explicit padding: the list then insets itself by the translucent
+      // nav bar and home indicator (MediaQuery padding) and scrolls under them.
       child: ListView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        children: user != null ? _signedIn(context, user) : _form(context),
+        children: [
+          const SizedBox(height: AppSpacing.md),
+          ...user != null ? _signedIn(context, user) : _form(context),
+          const SizedBox(height: AppSpacing.md),
+        ],
       ),
     );
   }

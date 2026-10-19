@@ -11,6 +11,11 @@ import 'app_states.dart';
 /// * [AppScaffold.largeTitle] — tab roots: a large title that collapses into
 ///   the bar on scroll, optional search / segmented control under it and
 ///   pull-to-refresh.
+///
+/// Bars are translucent: content scrolls under them, and their height reaches
+/// the page as `MediaQuery` padding. A `ListView` / `GridView` child picks that
+/// up only when it has **no explicit `padding`** — give it spacer children (or
+/// pad its items) instead, or the first rows hide under the nav bar.
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,

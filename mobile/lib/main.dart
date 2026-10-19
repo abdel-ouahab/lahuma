@@ -10,6 +10,7 @@ import 'features/settings/presentation/settings_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppTheme.applySystemChrome();
 
   await Hive.initFlutter();
   await Hive.openBox<String>(StorageKeys.bookmarksBox);

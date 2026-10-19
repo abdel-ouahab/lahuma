@@ -325,11 +325,15 @@ class _DesignSystemPreviewState extends State<DesignSystemPreview> {
               title: 'Tafsir',
               builder: (context, controller) => ListView(
                 controller: controller,
-                padding: const EdgeInsets.all(AppSpacing.md),
                 children: [
                   for (var i = 0; i < 30; i++)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        AppSpacing.md,
+                        AppSpacing.xs,
+                        AppSpacing.md,
+                        AppSpacing.xs,
+                      ),
                       child: Text('Line ${i + 1}', style: AppTypography.body),
                     ),
                 ],

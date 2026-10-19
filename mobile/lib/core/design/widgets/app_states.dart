@@ -124,6 +124,8 @@ class AppProgressBar extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(height / 2),
       child: SizedBox(
+        // Full width: the track is the whole bar, the fill a fraction of it.
+        width: double.infinity,
         height: height,
         child: ColoredBox(
           color: trackColor ?? c.fill,
