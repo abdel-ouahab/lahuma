@@ -1,12 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/design/design.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/network/api_exception.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/lahuma_icon_button.dart';
 import 'auth_providers.dart';
 
 /// Sign in / create account / sign out. Optional: reading, bookmarks and
@@ -38,7 +34,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
 
   String _messageFor(ApiException e) {
     if (e.message == ApiException.offline) {
-      return context.tr('تعذّر الاتصال بالخادم. تحقق من الإنترنت وأعد المحاولة.',
+      return context.tr(
+          'تعذّر الاتصال بالخادم. تحقق من الإنترنت وأعد المحاولة.',
           'Could not reach the server. Check your internet and try again.');
     }
     if (e.message == ApiException.generic) {
@@ -70,7 +67,8 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       if (mounted) setState(() => _error = _messageFor(e));
     } catch (_) {
       if (mounted) {
-        setState(() => _error = _messageFor(const ApiException(ApiException.generic)));
+        setState(() =>
+            _error = _messageFor(const ApiException(ApiException.generic)));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -80,167 +78,230 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark ? AppColors.textDark : AppColors.textLight;
-    final subtext = isDark ? AppColors.subtextDark : AppColors.subtextLight;
+    final title = user != null
+        ? context.tr('الحساب', 'Account')
+        : _registering
+            ? context.tr('إنشاء حساب', 'Create account')
+            : context.tr('تسجيل الدخول', 'Sign in');
 
-    return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          children: [
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: LahumaIconButton(
-                icon: Icons.arrow_back_ios_new_rounded,
-                tooltip: context.tr('رجوع', 'Back'),
-                onTap: () => context.canPop() ? context.pop() : context.go('/home'),
+    return AppScaffold(
+      title: title,
+      // Opened without history (deep link): offer a way home instead of the
+      // system back chevron.
+      leading: context.canPop()
+          ? null
+          : CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => context.go('/home'),
+              child: Text(
+                context.tr('الرئيسية', 'Home'),
+                style:
+                    AppTypography.body.copyWith(color: context.palette.accent),
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
-            if (user != null) ..._signedIn(context, user, text, subtext)
-            else ..._form(context, text, subtext),
-          ],
-        ),
+      child: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        children: user != null ? _signedIn(context, user) : _form(context),
       ),
     );
   }
 
-  List<Widget> _signedIn(
-      BuildContext context, AuthUser user, Color text, Color subtext) {
+  List<Widget> _signedIn(BuildContext context, AuthUser user) {
+    final c = context.palette;
     return [
-      Text(
-        user.name,
-        style: GoogleFonts.cairo(
-            fontSize: 24, fontWeight: FontWeight.w700, color: text),
-      ),
-      Text(user.email,
-          style: GoogleFonts.cairo(fontSize: 14, color: subtext)),
-      const SizedBox(height: AppSpacing.lg),
-      Text(
-        context.tr(
+      AppListSection(
+        footer: context.tr(
           'أنت مسجّل الدخول. مزامنة العلامات والتقدّم بين الأجهزة ستُضاف قريبًا؛ حتى ذلك الحين تبقى بياناتك على هذا الجهاز.',
           'You are signed in. Syncing bookmarks and progress across devices is coming; until then your data stays on this device.',
         ),
-        style: GoogleFonts.cairo(fontSize: 13, height: 1.7, color: subtext),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.person_crop_circle_fill,
+                    size: 56, color: c.accent),
+                const SizedBox(width: AppSpacing.ms),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(user.name,
+                          style: AppTypography.title3.copyWith(color: c.label)),
+                      LtrText(
+                        user.email,
+                        style: AppTypography.subheadline
+                            .copyWith(color: c.secondaryLabel),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-      const SizedBox(height: AppSpacing.lg),
-      OutlinedButton.icon(
-        onPressed: () async {
-          await ref.read(authProvider.notifier).logout();
-        },
-        icon: const Icon(Icons.logout_rounded, size: 18),
-        label: Text(context.tr('تسجيل الخروج', 'Sign out')),
+      const SizedBox(height: AppSpacing.md),
+      AppListSection(
+        children: [
+          AppListTile(
+            title: context.tr('تسجيل الخروج', 'Sign out'),
+            destructive: true,
+            chevron: false,
+            onTap: () async {
+              await ref.read(authProvider.notifier).logout();
+            },
+          ),
+        ],
       ),
     ];
   }
 
-  List<Widget> _form(BuildContext context, Color text, Color subtext) {
+  List<Widget> _form(BuildContext context) {
+    final c = context.palette;
     return [
-      Text(
-        _registering
-            ? context.tr('إنشاء حساب', 'Create account')
-            : context.tr('تسجيل الدخول', 'Sign in'),
-        style: GoogleFonts.cairo(
-            fontSize: 24, fontWeight: FontWeight.w700, color: text),
+      Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.screenMargin + AppSpacing.xs,
+          0,
+          AppSpacing.screenMargin + AppSpacing.xs,
+          AppSpacing.md,
+        ),
+        child: Text(
+          context.tr('الحساب اختياري. يمكنك القراءة وحفظ العلامات بدونه.',
+              'An account is optional. You can read and bookmark without one.'),
+          style: AppTypography.subheadline.copyWith(color: c.secondaryLabel),
+        ),
       ),
-      const SizedBox(height: AppSpacing.xs),
-      Text(
-        context.tr('الحساب اختياري. يمكنك القراءة وحفظ العلامات بدونه.',
-            'An account is optional. You can read and bookmark without one.'),
-        style: GoogleFonts.cairo(fontSize: 13, height: 1.6, color: subtext),
+      AutofillGroup(
+        child: Form(
+          key: _formKey,
+          child: AppListSection(
+            children: [
+              if (_registering)
+                AppTextFormRow(
+                  controller: _name,
+                  placeholder: context.tr('الاسم', 'Name'),
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.name],
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? context.tr('أدخل اسمك', 'Enter your name')
+                      : null,
+                ),
+              AppTextFormRow(
+                controller: _email,
+                placeholder: context.tr('البريد الإلكتروني', 'Email'),
+                ltr: true,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.email],
+                validator: (v) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                        .hasMatch((v ?? '').trim())
+                    ? null
+                    : context.tr(
+                        'أدخل بريدًا إلكترونيًا صحيحًا', 'Enter a valid email'),
+              ),
+              AppTextFormRow(
+                controller: _password,
+                placeholder: context.tr('كلمة المرور', 'Password'),
+                ltr: true,
+                obscureText: _hidePassword,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _submit(),
+                autofillHints: [
+                  _registering
+                      ? AutofillHints.newPassword
+                      : AutofillHints.password
+                ],
+                suffix: AppIconButton(
+                  icon: _hidePassword
+                      ? CupertinoIcons.eye
+                      : CupertinoIcons.eye_slash,
+                  color: c.secondaryLabel,
+                  label: _hidePassword
+                      ? context.tr('إظهار كلمة المرور', 'Show password')
+                      : context.tr('إخفاء كلمة المرور', 'Hide password'),
+                  onPressed: () =>
+                      setState(() => _hidePassword = !_hidePassword),
+                ),
+                validator: (v) {
+                  final value = v ?? '';
+                  if (value.isEmpty) {
+                    return context.tr(
+                        'أدخل كلمة المرور', 'Enter your password');
+                  }
+                  if (_registering && value.length < 8) {
+                    return context.tr(
+                        '٨ أحرف على الأقل', 'At least 8 characters');
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
       ),
-      const SizedBox(height: AppSpacing.lg),
-      Form(
-        key: _formKey,
+      if (_error != null)
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(
+            AppSpacing.screenMargin + AppSpacing.xs,
+            AppSpacing.xs,
+            AppSpacing.screenMargin + AppSpacing.xs,
+            0,
+          ),
+          child: Semantics(
+            liveRegion: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(CupertinoIcons.exclamationmark_circle_fill,
+                    size: 16, color: c.destructive),
+                const SizedBox(width: AppSpacing.xs + 2),
+                Expanded(
+                  child: Text(
+                    _error!,
+                    style:
+                        AppTypography.footnote.copyWith(color: c.destructive),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.screenMargin,
+          AppSpacing.lg,
+          AppSpacing.screenMargin,
+          0,
+        ),
         child: Column(
           children: [
-            if (_registering) ...[
-              TextFormField(
-                controller: _name,
-                textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.name],
-                decoration: InputDecoration(labelText: context.tr('الاسم', 'Name')),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? context.tr('أدخل اسمك', 'Enter your name')
-                    : null,
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            TextFormField(
-              controller: _email,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              decoration:
-                  InputDecoration(labelText: context.tr('البريد الإلكتروني', 'Email')),
-              validator: (v) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-                      .hasMatch((v ?? '').trim())
-                  ? null
-                  : context.tr('أدخل بريدًا إلكترونيًا صحيحًا', 'Enter a valid email'),
+            AppButton.filled(
+              label: _registering
+                  ? context.tr('إنشاء الحساب', 'Create account')
+                  : context.tr('دخول', 'Sign in'),
+              loading: _busy,
+              expand: true,
+              onPressed: _submit,
             ),
-            const SizedBox(height: AppSpacing.md),
-            TextFormField(
-              controller: _password,
-              obscureText: _hidePassword,
-              textInputAction: TextInputAction.done,
-              onFieldSubmitted: (_) => _submit(),
-              autofillHints: [
-                _registering ? AutofillHints.newPassword : AutofillHints.password
-              ],
-              decoration: InputDecoration(
-                labelText: context.tr('كلمة المرور', 'Password'),
-                suffixIcon: IconButton(
-                  tooltip: context.tr('إظهار كلمة المرور', 'Show password'),
-                  icon: Icon(_hidePassword
-                      ? Icons.visibility_outlined
-                      : Icons.visibility_off_outlined),
-                  onPressed: () => setState(() => _hidePassword = !_hidePassword),
-                ),
-              ),
-              validator: (v) {
-                final value = v ?? '';
-                if (value.isEmpty) {
-                  return context.tr('أدخل كلمة المرور', 'Enter your password');
-                }
-                if (_registering && value.length < 8) {
-                  return context.tr('٨ أحرف على الأقل', 'At least 8 characters');
-                }
-                return null;
-              },
+            const SizedBox(height: AppSpacing.sm),
+            AppButton.plain(
+              label: _registering
+                  ? context.tr('لدي حساب بالفعل', 'I already have an account')
+                  : context.tr('ليس لدي حساب', 'Create a new account'),
+              onPressed: _busy
+                  ? null
+                  : () => setState(() {
+                        _registering = !_registering;
+                        _error = null;
+                      }),
             ),
           ],
         ),
-      ),
-      if (_error != null) ...[
-        const SizedBox(height: AppSpacing.md),
-        Text(_error!,
-            style: GoogleFonts.cairo(fontSize: 13, color: AppColors.error)),
-      ],
-      const SizedBox(height: AppSpacing.lg),
-      FilledButton(
-        onPressed: _busy ? null : _submit,
-        child: _busy
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : Text(_registering
-                ? context.tr('إنشاء الحساب', 'Create account')
-                : context.tr('دخول', 'Sign in')),
-      ),
-      TextButton(
-        onPressed: _busy
-            ? null
-            : () => setState(() {
-                  _registering = !_registering;
-                  _error = null;
-                }),
-        child: Text(_registering
-            ? context.tr('لدي حساب بالفعل', 'I already have an account')
-            : context.tr('ليس لدي حساب', 'Create a new account')),
       ),
     ];
   }

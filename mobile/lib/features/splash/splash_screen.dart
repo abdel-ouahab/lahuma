@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../core/theme/app_colors.dart';
+import '../../core/design/design.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,11 +29,20 @@ class _SplashScreenState extends State<SplashScreen>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
-    _controller.forward();
-
     Future.delayed(const Duration(milliseconds: 1800), () {
       if (mounted) context.go('/home');
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reduce Motion: show the final frame straight away.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.value = 1;
+    } else if (!_controller.isAnimating && _controller.value == 0) {
+      _controller.forward();
+    }
   }
 
   @override
@@ -45,8 +53,10 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
+    const onBrand = AppColors.onAccent;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: AppColors.splashGradient,
@@ -62,42 +72,47 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Decorative circle behind the logo
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'ل',
-                        style: GoogleFonts.scheherazadeNew(
-                          fontSize: 52,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                  // The mark and wordmark are artwork: they keep their size
+                  // under large text. The tagline below still scales.
+                  MediaQuery.withNoTextScaling(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: onBrand.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            'ل',
+                            style: AppTypography.quran(
+                              size: 52,
+                              weight: FontWeight.w700,
+                              height: 1.2,
+                            ).copyWith(color: onBrand),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'لهما',
+                          style: AppTypography.quran(
+                            size: 52,
+                            weight: FontWeight.w700,
+                            height: 1.4,
+                          ).copyWith(color: onBrand),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'لهما',
-                    style: GoogleFonts.scheherazadeNew(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.ms),
                   Text(
                     'قرآنٌ يُتلى، وأجرٌ يُهدى.',
-                    style: GoogleFonts.scheherazadeNew(
-                      fontSize: 17,
-                      color: Colors.white.withValues(alpha: 0.85),
-                    ),
+                    textAlign: TextAlign.center,
+                    style: AppTypography.quran(size: 17, height: 1.6)
+                        .copyWith(color: onBrand.withValues(alpha: 0.85)),
                   ),
                 ],
               ),
