@@ -25,6 +25,9 @@ class AppTheme {
         applyThemeToAll: true,
       );
 
+  /// Bouncing physics and no Android overscroll glow, on every platform.
+  static const ScrollBehavior scrollBehavior = CupertinoScrollBehavior();
+
   static ThemeData get light => _material(Brightness.light);
   static ThemeData get dark => _material(Brightness.dark);
 
@@ -161,8 +164,7 @@ class AppTheme {
           foregroundColor: accent,
           minimumSize:
               const Size(AppSpacing.minTouchTarget, AppSpacing.minTouchTarget),
-          textStyle:
-              AppTypography.subheadline.copyWith(fontWeight: FontWeight.w600),
+          textStyle: AppTypography.subheadline.weight(FontWeight.w600),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(

@@ -81,6 +81,17 @@ class AppColors {
   static const CupertinoDynamicColor success = CupertinoColors.systemGreen;
   static const CupertinoDynamicColor warning = CupertinoColors.systemOrange;
 
+  // ─── Toast / HUD (inverted capsule over content) ─────────────────────────
+  static const CupertinoDynamicColor toastBackground =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xF02C2C2E),
+    darkColor: Color(0xF048484A),
+  );
+  static const Color toastLabel = Color(0xFFFFFFFF);
+
+  /// Accent readable on [toastBackground] (the toast's action button).
+  static const Color toastAction = Color(0xFF5CD6CB);
+
   // ─── Icon tiles (Settings-style coloured squares, white glyph) ───────────
   static const CupertinoDynamicColor tileBlue = CupertinoColors.systemBlue;
   static const CupertinoDynamicColor tilePurple = CupertinoColors.systemPurple;

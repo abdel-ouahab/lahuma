@@ -46,6 +46,7 @@ class LahumaApp extends ConsumerWidget {
       ],
       routerConfig: router,
       builder: AppTheme.builder,
+      scrollBehavior: AppTheme.scrollBehavior,
     );
   }
 }

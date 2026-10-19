@@ -97,12 +97,29 @@ class AppTypography {
       navActionTextStyle: body.copyWith(color: AppColors.accent),
       navTitleTextStyle: headline.copyWith(color: AppColors.label),
       navLargeTitleTextStyle: largeTitle.copyWith(color: AppColors.label),
-      tabLabelTextStyle: caption2.copyWith(
-        fontWeight: FontWeight.w500,
-        color: CupertinoColors.inactiveGray,
-      ),
+      tabLabelTextStyle: caption2
+          .weight(FontWeight.w500)
+          .copyWith(color: CupertinoColors.inactiveGray),
       pickerTextStyle: picker,
       dateTimePickerTextStyle: picker,
     );
+  }
+}
+
+extension AppTextStyleWeight on TextStyle {
+  /// Returns this style at [weight].
+  ///
+  /// Use this instead of `copyWith(fontWeight: …)`: google_fonts registers one
+  /// font family per weight (`Cairo_regular`, `Cairo_700`, …), so changing
+  /// only `fontWeight` would synthesise a fake bold from the regular file.
+  TextStyle weight(FontWeight weight) {
+    final family = fontFamily ?? '';
+    if (family.startsWith('Cairo')) {
+      return GoogleFonts.cairo(textStyle: this, fontWeight: weight);
+    }
+    if (family.startsWith('ScheherazadeNew')) {
+      return GoogleFonts.scheherazadeNew(textStyle: this, fontWeight: weight);
+    }
+    return copyWith(fontWeight: weight);
   }
 }

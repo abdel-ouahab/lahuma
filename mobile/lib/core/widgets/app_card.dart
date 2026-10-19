@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
+import '../design/app_motion.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_spacing.dart';
 
-/// Spring tuned like Apple's UI springs: critically damped, response 0.3s.
-/// stiffness = (2π / response)², damping = 4π·ζ / response (mass 1).
-const SpringDescription kLahumaSpring = SpringDescription(
-  mass: 1,
-  stiffness: 439,
-  damping: 41.9,
-);
+/// Legacy name for [AppMotion.spring]; new code uses the design system.
+const SpringDescription kLahumaSpring = AppMotion.spring;
 
 /// Base Lahuma card: flat surface, hairline edge, no coloured shadow.
 /// Responds on touch-down with a spring-driven scale that can be interrupted
@@ -118,8 +114,7 @@ class _LahumaCardState extends State<LahumaCard>
           child: ClipRRect(
             borderRadius: radius as BorderRadius,
             child: Padding(
-              padding: widget.padding ??
-                  const EdgeInsets.all(AppSpacing.md),
+              padding: widget.padding ?? const EdgeInsets.all(AppSpacing.md),
               child: widget.child,
             ),
           ),
