@@ -5,7 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants/app_settings_enum.dart';
 import 'core/constants/storage_keys.dart';
 import 'core/router/app_router.dart';
-import 'core/theme/app_theme.dart';
+import 'core/design/app_theme.dart';
 import 'features/settings/presentation/settings_providers.dart';
 
 Future<void> main() async {
@@ -45,6 +45,7 @@ class LahumaApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: router,
+      builder: AppTheme.builder,
     );
   }
 }
