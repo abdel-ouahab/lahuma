@@ -1,0 +1,52 @@
+name: lahuma
+description: "Lahuma — قرآنٌ يُتلى، وأجرٌ يُهدى. A Quran app built as a continuous charity for parents."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.2
+  cupertino_icons: ^1.0.8
+
+  # State management / navigation
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.0
+
+  # Networking
+  dio: ^5.5.0
+
+  # Local storage
+  shared_preferences: ^2.2.3
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Utilities
+  equatable: ^2.0.5
+
+  # Audio
+  just_audio: ^0.9.40
+
+  # Fonts & UI
+  google_fonts: ^6.2.1
+  scrollable_positioned_list: ^0.3.8
+  share_plus: ^13.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.11
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/images/
+    - assets/audio/Quran reciters/Ahmed bin Ali Al-Ajmi/
