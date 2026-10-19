@@ -6,7 +6,6 @@ import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/error_retry.dart';
-import '../../../core/widgets/glass_navigation_bar.dart';
 import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
 
@@ -114,7 +113,7 @@ class Mp3QuranRecitersList extends ConsumerWidget {
                           AppSpacing.lg,
                           AppSpacing.sm,
                           AppSpacing.lg,
-                          GlassNavigationBar.totalHeight(context) +
+                          MediaQuery.paddingOf(context).bottom +
                               AppSpacing.md,
                         ),
                         itemCount: list.length,

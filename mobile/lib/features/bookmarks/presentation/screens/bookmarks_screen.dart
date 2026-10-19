@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/glass_navigation_bar.dart';
 import '../../domain/bookmark.dart';
 import '../bookmark_card.dart';
 import '../bookmarks_providers.dart';
@@ -70,8 +69,8 @@ class BookmarksScreen extends ConsumerWidget {
                   ? _EmptyState(isDark: isDark)
                   : ListView.separated(
                       physics: const BouncingScrollPhysics(),
-                      padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
-                          AppSpacing.lg, GlassNavigationBar.totalHeight(context)),
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0,
+                          AppSpacing.lg, AppSpacing.lg),
                       itemCount: bookmarks.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(height: AppSpacing.sm),

@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/glass_navigation_bar.dart';
 import '../../domain/reciter.dart';
 import '../providers/reciter_providers.dart';
 import 'reciter_card.dart';
@@ -39,7 +38,7 @@ class ReciterListView extends ConsumerWidget {
             AppSpacing.lg,
             AppSpacing.md,
             AppSpacing.lg,
-            GlassNavigationBar.totalHeight(context) + AppSpacing.md,
+            MediaQuery.paddingOf(context).bottom + AppSpacing.md,
           ),
           itemCount: reciters.length,
           separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),

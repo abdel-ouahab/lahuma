@@ -9,7 +9,7 @@ import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/error_retry.dart';
-import '../../../core/widgets/glass_navigation_bar.dart';
+import '../../../core/design/widgets/app_mini_player.dart';
 import '../../quran/presentation/providers/quran_providers.dart';
 import '../../quran/presentation/providers/reciter_providers.dart'
     show activeReciterProvider;
@@ -190,11 +190,9 @@ class _PlayerBody extends ConsumerWidget {
       });
     }
 
-    final navHeight = GlassNavigationBar.totalHeight(context);
-    // With a track loaded the shell already reserves room for the mini
-    // player; otherwise the list scrolls behind the glass nav.
-    final listBottom =
-        state.surah != null ? AppSpacing.md : navHeight + AppSpacing.md;
+    // The tab shell reports the tab bar and mini-player as bottom padding;
+    // the list scrolls behind both and its last row stays reachable.
+    final listBottom = MediaQuery.paddingOf(context).bottom + AppSpacing.md;
 
     return Scaffold(
       backgroundColor: pal.bg,
@@ -505,87 +503,6 @@ class _TrackTile extends StatelessWidget {
   }
 }
 
-/// Dark "now playing" bar that floats above the navigation bar.
-class _NowPlayingBar extends StatelessWidget {
-  const _NowPlayingBar({
-    required this.pal,
-    required this.title,
-    required this.subtitle,
-    required this.controller,
-    required this.state,
-    required this.onTap,
-  });
-
-  final _Pal pal;
-  final String title;
-  final String subtitle;
-  final Mp3PlaybackController controller;
-  final Mp3PlaybackState state;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: pal.ink,
-      borderRadius: BorderRadius.circular(22),
-      elevation: 8,
-      shadowColor: Colors.black.withValues(alpha: 0.25),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: [
-              const _Artwork(size: 48, radius: 14, shadow: false),
-              const SizedBox(width: AppSpacing.sm + 4),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: _inter(15, FontWeight.w700, pal.onInk),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: _inter(12, FontWeight.w500,
-                          pal.onInk.withValues(alpha: 0.6)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              _PlaybackBuilder(
-                controller: controller,
-                state: state,
-                builder: (context, playing, busy) => _RoundButton(
-                  size: 44,
-                  background: pal.onInk,
-                  foreground: pal.ink,
-                  busy: busy,
-                  icon:
-                      playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  label: playing ? 'Pause' : 'Play',
-                  onTap: controller.togglePlay,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Height the shell reserves for [Mp3MiniPlayer] above the navigation bar.
-const double kMp3MiniPlayerHeight = 80;
-
 /// App-wide "now playing" bar. Shown by the main shell on every tab while a
 /// recitation is active; tapping it opens the full-screen player.
 class Mp3MiniPlayer extends ConsumerWidget {
@@ -602,15 +519,16 @@ class Mp3MiniPlayer extends ConsumerWidget {
     final controller = ref.read(mp3PlaybackProvider(moshaf).notifier);
     final names = ref.watch(mp3SuwarProvider).valueOrNull ?? const {};
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
-      child: _NowPlayingBar(
-        pal: _Pal.of(context),
+    return _PlaybackBuilder(
+      controller: controller,
+      state: state,
+      builder: (context, playing, busy) => AppMiniPlayerBar(
+        artwork: const _Artwork(size: 40, radius: 0, shadow: false),
         title: names[surah] ?? context.tr('سورة $surah', 'Surah $surah'),
         subtitle: session.reciter.name,
-        controller: controller,
-        state: state,
+        playing: playing,
+        busy: busy,
+        onTogglePlay: controller.togglePlay,
         onTap: () => showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,
@@ -622,53 +540,6 @@ class Mp3MiniPlayer extends ConsumerWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             child: _NowPlayingScreen(
                 reciter: session.reciter, moshaf: session.moshaf),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({
-    required this.size,
-    required this.background,
-    required this.foreground,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.busy = false,
-  });
-
-  final double size;
-  final Color background;
-  final Color foreground;
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool busy;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: Material(
-        color: background,
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: busy ? null : onTap,
-          child: SizedBox(
-            width: size,
-            height: size,
-            child: busy
-                ? Padding(
-                    padding: EdgeInsets.all(size * 0.3),
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2.4, color: foreground),
-                  )
-                : Icon(icon, size: size * 0.5, color: foreground),
           ),
         ),
       ),

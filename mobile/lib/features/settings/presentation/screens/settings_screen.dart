@@ -7,7 +7,6 @@ import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/glass_navigation_bar.dart';
 import '../../../auth/presentation/auth_providers.dart';
 import '../../../dedication/presentation/dedication_labels.dart';
 import '../../../dedication/presentation/dedication_providers.dart';
@@ -38,8 +37,8 @@ class SettingsScreen extends ConsumerWidget {
       body: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md,
-              AppSpacing.lg, GlassNavigationBar.totalHeight(context)),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md,
+              AppSpacing.lg, AppSpacing.lg),
           children: [
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.lg),

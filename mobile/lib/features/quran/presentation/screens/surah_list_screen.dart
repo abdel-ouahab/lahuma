@@ -6,7 +6,6 @@ import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/error_retry.dart';
-import '../../../../core/widgets/glass_navigation_bar.dart';
 import '../../../../core/widgets/lahuma_icon_button.dart';
 import '../../domain/juz_data.dart';
 import '../../domain/surah.dart';
@@ -199,8 +198,8 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                         physics: const BouncingScrollPhysics(),
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
-                        padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
-                            AppSpacing.lg, GlassNavigationBar.totalHeight(context)),
+                        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0,
+                            AppSpacing.lg, AppSpacing.lg),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.sm),
@@ -252,8 +251,8 @@ class _JuzList extends StatelessWidget {
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg,
-          GlassNavigationBar.totalHeight(context)),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg,
+          AppSpacing.lg),
       itemCount: juzStarts.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {

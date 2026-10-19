@@ -7,7 +7,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/continue_reading_card.dart';
 import '../../../core/widgets/feature_card.dart';
-import '../../../core/widgets/glass_navigation_bar.dart';
 import '../../../core/widgets/lahuma_icon_button.dart';
 import '../../../core/widgets/progress_card.dart';
 import '../../../core/widgets/sadaqah_card.dart';
@@ -204,9 +203,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
-              child: SizedBox(height: GlassNavigationBar.totalHeight(context)),
-            ),
+            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.md)),
           ],
         ),
       ),

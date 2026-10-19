@@ -1,5 +1,8 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../design/design_system_preview.dart';
 import '../shell/main_shell.dart';
 import '../../features/splash/splash_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -12,6 +15,11 @@ import '../../features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/account_screen.dart';
 
+/// Every screen is an iOS page: slide transition with the interactive
+/// edge-swipe back gesture (from the right edge in RTL).
+Page<void> _page(GoRouterState state, Widget child) =>
+    CupertinoPage<void>(key: state.pageKey, child: child);
+
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
@@ -19,26 +27,37 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── Splash (outside shell) ──────────────────────────────────────────
       GoRoute(
         path: '/',
-        builder: (context, state) => const SplashScreen(),
+        pageBuilder: (context, state) => _page(state, const SplashScreen()),
       ),
 
       // ── Surah reader (outside shell — full-screen reading experience) ───
       GoRoute(
         path: r'/quran/:number(\d+)',
-        builder: (context, state) => SurahReadingScreen(
-          surahNumber: int.parse(state.pathParameters['number']!),
-          initialAyah:
-              int.tryParse(state.uri.queryParameters['ayah'] ?? '') ?? 1,
+        pageBuilder: (context, state) => _page(
+          state,
+          SurahReadingScreen(
+            surahNumber: int.parse(state.pathParameters['number']!),
+            initialAyah:
+                int.tryParse(state.uri.queryParameters['ayah'] ?? '') ?? 1,
+          ),
         ),
       ),
 
       // ── Account (optional sign in) ──────────────────────────────────────
       GoRoute(
         path: '/account',
-        builder: (context, state) => const AccountScreen(),
+        pageBuilder: (context, state) => _page(state, const AccountScreen()),
       ),
 
-      // ── Main Shell with persistent bottom nav ───────────────────────────
+      // ── Design system catalogue (debug builds only) ─────────────────────
+      if (kDebugMode)
+        GoRoute(
+          path: '/__design',
+          pageBuilder: (context, state) =>
+              _page(state, const DesignSystemPreview()),
+        ),
+
+      // ── Main Shell with persistent tab bar ──────────────────────────────
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
@@ -48,7 +67,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const HomeScreen(),
+                pageBuilder: (context, state) =>
+                    _page(state, const HomeScreen()),
               ),
             ],
           ),
@@ -57,24 +77,32 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/quran',
-                builder: (context, state) => SurahListScreen(
-                  initialTab:
-                      int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0,
+                pageBuilder: (context, state) => _page(
+                  state,
+                  SurahListScreen(
+                    initialTab:
+                        int.tryParse(state.uri.queryParameters['tab'] ?? '') ??
+                            0,
+                  ),
                 ),
                 routes: [
                   GoRoute(
                     path: 'mp3quran',
-                    builder: (context, state) => const Mp3QuranRecitersScreen(),
+                    pageBuilder: (context, state) =>
+                        _page(state, const Mp3QuranRecitersScreen()),
                     routes: [
                       GoRoute(
                         path: ':reciterId/:moshafId',
-                        builder: (context, state) => Mp3QuranPlayerScreen(
-                          reciterId: int.tryParse(
-                                  state.pathParameters['reciterId']!) ??
-                              -1,
-                          moshafId: int.tryParse(
-                                  state.pathParameters['moshafId']!) ??
-                              -1,
+                        pageBuilder: (context, state) => _page(
+                          state,
+                          Mp3QuranPlayerScreen(
+                            reciterId: int.tryParse(
+                                    state.pathParameters['reciterId']!) ??
+                                -1,
+                            moshafId: int.tryParse(
+                                    state.pathParameters['moshafId']!) ??
+                                -1,
+                          ),
                         ),
                       ),
                     ],
@@ -82,8 +110,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                   // Reciter full-screen player (inside shell so mini-player stays)
                   GoRoute(
                     path: 'reciters/:id',
-                    builder: (context, state) => ReciterPlayerScreen(
-                      reciterId: state.pathParameters['id']!,
+                    pageBuilder: (context, state) => _page(
+                      state,
+                      ReciterPlayerScreen(
+                        reciterId: state.pathParameters['id']!,
+                      ),
                     ),
                   ),
                 ],
@@ -95,7 +126,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/bookmarks',
-                builder: (context, state) => const BookmarksScreen(),
+                pageBuilder: (context, state) =>
+                    _page(state, const BookmarksScreen()),
               ),
             ],
           ),
@@ -104,7 +136,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const SettingsScreen(),
+                pageBuilder: (context, state) =>
+                    _page(state, const SettingsScreen()),
               ),
             ],
           ),

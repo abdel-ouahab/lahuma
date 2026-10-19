@@ -12,6 +12,7 @@ export 'widgets/app_card.dart';
 export 'widgets/app_direction.dart';
 export 'widgets/app_inputs.dart';
 export 'widgets/app_list.dart';
+export 'widgets/app_mini_player.dart';
 export 'widgets/app_overlays.dart';
 export 'widgets/app_scaffold.dart';
 export 'widgets/app_states.dart';
