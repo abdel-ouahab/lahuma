@@ -1,9 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../design/design.dart';
 import '../localization/tr.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
-import 'app_card.dart';
 
 /// Hero "Continue Reading" card on the Home screen.
 /// One idea: where you left off, and a single obvious way back in.
@@ -25,112 +21,93 @@ class ContinueReadingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasProgress = surahName != null;
-    const onHero = Colors.white;
-    final onHeroDim = Colors.white.withValues(alpha: 0.72);
+    const onHero = AppColors.onAccent;
+    final onHeroDim = onHero.withValues(alpha: 0.75);
+    final actionColor = AppColors.heroGradient.last;
+    final caption = AppTypography.footnote
+        .weight(FontWeight.w600)
+        .copyWith(color: onHeroDim);
 
-    return LahumaCard(
+    return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      borderRadius: BorderRadius.circular(AppRadius.xxl),
+      semanticLabel: hasProgress
+          ? context.tr(
+              'متابعة القراءة: $surahName', 'Continue reading $surahName')
+          : context.tr('ابدأ القراءة', 'Start reading'),
+      padding: const EdgeInsetsDirectional.all(AppSpacing.ml),
       gradient: const LinearGradient(
         colors: AppColors.heroGradient,
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
       ),
-      border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 0.5),
-      shadow: [
-        BoxShadow(
-          color: AppColors.primaryDark.withValues(alpha: 0.28),
-          blurRadius: 30,
-          spreadRadius: -6,
-          offset: const Offset(0, 14),
-        ),
-      ],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(
-                hasProgress
-                    ? context.tr('آخر قراءة', 'Last read')
-                    : context.tr('ابدأ القراءة', 'Start reading'),
-                style: GoogleFonts.cairo(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: onHeroDim,
+              Expanded(
+                child: Text(
+                  hasProgress
+                      ? context.tr('آخر قراءة', 'Last read')
+                      : context.tr('ابدأ القراءة', 'Start reading'),
+                  style: caption,
                 ),
               ),
-              const Spacer(),
               if (progressPercent != null)
-                Text(
-                  '${progressPercent!.toInt()}%',
-                  style: GoogleFonts.cairo(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: onHeroDim,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
-                ),
+                LtrText('${progressPercent!.toInt()}%',
+                    style: AppTypography.tabular(caption)),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           Text(
-            hasProgress ? surahName! : context.tr('القرآن الكريم', 'The Holy Quran'),
-            style: GoogleFonts.scheherazadeNew(
-              fontSize: 34,
-              height: 1.3,
-              color: onHero,
-              fontWeight: FontWeight.w700,
-            ),
+            hasProgress
+                ? surahName!
+                : context.tr('القرآن الكريم', 'The Holy Quran'),
+            style: AppTypography.quran(
+                    size: 34, weight: FontWeight.w700, height: 1.35)
+                .copyWith(color: onHero),
           ),
           if (hasProgress)
             Text(
               context.tr('الآية ${ayahNumber ?? 1}', 'Ayah ${ayahNumber ?? 1}'),
-              style: GoogleFonts.cairo(fontSize: 14, color: onHeroDim),
+              style: AppTypography.subheadline.copyWith(color: onHeroDim),
             ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: AppSpacing.md),
           if (progressPercent != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.full),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0, end: progressPercent! / 100),
-                duration: const Duration(milliseconds: 700),
-                curve: Curves.easeOutCubic,
-                builder: (_, v, __) => LinearProgressIndicator(
-                  value: v,
-                  backgroundColor: Colors.white.withValues(alpha: 0.22),
-                  valueColor: const AlwaysStoppedAnimation<Color>(onHero),
-                  minHeight: 4,
-                ),
-              ),
+            AppProgressBar(
+              value: progressPercent! / 100,
+              color: onHero,
+              trackColor: onHero.withValues(alpha: 0.22),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: AppSpacing.md),
           ],
-          // Single clear action: a white pill, the card's only bright element.
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppRadius.full),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.play_arrow_rounded,
-                    size: 18, color: AppColors.primaryDark),
-                const SizedBox(width: 6),
-                Text(
-                  hasProgress
-                      ? context.tr('متابعة القراءة', 'Continue')
-                      : context.tr('ابدأ الآن', 'Begin'),
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryDark,
+          // Single clear action: a white capsule, the card's only bright
+          // element. The whole card is the tap target.
+          DecoratedBox(
+            decoration:
+                const ShapeDecoration(color: onHero, shape: StadiumBorder()),
+            child: Padding(
+              padding: const EdgeInsetsDirectional.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.play_fill, size: 15, color: actionColor),
+                  const SizedBox(width: AppSpacing.xs + 2),
+                  Flexible(
+                    child: Text(
+                      hasProgress
+                          ? context.tr('متابعة القراءة', 'Continue')
+                          : context.tr('ابدأ الآن', 'Begin'),
+                      style: AppTypography.subheadline
+                          .weight(FontWeight.w700)
+                          .copyWith(color: actionColor),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],

@@ -1,10 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_colors.dart';
+import '../design/design.dart';
 
-/// Section title with optional trailing action.
+/// Section title with optional trailing action (iOS "See All" style).
 class SectionTitle extends StatelessWidget {
-  const SectionTitle({super.key, required this.title, this.trailing, this.onTrailingTap});
+  const SectionTitle(
+      {super.key, required this.title, this.trailing, this.onTrailingTap});
 
   final String title;
   final String? trailing;
@@ -12,39 +11,21 @@ class SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final c = context.palette;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsetsDirectional.only(bottom: AppSpacing.sm),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            title,
-            style: GoogleFonts.cairo(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-              color: isDark ? AppColors.textDark : AppColors.textLight,
+          Expanded(
+            child: Semantics(
+              header: true,
+              child: Text(title,
+                  style: AppTypography.title3.copyWith(color: c.label)),
             ),
           ),
-          if (trailing != null) ...[
-            const Spacer(),
-            GestureDetector(
-              onTap: onTrailingTap,
-              behavior: HitTestBehavior.opaque,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  trailing!,
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          if (trailing != null)
+            AppButton.plain(
+                label: trailing!, small: true, onPressed: onTrailingTap),
         ],
       ),
     );

@@ -1,11 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../theme/app_colors.dart';
-import '../theme/app_spacing.dart';
-import 'app_card.dart';
+import '../design/design.dart';
 
-/// Shortcut tile: a solid app-icon-style glyph tile over a calm surface.
-/// The colour lives only in the glyph; the card itself stays neutral.
+/// Shortcut tile: a Settings-style coloured glyph tile over a neutral card.
+/// The colour lives only in the glyph; the card itself stays neutral. Its
+/// height follows its text, so it never clips under large Dynamic Type.
 class FeatureCard extends StatelessWidget {
   const FeatureCard({
     super.key,
@@ -18,56 +15,37 @@ class FeatureCard extends StatelessWidget {
 
   final String title;
   final IconData icon;
+
+  /// A design token, e.g. [AppColors.tilePurple].
   final Color iconColor;
   final String? subtitle;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return LahumaCard(
+    final c = context.palette;
+    return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      semanticLabel: subtitle == null ? title : '$title، $subtitle',
+      padding: const EdgeInsetsDirectional.all(AppSpacing.ms + 2),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: iconColor,
-              borderRadius: BorderRadius.circular(11),
+          AppIconTile(icon: icon, color: iconColor, size: 32),
+          const SizedBox(height: AppSpacing.ms),
+          Text(
+            title,
+            style: AppTypography.headline.copyWith(color: c.label),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (subtitle != null)
+            Text(
+              subtitle!,
+              style: AppTypography.footnote.copyWith(color: c.secondaryLabel),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            child: Icon(icon, color: Colors.white, size: 21),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.cairo(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  height: 1.3,
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (subtitle != null)
-                Text(
-                  subtitle!,
-                  style: GoogleFonts.cairo(
-                    fontSize: 12,
-                    height: 1.3,
-                    color: isDark ? AppColors.subtextDark : AppColors.subtextLight,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-            ],
-          ),
         ],
       ),
     );
