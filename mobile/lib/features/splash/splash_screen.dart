@@ -33,8 +33,8 @@ class _SplashScreenState extends State<SplashScreen>
 
     Future.delayed(const Duration(milliseconds: 1800), () {
       if (!mounted) return;
-      // A tapped notification (e.g. the Fajr wake list) launched the app:
-      // open it on top of Home so "back" lands somewhere sensible.
+      // A tapped notification (the Fajr wake list or its results) launched
+      // the app: open it on top of Home so "back" lands somewhere sensible.
       final launch = ProviderScope.containerOf(context, listen: false)
           .read(localNotificationsProvider)
           .takeLaunchRoute();

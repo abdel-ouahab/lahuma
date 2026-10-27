@@ -10,6 +10,22 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Fajr Call: one city-level fix for prayer times. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+    <!-- Fajr Call, Android auto mode (asked in context, all optional). -->
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <!-- Lets the app hang up after the ring time (TelecomManager.endCall). -->
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
+    <!-- READ_CALL_LOG only in builds made with -PfajrCallLog=true (see
+         build.gradle.kts); otherwise this names an unused, harmless
+         app-private permission so Play never sees READ_CALL_LOG. -->
+    <uses-permission android:name="${fajrCallLogPermission}"/>
+    <!-- CALL_PHONE would otherwise hide the app from tablets on Play. -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <application
         android:usesCleartextTraffic="true"
         android:label="@string/app_name"
@@ -37,6 +53,26 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Fajr Call engine: runs the call loop with the app killed. -->
+        <service
+            android:name=".fajrcall.FajrCallService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="At a time the user scheduled (Fajr prayer), places phone calls one after another to contacts the user chose, to wake them; shows progress and a Stop action until the calls end."/>
+        </service>
+        <receiver android:name=".fajrcall.FajrAlarmReceiver" android:exported="false"/>
+        <receiver android:name=".fajrcall.FajrBootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.TIME_SET"/>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+            </intent-filter>
+        </receiver>
+
         <!-- flutter_local_notifications: scheduled notifications and their
              rescheduling after a reboot / app update. -->
         <receiver android:exported="false"

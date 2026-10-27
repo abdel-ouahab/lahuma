@@ -8,6 +8,7 @@ import 'core/notifications/local_notifications.dart';
 import 'core/notifications/notification_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/design/app_theme.dart';
+import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
 
@@ -22,6 +23,9 @@ Future<void> main() async {
   // Timezone + notification plugin; permissions are asked later, in context.
   final notifications = LocalNotifications();
   await notifications.init();
+  // A Fajr Call engine notification (results / fallback) launched the app.
+  final engineRoute = await const FajrCallPlatform().takeLaunchRoute();
+  if (engineRoute != null) notifications.setLaunchRoute(engineRoute);
 
   runApp(ProviderScope(
     overrides: [localNotificationsProvider.overrideWithValue(notifications)],
@@ -45,6 +49,10 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     // Loads the Fajr lists and reschedules them: Fajr moves every day, so
     // every launch refreshes the upcoming times.
     ref.read(fajrCallProvider);
+    ref.read(fajrCallPlatformProvider).setHandlers(
+          onRoute: (route) => ref.read(routerProvider).push(route),
+          onSessionsChanged: () => ref.read(fajrCallProvider.notifier).refresh(),
+        );
   }
 
   @override

@@ -100,6 +100,12 @@ class LocalNotifications {
     }
   }
 
+  /// Records a launch route from a notification posted outside this plugin
+  /// (the Android call engine posts its own).
+  void setLaunchRoute(String route) {
+    if (route.startsWith('/')) _launchRoute ??= route;
+  }
+
   /// The route of the notification that launched the app, once.
   String? takeLaunchRoute() {
     final route = _launchRoute;

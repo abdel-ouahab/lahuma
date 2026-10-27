@@ -192,6 +192,29 @@ class FajrCallPlatform {
   /// Opens the app's system settings page (for OEM autostart switches).
   Future<void> openAppSettings() => _invoke<void>('openAppSettings');
 
+  /// The route of the native notification (results, fallback) that
+  /// launched the app, once.
+  Future<String?> takeLaunchRoute() => _invoke<String>('takeLaunchRoute');
+
+  /// Native → Flutter: a notification was tapped while the app was running
+  /// ([onRoute]), or the engine finished a loop ([onSessionsChanged]).
+  void setHandlers({
+    required void Function(String route) onRoute,
+    required void Function() onSessionsChanged,
+  }) {
+    if (!_android) return;
+    _channel.setMethodCallHandler((call) async {
+      switch (call.method) {
+        case 'openRoute':
+          final route = call.arguments;
+          if (route is String && route.startsWith('/')) onRoute(route);
+        case 'sessionsChanged':
+          onSessionsChanged();
+      }
+      return null;
+    });
+  }
+
   Future<List<PhoneAccountOption>> phoneAccounts() async {
     final raw = await _invoke<List<dynamic>>('phoneAccounts');
     return [
