@@ -16,6 +16,7 @@ The MVP lets anyone browse and read the full Quran **as a guest, with no login r
 - Reading intention: dedicate your recitation to your parents (or someone else); every ayah read is counted and the dua closes each surah
 - Offline: any surah/translation/tafsir you've opened once is cached and readable without a connection
 - Bookmarks with swipe-to-delete and undo
+- Fajr Call (نداء الفجر): at Fajr the app phones your parents and loved ones one by one to wake them for prayer (Android), or reminds you with a one-tap call list (iOS / manual mode), then shows who was called and who is awake. Offline Fajr time (Algerian method by default), everything stays on the device. See [docs/fajr-call.md](docs/fajr-call.md)
 - Settings: language (Arabic/English, whole UI), theme, text size, goal, intention, optional account
 - Optional account (sign in / create / sign out) against the backend; the whole app works as a guest
 - Backend: register / login / get current user (JWT), plus a thin Quran API proxy
@@ -45,7 +46,7 @@ lahuma/
 
 ## Requirements
 
-- Flutter SDK ≥ 3.22 (Dart ≥ 3.3)
+- Flutter SDK ≥ 3.44 (Dart ≥ 3.12). Current plugin versions need it; `share_plus` 13 already required 3.38.
 - Node.js ≥ 20
 - Docker & Docker Compose
 - PostgreSQL 16 (via Docker, or local install)
@@ -169,9 +170,28 @@ The mobile app currently talks to the Quran data provider (`api.alquran.cloud`) 
 - Per-ayah audio streams from cdn.islamic.network (Alafasy) and needs a connection.
 - Signing in does not sync anything yet: bookmarks, progress, wird and notes are device-local. The auth token is kept in SharedPreferences, not secure storage.
 - Reading credit is counted when you scroll past an ayah (capped per scroll event); it is an honest approximation, not a guarantee of reading.
-- Daily reminders / push notifications are not implemented.
+- Daily reading / adhkar reminders are not implemented yet (F1). The local-notification layer they need exists and is used by Fajr Call. There are no push notifications.
+- Fajr Call: automatic calling is Android-only (iOS doesn't allow it). The Play build can't tell whether a call was answered, so the log relies on the user's "awake" tick (see [docs/fajr-call.md](docs/fajr-call.md#answer-detection)). Hanging up uses a deprecated Android API that may be refused on some devices. Calls use the user's own credit. Some OEM battery savers need the autostart / unrestricted settings.
 - Memorization (hifz) review is not implemented.
 - Rate limiting is applied to auth routes only.
+
+## Fajr Call (نداء الفجر)
+
+At Fajr, Lahuma calls the people you chose (your parents first) one by one to wake them for prayer.
+
+- **Android, auto mode:** a foreground service places the calls with the app killed and the screen off, hangs up after the ring time, retries the people not reached, and shows a Stop button. Results appear in the log.
+- **iOS, and Android manual mode:** a time-sensitive notification opens a wake list. Each person has a call button and an "استيقظ ✓" tick.
+- **Fajr time** is calculated offline (`adhan`; Algeria's 18°/17° by default, other methods selectable) from one coarse GPS fix or a city list. A list can also use a fixed time, an offset, or chosen weekdays.
+- **Privacy:** lists, numbers, results and location stay on the device. Contacts come from the system picker, so no contacts permission is needed.
+- **Permissions** are asked one by one with an explanation. Without them the feature degrades to manual mode.
+- **Answer detection:** the Play build can't detect answers; a build made with `--android-project-arg=fajrCallLog=true` reads the call log to tell answered calls apart.
+
+Design, Play-policy notes, iOS signing steps and a two-phone test script: [docs/fajr-call.md](docs/fajr-call.md).
+
+```bash
+# Kotlin unit tests (call loop)
+cd mobile/android && ./gradlew :app:testDebugUnitTest
+```
 
 ## Future Roadmap
 

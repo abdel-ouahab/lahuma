@@ -142,6 +142,7 @@ A1 → A2 → J1 → D1 → C1 → H1 → B1 → M1/M2 → X1. These are mostly 
 - [ ] **F1 · Reminders (local notifications)** — P1 · M
   *Where:* README says "Daily reminders / push notifications are not implemented".
   *Done when:* there are wird, morning-adhkar, evening-adhkar and Friday Al-Kahf reminders, each with its own time and on/off switch (`flutter_local_notifications` + `timezone`). The app asks for Android 13 `POST_NOTIFICATIONS` and the iOS permission in context, and tapping a notification deep-links to the right screen.
+  *Head start:* the notification layer now exists. `core/notifications/LocalNotifications` (timezone set-up, in-context permission, exact-alarm check, `scheduleAt`, and tap → route through `taps` / `takeLaunchRoute`) was built for O1 Fajr Call. The Android manifest receivers, desugaring and the iOS delegate are in place. F1 only needs its own channel and schedules.
 
 - [ ] **F2 · Khatmah planner** — P1 · M
   *Done when:* you pick a finish target (7 / 15 / 30 / 60 days or a date) and get a daily portion in pages or juz'. Home shows today's portion and overall percent, completing a khatmah is celebrated and saved to history, and a khatmah can be dedicated (G2).
@@ -300,6 +301,21 @@ A1 → A2 → J1 → D1 → C1 → H1 → B1 → M1/M2 → X1. These are mostly 
 - [ ] **N6 · Choose one way to handle strings** — P2 · S
   *Where:* `AppLocalizations` is generated from ARB files but never used, and every string is an inline `context.tr(ar, en)`.
   *Done when:* there's a single approach. Moving to ARB makes it possible to add a third UI language (French, Urdu…).
+
+## O. Fajr Call (نداء الفجر)
+
+At Fajr the app calls the people you chose, one by one, to wake them for prayer. See [fajr-call.md](fajr-call.md) for the design, limits, Play-policy notes and the manual test script.
+
+- [x] **O1 · Domain, storage and offline Fajr time** — P1 · M
+  *Done:* lists, contacts, attempts and sessions as JSON models; SharedPreferences repository (30 sessions); `PrayerTimesService` (`adhan`, Algeria 18°/17° by default); `FajrSchedule` with DST-safe fire times. Fajr matches api.aladhan.com within 1 minute in the tests.
+- [x] **O2 · Manual mode on both platforms** — P1 · M
+  *Done:* lists, editor, log, wake list and permissions screens (Apple design, RTL / LTR, light / dark, 1.6× text); a time-sensitive notification opens the wake list (`tel:` and "استيقظ ✓"); Home shortcut and next-call card; Settings row.
+- [x] **O3 · Android auto-call engine** — P1 · L
+  *Done:* Kotlin foreground service (`specialUse`), `setAlarmClock` per list, boot / time / timezone / update rescheduling, `TelecomManager.placeCall` with dual-SIM choice, `endCall` with a fallback, call-state listener, optional call-log answer detection (`-PfajrCallLog=true`), and JUnit tests for the call loop.
+- [ ] **O4 · Device check on OEM Android** — P1 · S
+  *Done when:* the manual test script in `fajr-call.md` passes on a Xiaomi/Redmi, a Samsung and an Infinix/Tecno phone on Android 13–16, including `endCall` and the battery steps.
+- [ ] **O5 · iOS signing** — P2 · S (needs a Mac)
+  *Done when:* the Time Sensitive Notifications capability is added in Xcode and the wake-list flow is checked on an iPhone.
 
 ## X. Backend work that blocks mobile features
 
