@@ -7,6 +7,7 @@ class StorageKeys {
   static const String localeOption = 'settings.locale';
   static const String readerFontSize = 'settings.readerFontSize';
   static const String showTranslation = 'settings.showTranslation';
+  static const String autoScrollSpeed = 'settings.autoScrollSpeed';
 
   static const String lastReadSurahId = 'progress.lastSurahId';
   static const String lastReadSurahName = 'progress.lastSurahName';
@@ -25,9 +26,16 @@ class StorageKeys {
 
   static const String ayahNotes = 'notes.ayah';
 
+  static const String adhkarProgress = 'adhkar.progress';
+  static const String adhkarFavorites = 'adhkar.favorites';
+  static const String adhkarCompletions = 'adhkar.completions';
+
+  static const String reciterFavorites = 'mp3quran.favoriteReciters';
+
   static const String authToken = 'auth.token';
   static const String authUser = 'auth.user';
 
   static const String bookmarksBox = 'bookmarks_box';
   static const String quranCacheBox = 'quran_cache_box';
+  static const String adhkarCacheBox = 'adhkar_cache_box';
 }

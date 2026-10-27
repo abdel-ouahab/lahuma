@@ -58,18 +58,6 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
     _searchFocus.requestFocus();
   }
 
-  static List<Surah> _filter(List<Surah> surahs, String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return surahs;
-    return surahs
-        .where((s) =>
-            s.arabicName.contains(q) ||
-            s.englishName.toLowerCase().contains(q) ||
-            s.englishNameTranslation.toLowerCase().contains(q) ||
-            '${s.number}' == q)
-        .toList();
-  }
-
   @override
   Widget build(BuildContext context) {
     final surahListAsync = ref.watch(surahListProvider);
@@ -180,7 +168,7 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                   // ── Surahs ────────────────────────────────────────────────
                   surahListAsync.when(
                     data: (surahs) {
-                      final filtered = _filter(surahs, query);
+                      final filtered = filterSurahs(surahs, query);
                       if (filtered.isEmpty) {
                         return Center(
                           child: Text(

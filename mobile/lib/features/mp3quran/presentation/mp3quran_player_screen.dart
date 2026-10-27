@@ -5,14 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../../core/audio/audio_focus.dart';
+import '../../../core/utils/arabic_text.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/error_retry.dart';
 import '../../../core/design/widgets/app_mini_player.dart';
 import '../../quran/presentation/providers/quran_providers.dart';
-import '../../quran/presentation/providers/reciter_providers.dart'
-    show activeReciterProvider;
 import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
 
@@ -184,10 +184,8 @@ class _PlayerBody extends ConsumerWidget {
     // screen.
     final session = Mp3Session(reciter, moshaf);
     if (state.surah != null && ref.read(mp3SessionProvider) != session) {
-      Future.microtask(() {
-        ref.read(mp3SessionProvider.notifier).state = session;
-        ref.read(activeReciterProvider.notifier).state = null;
-      });
+      Future.microtask(
+          () => ref.read(mp3SessionProvider.notifier).state = session);
     }
 
     // The tab shell reports the tab bar and mini-player as bottom padding;
@@ -529,6 +527,7 @@ class Mp3MiniPlayer extends ConsumerWidget {
         playing: playing,
         busy: busy,
         onTogglePlay: controller.togglePlay,
+        onClose: () => ref.read(audioFocusProvider).stopAll(),
         onTap: () => showModalBottomSheet<void>(
           context: context,
           isScrollControlled: true,

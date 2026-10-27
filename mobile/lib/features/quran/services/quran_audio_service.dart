@@ -18,9 +18,13 @@ import '../domain/surah_audio.dart';
 ///         ↓
 ///   Flutter asset  (assets/audio/…)
 class QuranAudioService {
-  QuranAudioService() : _player = AudioPlayer();
+  QuranAudioService({this.beforePlay}) : _player = AudioPlayer();
 
   final AudioPlayer _player;
+
+  /// Runs before playback starts or resumes; the provider uses it to claim
+  /// audio focus so the app's other players stop.
+  final Future<void> Function()? beforePlay;
 
   // ── Current context ──────────────────────────────────────────────────────
   Reciter? _currentReciter;
@@ -45,6 +49,7 @@ class QuranAudioService {
   ///
   /// If the same reciter+surah is already loaded, just resumes or replays.
   Future<void> play(Reciter reciter, SurahAudio surah) async {
+    await beforePlay?.call();
     final isSameTrack = _currentReciter?.id == reciter.id &&
         _currentSurah?.fileName == surah.fileName;
 
@@ -95,7 +100,10 @@ class QuranAudioService {
 
   Future<void> pause() async => _player.pause();
 
-  Future<void> resume() async => unawaited(_player.play());
+  Future<void> resume() async {
+    await beforePlay?.call();
+    unawaited(_player.play());
+  }
 
   Future<void> stop() async {
     await _player.stop();

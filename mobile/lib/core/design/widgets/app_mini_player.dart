@@ -8,7 +8,8 @@ import '../app_typography.dart';
 
 /// "Now playing" bar that floats just above the tab bar (Music-app style):
 /// translucent blurred bar material, hairline edge, no shadow. Tap the bar to
-/// open the full player; the trailing button plays / pauses.
+/// open the full player; the trailing buttons play / pause and, when
+/// [onClose] is set, stop and dismiss the bar.
 ///
 /// Its height is fixed so the shell can reserve [reservedHeight]; text inside
 /// does not grow with Dynamic Type (like the bars around it).
@@ -24,6 +25,7 @@ class AppMiniPlayerBar extends StatelessWidget {
     this.busy = false,
     this.progress,
     this.titleStyle,
+    this.onClose,
   });
 
   /// 40 × 40 artwork / glyph.
@@ -40,6 +42,9 @@ class AppMiniPlayerBar extends StatelessWidget {
 
   /// Override for the title (e.g. Scheherazade for an Arabic surah name).
   final TextStyle? titleStyle;
+
+  /// Stops playback; shows a close button after play / pause when set.
+  final VoidCallback? onClose;
 
   static const double _barHeight = 56;
   static const double _margin = AppSpacing.sm;
@@ -144,6 +149,25 @@ class AppMiniPlayerBar extends StatelessWidget {
                                         ),
                                 ),
                               ),
+                              if (onClose != null)
+                                Semantics(
+                                  button: true,
+                                  label: context.tr('إيقاف التشغيل', 'Stop'),
+                                  child: CupertinoButton(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size.square(
+                                        AppSpacing.minTouchTarget),
+                                    onPressed: () {
+                                      HapticFeedback.lightImpact();
+                                      onClose!();
+                                    },
+                                    child: Icon(
+                                      CupertinoIcons.xmark,
+                                      size: 18,
+                                      color: c.secondaryLabel,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/audio/audio_focus.dart';
 import '../../../../core/design/design.dart';
 import '../providers/reciter_providers.dart';
 
@@ -57,6 +58,7 @@ class QuranMiniPlayer extends ConsumerWidget {
         final service = ref.read(quranAudioServiceProvider);
         isPlaying ? service.pause() : service.resume();
       },
+      onClose: () => ref.read(audioFocusProvider).stopAll(),
     );
   }
 }

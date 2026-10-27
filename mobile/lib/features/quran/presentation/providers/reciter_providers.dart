@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../../../core/audio/audio_focus.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/arabic_text.dart';
 import '../../data/reciter_local_data_source.dart';
 import '../../data/reciter_repository_impl.dart';
 import '../../domain/reciter.dart';
@@ -24,6 +26,20 @@ final reciterListProvider = FutureProvider<List<Reciter>>((ref) async {
   return ref.watch(reciterRepositoryProvider).getReciters();
 });
 
+/// [all] reciters that have at least one uploaded surah and match [query]
+/// (Arabic or Latin name, ignoring diacritics).
+List<Reciter> playableReciters(List<Reciter> all, String query) {
+  final q = normalizeArabic(query);
+  return [
+    for (final r in all)
+      if (r.audioUrls.isNotEmpty &&
+          (q.isEmpty ||
+              normalizeArabic(r.displayName).contains(q) ||
+              normalizeArabic(r.name).contains(q)))
+        r,
+  ];
+}
+
 final surahsForReciterProvider =
     FutureProvider.family<List<SurahAudio>, Reciter>((ref, reciter) async {
   return ref.watch(reciterRepositoryProvider).getAvailableSurahs(reciter);
@@ -32,8 +48,19 @@ final surahsForReciterProvider =
 // ── Audio service (singleton — outlives individual screens) ──────────────────
 
 final quranAudioServiceProvider = Provider<QuranAudioService>((ref) {
-  final service = QuranAudioService();
-  ref.onDispose(service.dispose);
+  final focus = ref.read(audioFocusProvider);
+  late final QuranAudioService service;
+  service = QuranAudioService(beforePlay: () => focus.claim(service));
+  // Another player took over: stop and hide this one's mini-player.
+  focus.register(service, () async {
+    await service.stop();
+    ref.read(activeReciterProvider.notifier).state = null;
+    ref.read(activeSurahAudioProvider.notifier).state = null;
+  });
+  ref.onDispose(() {
+    focus.unregister(service);
+    service.dispose();
+  });
   return service;
 });
 

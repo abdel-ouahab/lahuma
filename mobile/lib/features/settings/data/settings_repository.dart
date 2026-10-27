@@ -55,4 +55,19 @@ class SettingsRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(StorageKeys.showTranslation, value);
   }
+
+  static const int minAutoScrollSpeed = 1;
+  static const int maxAutoScrollSpeed = 10;
+  static const int defaultAutoScrollSpeed = 3;
+
+  Future<int> getAutoScrollSpeed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getInt(StorageKeys.autoScrollSpeed) ?? defaultAutoScrollSpeed)
+        .clamp(minAutoScrollSpeed, maxAutoScrollSpeed);
+  }
+
+  Future<void> setAutoScrollSpeed(int speed) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(StorageKeys.autoScrollSpeed, speed);
+  }
 }

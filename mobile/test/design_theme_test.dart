@@ -34,17 +34,17 @@ void main() {
         await pumpApp(tester, mode: ThemeMode.dark, platform: Brightness.light);
     expect(context.palette.isDark, isTrue);
     expect(
-        context.palette.label, isSameColorAs(CupertinoColors.label.darkColor));
+        context.palette.label, isSameColorAs(AppColors.label.darkColor));
     expect(context.palette.accent, isSameColorAs(AppColors.accent.darkColor));
     expect(context.palette.groupedBackground,
-        isSameColorAs(CupertinoColors.systemGroupedBackground.darkColor));
+        isSameColorAs(AppColors.groupedBackground.darkColor));
   });
 
   testWidgets('forced light wins over a dark system setting', (tester) async {
     final context =
         await pumpApp(tester, mode: ThemeMode.light, platform: Brightness.dark);
     expect(context.palette.isDark, isFalse);
-    expect(context.palette.label, isSameColorAs(CupertinoColors.label.color));
+    expect(context.palette.label, isSameColorAs(AppColors.label.color));
     expect(context.palette.accent, isSameColorAs(AppColors.accent.color));
   });
 
@@ -52,7 +52,7 @@ void main() {
     final context = await pumpApp(tester,
         mode: ThemeMode.system, platform: Brightness.dark);
     expect(
-        context.palette.label, isSameColorAs(CupertinoColors.label.darkColor));
+        context.palette.label, isSameColorAs(AppColors.label.darkColor));
     expect(CupertinoTheme.of(context).primaryColor,
         isSameColorAs(AppColors.accent.darkColor));
   });
@@ -64,6 +64,6 @@ void main() {
     final style = DefaultTextStyle.of(context).style;
     expect(style.decoration, TextDecoration.none);
     expect(style.fontSize, 17);
-    expect(style.color, isSameColorAs(CupertinoColors.label.color));
+    expect(style.color, isSameColorAs(AppColors.label.color));
   });
 }

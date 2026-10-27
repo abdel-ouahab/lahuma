@@ -24,6 +24,16 @@ class AuthApi {
     }
   }
 
+  /// The account behind the current token: `{user: {...}}`.
+  Future<Map<String, dynamic>> me() async {
+    try {
+      final response = await _client.dio.get('/auth/me');
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      throw ApiException.fromDioError(e);
+    }
+  }
+
   Future<Map<String, dynamic>> login({
     required String email,
     required String password,

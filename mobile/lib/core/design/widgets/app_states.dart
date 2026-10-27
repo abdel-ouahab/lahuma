@@ -144,3 +144,47 @@ class AppProgressBar extends StatelessWidget {
     );
   }
 }
+
+/// iOS notification-style count capsule: white digits on red; caps at 99+.
+/// Zero is hidden unless [showZero], which draws it in neutral grey.
+class AppBadge extends StatelessWidget {
+  const AppBadge({
+    super.key,
+    required this.count,
+    this.semanticLabel,
+    this.showZero = false,
+  });
+
+  final int count;
+  final String? semanticLabel;
+  final bool showZero;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count <= 0 && !showZero) return const SizedBox.shrink();
+    final c = context.palette;
+    final active = count > 0;
+    return Semantics(
+      label: semanticLabel,
+      excludeSemantics: semanticLabel != null,
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: active ? c.destructive : c.fill,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          count > 99 ? '99+' : '${count < 0 ? 0 : count}',
+          textDirection: TextDirection.ltr,
+          style: AppTypography.tabular(AppTypography.caption1).copyWith(
+            color: active ? CupertinoColors.white : c.secondaryLabel,
+            fontWeight: FontWeight.w600,
+            height: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}

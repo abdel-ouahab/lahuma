@@ -1,38 +1,53 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import '../../../../core/audio/audio_focus.dart';
 import '../../domain/ayah.dart';
 import '../../domain/surah_detail.dart';
-import 'reciter_providers.dart';
 
 /// Which ayah is being recited right now.
 class AyahPlayback {
   const AyahPlayback({
     required this.surah,
+    required this.surahName,
+    required this.totalAyahs,
     required this.ayah,
     required this.playing,
   });
 
   final int surah;
+
+  /// Arabic name of the surah, for the mini-player.
+  final String surahName;
+  final int totalAyahs;
   final int ayah;
   final bool playing;
 
   AyahPlayback copyWith({int? ayah, bool? playing}) => AyahPlayback(
         surah: surah,
+        surahName: surahName,
+        totalAyahs: totalAyahs,
         ayah: ayah ?? this.ayah,
         playing: playing ?? this.playing,
       );
 }
 
 /// Plays a surah ayah by ayah from the reader, continuing to the end of the
-/// surah. Separate from [QuranAudioService], which plays full-surah files
-/// for the reciters tab; starting one pauses the other.
+/// surah. Separate from the reciter players; [AudioFocus] stops them when
+/// this one starts, and stops this one when they start. Playback carries on
+/// after the reader is closed, with the shell's mini-player as its control.
 class AyahAudioNotifier extends StateNotifier<AyahPlayback?> {
-  AyahAudioNotifier(this._ref) : super(null);
+  AyahAudioNotifier(Ref ref)
+      : _focus = ref.read(audioFocusProvider),
+        super(null) {
+    _focus.register(this, stop);
+  }
 
   static const String _reciterPath = 'ar.alafasy';
+  static const String reciterNameAr = 'مشاري العفاسي';
+  static const String reciterNameEn = 'Mishary Alafasy';
 
-  final Ref _ref;
+  final AudioFocus _focus;
   AudioPlayer? _player;
   List<Ayah> _queue = const [];
   StreamSubscription<int?>? _indexSub;
@@ -48,12 +63,14 @@ class AyahAudioNotifier extends StateNotifier<AyahPlayback?> {
         .toList();
     if (queue.isEmpty) return;
 
-    await _ref.read(quranAudioServiceProvider).pause();
+    await _focus.claim(this);
 
     final player = _player ??= _createPlayer();
     _queue = queue;
     state = AyahPlayback(
       surah: detail.number,
+      surahName: detail.arabicName,
+      totalAyahs: detail.numberOfAyahs,
       ayah: queue.first.numberInSurah,
       playing: true,
     );
@@ -96,7 +113,9 @@ class AyahAudioNotifier extends StateNotifier<AyahPlayback?> {
 
   Future<void> resume() async {
     final player = _player;
-    if (player != null) unawaited(player.play());
+    if (player == null || state == null) return;
+    await _focus.claim(this);
+    unawaited(player.play());
   }
 
   Future<void> stop() async {
@@ -106,6 +125,7 @@ class AyahAudioNotifier extends StateNotifier<AyahPlayback?> {
 
   @override
   void dispose() {
+    _focus.unregister(this);
     _indexSub?.cancel();
     _stateSub?.cancel();
     _player?.dispose();

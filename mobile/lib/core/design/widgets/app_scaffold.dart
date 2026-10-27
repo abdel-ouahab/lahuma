@@ -1,7 +1,11 @@
+import 'dart:math' as math;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import '../app_colors.dart';
+import '../app_motion.dart';
 import '../app_spacing.dart';
+import '../app_typography.dart';
 import 'app_states.dart';
 
 /// Page scaffold.
@@ -214,8 +218,11 @@ class AppTabItem {
   final String label;
 }
 
-/// iOS tab bar: translucent blurred material, hairline top border, icon +
-/// short label, accent for the selected tab, selection haptic on change.
+/// Floating tab bar, after the "Modern Floating Navbar" Figma kit: a bar
+/// (accent blue in light mode, navy in dark) whose top edge dips into a
+/// curved notch under the selected tab, which rises out of it as a circle of
+/// the same colour. The notch and circle glide between tabs
+/// (instantly with Reduce Motion); selection haptic on change.
 /// Labels don't grow with Dynamic Type (as on iOS); the bar keeps its height.
 class AppTabBar extends StatelessWidget {
   const AppTabBar({
@@ -229,41 +236,215 @@ class AppTabBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
-  /// Bar height above the home indicator.
-  static const double height = 50;
+  /// Height of the bar body, excluding the home-indicator extension.
+  static const double height = 68;
 
-  /// Height including the bottom safe area.
+  /// How far the selected tab's circle rises above the bar body.
+  static const double _rise = 30;
+  static const double _circleSize = 50;
+
+  /// Side inset of the tab row; keeps the outer notches clear of the
+  /// bar's rounded corners.
+  static const double _inset = 24;
+
+  /// The labels already sit 13pt above the bar's bottom edge, so only the
+  /// rest of the home-indicator area is added below them.
+  static double _bottomExtension(BuildContext context) =>
+      math.max(0, MediaQuery.viewPaddingOf(context).bottom - 12);
+
+  /// Height including the raised circle and the bottom safe area.
   static double totalHeight(BuildContext context) =>
-      height + MediaQuery.viewPaddingOf(context).bottom;
+      _rise + height + _bottomExtension(context);
+
+  void _select(int index) {
+    if (index != currentIndex) HapticFeedback.selectionClick();
+    onTap(index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final duration = AppMotion.of(context);
+    final c = context.palette;
+
+    return MediaQuery.withClampedTextScaling(
+      maxScaleFactor: 1.0,
+      child: SizedBox(
+        height: totalHeight(context),
+        child: LayoutBuilder(builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final slot = (width - 2 * _inset) / items.length;
+          final x = _inset + slot * (currentIndex + 0.5);
+
+          return TweenAnimationBuilder<double>(
+            tween: Tween(end: rtl ? width - x : x),
+            duration: duration,
+            curve: AppMotion.curve,
+            builder: (context, notchX, _) => Stack(
+              children: [
+                Positioned.fill(
+                  top: _rise,
+                  child: CustomPaint(
+                    painter: _NotchedBarPainter(
+                      notchX: notchX,
+                      color: c.tabBarBackground,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: notchX - _circleSize / 2,
+                  top: _rise - _circleSize / 2,
+                  width: _circleSize,
+                  height: _circleSize,
+                  child: GestureDetector(
+                    onTap: () => _select(currentIndex),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: c.tabBarBackground,
+                        shape: BoxShape.circle,
+                      ),
+                      child: AnimatedSwitcher(
+                        duration: duration,
+                        child: Icon(
+                          items[currentIndex].activeIcon,
+                          key: ValueKey(currentIndex),
+                          size: 24,
+                          color: c.tabBarActive,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: _inset,
+                  right: _inset,
+                  top: _rise,
+                  height: height,
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < items.length; i++)
+                        Expanded(
+                          child: _TabSlot(
+                            item: items[i],
+                            selected: i == currentIndex,
+                            duration: duration,
+                            onTap: () => _select(i),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+/// One tab's tap target. The selected tab's icon lives in the raised circle,
+/// so here it fades out while the label lifts slightly and brightens.
+class _TabSlot extends StatelessWidget {
+  const _TabSlot({
+    required this.item,
+    required this.selected,
+    required this.duration,
+    required this.onTap,
+  });
+
+  final AppTabItem item;
+  final bool selected;
+  final Duration duration;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return MediaQuery.withClampedTextScaling(
-      maxScaleFactor: 1.0,
-      child: CupertinoTabBar(
-        currentIndex: currentIndex,
-        height: height,
-        iconSize: 26,
-        activeColor: AppColors.accent,
-        backgroundColor: AppColors.barBackground,
-        border: Border(
-            top: BorderSide(color: c.separator, width: AppSpacing.hairline)),
-        onTap: (i) {
-          if (i != currentIndex) HapticFeedback.selectionClick();
-          onTap(i);
-        },
-        items: [
-          for (final item in items)
-            BottomNavigationBarItem(
-              icon: Icon(item.icon),
-              activeIcon: Icon(item.activeIcon),
-              label: item.label,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: item.label,
+        excludeSemantics: true,
+        child: Stack(
+          children: [
+            Positioned(
+              top: 15,
+              left: 0,
+              right: 0,
+              child: AnimatedOpacity(
+                opacity: selected ? 0 : 1,
+                duration: duration,
+                child: Icon(item.icon, size: 20, color: c.tabBarInactive),
+              ),
             ),
-        ],
+            AnimatedPositioned(
+              top: selected ? 36 : 39,
+              left: 0,
+              right: 0,
+              duration: duration,
+              curve: AppMotion.curve,
+              child: AnimatedDefaultTextStyle(
+                duration: duration,
+                style: AppTypography.caption2.copyWith(
+                  fontSize: 10,
+                  height: 1.6,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  color: selected ? c.tabBarActive : c.tabBarInactive,
+                ),
+                child: Text(
+                  item.label,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+}
+
+/// The bar body: a rounded rectangle with a curved notch cut from its top
+/// edge, centred on [notchX]. Curve geometry is taken from the Figma
+/// "Subtract" shape (92pt wide, 30pt deep).
+class _NotchedBarPainter extends CustomPainter {
+  const _NotchedBarPainter({required this.notchX, required this.color});
+
+  final double notchX;
+  final Color color;
+
+  static const double _radius = 16;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final x = notchX;
+    final body = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+          Offset.zero & size, const Radius.circular(_radius)));
+    final notch = Path()
+      ..moveTo(x - 46, -1)
+      ..lineTo(x - 46, 0)
+      ..cubicTo(x - 37.16, 0, x - 30.34, 7.65, x - 25.84, 15.25)
+      ..cubicTo(x - 20.62, 24.08, x - 11, 30, x, 30)
+      ..cubicTo(x + 11, 30, x + 20.62, 24.08, x + 25.84, 15.25)
+      ..cubicTo(x + 30.34, 7.65, x + 37.16, 0, x + 46, 0)
+      ..lineTo(x + 46, -1)
+      ..close();
+    canvas.drawPath(
+      Path.combine(PathOperation.difference, body, notch),
+      Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_NotchedBarPainter old) =>
+      old.notchX != notchX || old.color != color;
 }
 
 /// Tab shell: [body] fills the screen and scrolls under the translucent

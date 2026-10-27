@@ -1,4 +1,4 @@
-package com.example.lahuma
+package com.lahuma.app
 
 import io.flutter.embedding.android.FlutterActivity
 

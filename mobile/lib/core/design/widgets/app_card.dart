@@ -3,11 +3,13 @@ import 'package:flutter/physics.dart';
 import '../app_colors.dart';
 import '../app_motion.dart';
 import '../app_spacing.dart';
+import 'app_surface.dart';
 
-/// Content card. No shadow: it separates from the page through background
-/// contrast (`secondaryGroupedBackground` on `groupedBackground`), with
-/// continuous corners. When tappable it scales down slightly on touch with an
-/// interruptible spring (always animating from the live value).
+/// Content card. By default a raised surface: [AppPalette.cardGradient],
+/// a lit glass edge and a soft drop shadow, with continuous corners. Passing
+/// [color] or [gradient] gives a flat card in that fill instead. When
+/// tappable it scales down slightly on touch with an interruptible spring
+/// (always animating from the live value).
 class AppCard extends StatefulWidget {
   const AppCard({
     super.key,
@@ -25,7 +27,8 @@ class AppCard extends StatefulWidget {
   final VoidCallback? onTap;
   final EdgeInsetsGeometry padding;
 
-  /// Defaults to `secondaryGroupedBackground`. Ignored when [gradient] is set.
+  /// Flat fill. Ignored when [gradient] is set; when both are null the card
+  /// is the raised default.
   final Color? color;
   final Gradient? gradient;
   final double radius;
@@ -65,7 +68,6 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.palette;
     final borderRadius = BorderRadius.circular(widget.radius);
     final shape = RoundedSuperellipseBorder(
       borderRadius: borderRadius,
@@ -73,20 +75,35 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
           ? BorderSide.none
           : BorderSide(color: widget.borderColor!, width: 1),
     );
+    final raised = widget.color == null && widget.gradient == null;
 
     Widget card = DecoratedBox(
       decoration: ShapeDecoration(
         shape: shape,
-        color: widget.gradient == null
-            ? (widget.color ?? c.secondaryGroupedBackground)
+        color: widget.gradient == null ? widget.color : null,
+        gradient: raised ? context.palette.cardGradient : widget.gradient,
+        shadows: raised
+            ? [
+                BoxShadow(
+                  color: context.palette.shadow(0.5),
+                  offset: const Offset(0, 10),
+                  blurRadius: 24,
+                ),
+              ]
             : null,
-        gradient: widget.gradient,
       ),
       child: ClipRSuperellipse(
         borderRadius: borderRadius,
         child: Padding(padding: widget.padding, child: widget.child),
       ),
     );
+    // The lit edge only reads on dark surfaces.
+    if (raised && widget.borderColor == null && context.palette.isDark) {
+      card = CustomPaint(
+        foregroundPainter: AppEdgeHighlight(shape: shape),
+        child: card,
+      );
+    }
 
     if (widget.onTap == null) return card;
 

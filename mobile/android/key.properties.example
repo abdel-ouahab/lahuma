@@ -1,0 +1,8 @@
+# Copy to android/key.properties (gitignored) and fill in to sign release builds.
+# Create the keystore once, and keep it and these passwords somewhere safe:
+#   keytool -genkey -v -keystore ~/lahuma-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+# storeFile is relative to android/app/ (or an absolute path).
+storePassword=CHANGE_ME
+keyPassword=CHANGE_ME
+keyAlias=upload
+storeFile=/absolute/path/to/lahuma-upload.jks

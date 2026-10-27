@@ -5,8 +5,10 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import '../../quran/presentation/providers/reciter_providers.dart';
+import '../../../core/audio/audio_focus.dart';
+import '../../../core/utils/arabic_text.dart';
 import '../data/mp3quran_api.dart';
+import '../data/reciter_favorites_repository.dart';
 import '../domain/mp3quran_models.dart';
 
 final mp3QuranApiProvider = Provider<Mp3QuranApi>((ref) => Mp3QuranApi());
@@ -24,23 +26,56 @@ final mp3SuwarProvider = FutureProvider<Map<int, String>>((ref) async {
 
 final mp3RecitersSearchProvider = StateProvider.autoDispose<String>((_) => '');
 
-/// Strips Arabic diacritics and unifies alef/yaa/taa-marbuta forms so that
-/// searching "احمد" matches "أحمد".
-String normalizeArabic(String s) {
-  return s
-      .replaceAll(RegExp('[ً-ٰٟـ]'), '')
-      .replaceAll(RegExp('[أإآٱ]'), 'ا')
-      .replaceAll('ى', 'ي')
-      .replaceAll('ة', 'ه')
-      .toLowerCase()
-      .trim();
-}
-
 List<Mp3Reciter> filterReciters(List<Mp3Reciter> all, String query) {
   final q = normalizeArabic(query);
   if (q.isEmpty) return all;
   return all.where((r) => normalizeArabic(r.name).contains(q)).toList();
 }
+
+/// Moves [favorites] to the top, keeping the API order within each group.
+List<Mp3Reciter> sortFavoritesFirst(List<Mp3Reciter> list, Set<int> favorites) {
+  if (favorites.isEmpty) return list;
+  return [
+    ...list.where((r) => favorites.contains(r.id)),
+    ...list.where((r) => !favorites.contains(r.id)),
+  ];
+}
+
+// ── Favourites ──────────────────────────────────────────────────────────────
+
+final reciterFavoritesRepositoryProvider =
+    Provider((ref) => ReciterFavoritesRepository());
+
+class ReciterFavoritesNotifier extends StateNotifier<Set<int>> {
+  ReciterFavoritesNotifier(this._repository) : super(const {}) {
+    _load();
+  }
+
+  final ReciterFavoritesRepository _repository;
+  bool _touched = false;
+
+  Future<void> _load() async {
+    final saved = await _repository.load();
+    // A toggle made before loading finished already saved the full set.
+    if (!_touched && mounted) state = saved;
+  }
+
+  /// Adds or removes [reciter]; returns true when it is now a favourite.
+  bool toggle(Mp3Reciter reciter) {
+    _touched = true;
+    final next = Set<int>.from(state);
+    final added = next.add(reciter.id);
+    if (!added) next.remove(reciter.id);
+    state = next;
+    _repository.save(next);
+    return added;
+  }
+}
+
+final reciterFavoritesProvider =
+    StateNotifierProvider<ReciterFavoritesNotifier, Set<int>>((ref) {
+  return ReciterFavoritesNotifier(ref.watch(reciterFavoritesRepositoryProvider));
+});
 
 // ── Playback ────────────────────────────────────────────────────────────────
 
@@ -61,7 +96,8 @@ class Mp3PlaybackState {
 /// Owns a dedicated [AudioPlayer] for one reciter/Moshaf; auto-disposed (and
 /// the player released) when the player screen is left.
 class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
-  Mp3PlaybackController(this._moshaf) : super(const Mp3PlaybackState()) {
+  Mp3PlaybackController(this._moshaf, {this.beforePlay})
+      : super(const Mp3PlaybackState()) {
     _completeSub = player.processingStateStream.listen((s) {
       if (s != ProcessingState.completed) return;
       final current = state.surah;
@@ -76,6 +112,11 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
   }
 
   final Mp3Moshaf _moshaf;
+
+  /// Runs before playback starts or resumes; the provider uses it to claim
+  /// audio focus so the app's other players stop.
+  final Future<void> Function()? beforePlay;
+
   final AudioPlayer player = AudioPlayer();
   late final StreamSubscription<ProcessingState> _completeSub;
   final _random = Random();
@@ -115,6 +156,8 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
     }
     final token = ++_token;
     state = Mp3PlaybackState(surah: surah, status: Mp3PlaybackStatus.loading);
+    await beforePlay?.call();
+    if (token != _token) return;
     try {
       await player.stop();
       await player.setUrl(url);
@@ -138,11 +181,21 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
     if (player.playing) {
       await player.pause();
     } else {
+      await beforePlay?.call();
       if (player.processingState == ProcessingState.completed) {
         await player.seek(Duration.zero);
       }
       unawaited(player.play());
     }
+  }
+
+  /// Stops playback and forgets the current surah (another player took over,
+  /// or the mini-player was closed).
+  Future<void> stop() async {
+    if (!mounted) return;
+    _token++;
+    state = const Mp3PlaybackState();
+    await player.stop();
   }
 
   Future<void> seek(Duration position) => player.seek(position);
@@ -199,8 +252,21 @@ final mp3SessionProvider = StateProvider<Mp3Session?>((_) => null);
 final mp3PlaybackProvider = StateNotifierProvider.autoDispose
     .family<Mp3PlaybackController, Mp3PlaybackState, Mp3Moshaf>(
   (ref, moshaf) {
-    // Only one audio source at a time: silence the app's other reciter player.
-    unawaited(ref.read(quranAudioServiceProvider).stop());
-    return Mp3PlaybackController(moshaf);
+    final focus = ref.read(audioFocusProvider);
+    late final Mp3PlaybackController controller;
+    controller = Mp3PlaybackController(
+      moshaf,
+      beforePlay: () => focus.claim(controller),
+    );
+    // Another player took over: stop, and end the session so the mini-player
+    // goes away (and, unless the player screen is open, the controller too).
+    focus.register(controller, () async {
+      await controller.stop();
+      if (ref.read(mp3SessionProvider)?.moshaf == moshaf) {
+        ref.read(mp3SessionProvider.notifier).state = null;
+      }
+    });
+    ref.onDispose(() => focus.unregister(controller));
+    return controller;
   },
 );

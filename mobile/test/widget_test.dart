@@ -21,7 +21,8 @@ void main() {
     // MaterialApp.router builds a MaterialApp with a Router inside.
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(Router<Object>), findsOneWidget);
-    expect(find.text('لهما'), findsOneWidget);
+    expect(find.image(const AssetImage('assets/images/logo.png')),
+        findsOneWidget);
 
     // Let the splash delay elapse and the route change settle.
     await tester.pump(const Duration(seconds: 2));

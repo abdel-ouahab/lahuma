@@ -73,6 +73,25 @@ class ShowTranslationNotifier extends StateNotifier<bool> {
   }
 }
 
+class AutoScrollSpeedNotifier extends StateNotifier<int> {
+  AutoScrollSpeedNotifier(this._repository)
+      : super(SettingsRepository.defaultAutoScrollSpeed) {
+    _load();
+  }
+
+  final SettingsRepository _repository;
+
+  Future<void> _load() async {
+    state = await _repository.getAutoScrollSpeed();
+  }
+
+  Future<void> update(int speed) async {
+    state = speed.clamp(SettingsRepository.minAutoScrollSpeed,
+        SettingsRepository.maxAutoScrollSpeed);
+    await _repository.setAutoScrollSpeed(state);
+  }
+}
+
 final readerFontSizeProvider =
     StateNotifierProvider<ReaderFontSizeNotifier, double>((ref) {
   return ReaderFontSizeNotifier(ref.watch(settingsRepositoryProvider));
@@ -81,6 +100,11 @@ final readerFontSizeProvider =
 final showTranslationProvider =
     StateNotifierProvider<ShowTranslationNotifier, bool>((ref) {
   return ShowTranslationNotifier(ref.watch(settingsRepositoryProvider));
+});
+
+final autoScrollSpeedProvider =
+    StateNotifierProvider<AutoScrollSpeedNotifier, int>((ref) {
+  return AutoScrollSpeedNotifier(ref.watch(settingsRepositoryProvider));
 });
 
 final themeModeProvider =StateNotifierProvider<ThemeModeNotifier, AppThemeMode>((ref) {

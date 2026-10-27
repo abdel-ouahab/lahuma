@@ -14,6 +14,9 @@ import '../../features/mp3quran/presentation/mp3quran_reciters_screen.dart';
 import '../../features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/account_screen.dart';
+import '../../features/adhkar/domain/dhikr.dart';
+import '../../features/adhkar/presentation/screens/adhkar_reader_screen.dart';
+import '../../features/adhkar/presentation/screens/adhkar_screen.dart';
 
 /// Every screen is an iOS page: slide transition with the interactive
 /// edge-swipe back gesture (from the right edge in RTL).
@@ -39,6 +42,19 @@ final routerProvider = Provider<GoRouter>((ref) {
             surahNumber: int.parse(state.pathParameters['number']!),
             initialAyah:
                 int.tryParse(state.uri.queryParameters['ayah'] ?? '') ?? 1,
+          ),
+        ),
+      ),
+
+      // ── Adhkar reader (outside shell — counter needs the full screen) ───
+      GoRoute(
+        path: '/adhkar/:period(morning|evening)',
+        pageBuilder: (context, state) => _page(
+          state,
+          AdhkarReaderScreen(
+            period: AdhkarPeriod.tryParse(state.pathParameters['period'])!,
+            initialIndex:
+                int.tryParse(state.uri.queryParameters['index'] ?? '') ?? 0,
           ),
         ),
       ),
@@ -69,6 +85,18 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/home',
                 pageBuilder: (context, state) =>
                     _page(state, const HomeScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'adhkar',
+                    pageBuilder: (context, state) => _page(
+                      state,
+                      AdhkarScreen(
+                        initialTab:
+                            AdhkarTab.parse(state.uri.queryParameters['tab']),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

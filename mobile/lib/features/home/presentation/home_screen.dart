@@ -7,6 +7,8 @@ import '../../../core/widgets/feature_card.dart';
 import '../../../core/widgets/progress_card.dart';
 import '../../../core/widgets/sadaqah_card.dart';
 import '../../../core/widgets/section_title.dart';
+import '../../adhkar/domain/dhikr.dart';
+import '../../adhkar/presentation/adhkar_providers.dart';
 import '../../dedication/presentation/dedication_providers.dart';
 import '../../dedication/presentation/dedication_sheet.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
@@ -21,6 +23,7 @@ class HomeScreen extends ConsumerWidget {
     final progressAsync = ref.watch(readingProgressProvider);
     final wird = ref.watch(wirdProvider);
     final dedication = ref.watch(dedicationProvider);
+    final adhkarDone = ref.watch(adhkarCompletionsProvider);
     final c = context.palette;
 
     const margin = AppSpacing.screenMargin;
@@ -141,6 +144,35 @@ class HomeScreen extends ConsumerWidget {
           top: 0,
         ),
 
+        // ── Adhkar ──────────────────────────────────────────────────────────
+        box(SectionTitle(title: context.tr('الأذكار', 'Adhkar')),
+            top: AppSpacing.xl),
+        box(
+          pair(
+            FeatureCard(
+              title: context.tr('أذكار الصباح', 'Morning adhkar'),
+              icon: CupertinoIcons.sun_max_fill,
+              iconColor: AppColors.tileOrange,
+              subtitle: context.tr('أول النهار', 'Start of the day'),
+              badge: adhkarDone.countOf(AdhkarPeriod.morning),
+              badgeLabel: _adhkarRead(
+                  context, adhkarDone.countOf(AdhkarPeriod.morning)),
+              onTap: () => context.go('/home/adhkar?tab=morning'),
+            ),
+            FeatureCard(
+              title: context.tr('أذكار المساء', 'Evening adhkar'),
+              icon: CupertinoIcons.moon_fill,
+              iconColor: AppColors.tileIndigo,
+              subtitle: context.tr('آخر النهار', 'End of the day'),
+              badge: adhkarDone.countOf(AdhkarPeriod.evening),
+              badgeLabel: _adhkarRead(
+                  context, adhkarDone.countOf(AdhkarPeriod.evening)),
+              onTap: () => context.go('/home/adhkar?tab=evening'),
+            ),
+          ),
+          top: 0,
+        ),
+
         // ── Today's wird ────────────────────────────────────────────────────
         box(SectionTitle(title: context.tr('وردك اليوم', 'Today\'s wird')),
             top: AppSpacing.xl),
@@ -166,3 +198,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
+
+String _adhkarRead(BuildContext context, int n) =>
+    context.tr('قرأت $n ذكراً', '$n adhkar read');

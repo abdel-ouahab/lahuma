@@ -7,11 +7,8 @@ import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/error_retry.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../mp3quran/presentation/mp3quran_providers.dart'
-    show mp3SessionProvider;
 import '../../domain/reciter.dart';
 import '../../domain/surah_audio.dart';
-import '../providers/ayah_audio_provider.dart';
 import '../providers/reciter_providers.dart';
 
 /// Full-screen Quran audio player for a specific reciter.
@@ -256,8 +253,7 @@ class _PlayerContentState extends ConsumerState<_PlayerContent> {
     });
 
     try {
-      ref.read(mp3SessionProvider.notifier).state = null;
-      await ref.read(ayahAudioProvider.notifier).stop();
+      // play() claims audio focus, which stops the other players.
       ref.read(activeReciterProvider.notifier).state = widget.reciter;
       ref.read(activeSurahAudioProvider.notifier).state = surah;
       await ref.read(quranAudioServiceProvider).play(widget.reciter, surah);

@@ -11,6 +11,8 @@ class FeatureCard extends StatelessWidget {
     required this.iconColor,
     this.subtitle,
     this.onTap,
+    this.badge,
+    this.badgeLabel,
   });
 
   final String title;
@@ -20,6 +22,13 @@ class FeatureCard extends StatelessWidget {
   final Color iconColor;
   final String? subtitle;
   final VoidCallback? onTap;
+
+  /// Count shown as a notification badge in the top trailing corner (top
+  /// left in Arabic), including 0; null shows no badge.
+  final int? badge;
+
+  /// Spoken description of [badge].
+  final String? badgeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +40,16 @@ class FeatureCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          AppIconTile(icon: icon, color: iconColor, size: 32),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppIconTile(icon: icon, color: iconColor, size: 32),
+              const Spacer(),
+              if (badge != null)
+                AppBadge(
+                    count: badge!, semanticLabel: badgeLabel, showZero: true),
+            ],
+          ),
           const SizedBox(height: AppSpacing.ms),
           Text(
             title,

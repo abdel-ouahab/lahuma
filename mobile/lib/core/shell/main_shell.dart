@@ -4,12 +4,14 @@ import '../design/design.dart';
 import '../localization/tr.dart';
 import '../../features/mp3quran/presentation/mp3quran_player_screen.dart';
 import '../../features/mp3quran/presentation/mp3quran_providers.dart';
+import '../../features/quran/presentation/providers/ayah_audio_provider.dart';
 import '../../features/quran/presentation/providers/reciter_providers.dart';
+import '../../features/quran/presentation/widgets/ayah_mini_player.dart';
 import '../../features/quran/presentation/widgets/quran_mini_player.dart';
 
 /// Persistent shell wrapping the 4 main destinations.
 ///
-/// Pages scroll under the translucent iOS tab bar; the mini-player (when audio
+/// Pages scroll under the floating tab bar; the mini-player (when audio
 /// is loaded) sits just above it. Both heights reach the pages as bottom
 /// `MediaQuery` padding (see [AppTabScaffold]), so screens never pad for the
 /// bar themselves. Each tab keeps its own navigation stack through the
@@ -51,13 +53,21 @@ class MainShell extends ConsumerWidget {
     // on every tab, not just while the player screen is open.
     final mp3Visible = session != null &&
         ref.watch(mp3PlaybackProvider(session.moshaf)).surah != null;
-    final miniPlayerVisible = quranVisible || mp3Visible;
+    // The reader's ayah recitation, still going after the reader was closed.
+    final ayahVisible = ref.watch(ayahAudioProvider) != null;
+
+    // AudioFocus keeps a single player active, so at most one of these shows.
+    final Widget? miniPlayer = mp3Visible
+        ? const Mp3MiniPlayer()
+        : quranVisible
+            ? const QuranMiniPlayer()
+            : ayahVisible
+                ? const AyahMiniPlayer()
+                : null;
 
     return AppTabScaffold(
       body: navigationShell,
-      accessory: miniPlayerVisible
-          ? (mp3Visible ? const Mp3MiniPlayer() : const QuranMiniPlayer())
-          : null,
+      accessory: miniPlayer,
       accessoryHeight: AppMiniPlayerBar.reservedHeight,
       tabBar: AppTabBar(
         items: _tabs(context),

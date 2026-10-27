@@ -229,6 +229,7 @@ class AppSegmentedControl<T extends Object> extends StatelessWidget {
       child: CupertinoSlidingSegmentedControl<T>(
         groupValue: value,
         backgroundColor: AppColors.tertiaryFill,
+        thumbColor: AppColors.tertiaryGroupedBackground,
         children: {
           for (final entry in segments.entries)
             entry.key: Padding(
@@ -240,7 +241,10 @@ class AppSegmentedControl<T extends Object> extends StatelessWidget {
                 style: AppTypography.subheadline
                     .weight(
                         entry.key == value ? FontWeight.w600 : FontWeight.w500)
-                    .copyWith(color: c.label),
+                    .copyWith(
+                        color: entry.key == value
+                            ? c.accent
+                            : c.secondaryLabel),
               ),
             ),
         },

@@ -72,42 +72,27 @@ class _SplashScreenState extends State<SplashScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // The mark and wordmark are artwork: they keep their size
-                  // under large text. The tagline below still scales.
-                  MediaQuery.withNoTextScaling(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: onBrand.withValues(alpha: 0.12),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            'ل',
-                            style: AppTypography.quran(
-                              size: 52,
-                              weight: FontWeight.w700,
-                              height: 1.2,
-                            ).copyWith(color: onBrand),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        Text(
-                          'لهما',
-                          style: AppTypography.quran(
-                            size: 52,
-                            weight: FontWeight.w700,
-                            height: 1.4,
-                          ).copyWith(color: onBrand),
+                  // The logo is artwork: it keeps its size under large text.
+                  // The tagline below still scales.
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(44),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.shadow.withValues(alpha: 0.25),
+                          blurRadius: 30,
+                          offset: const Offset(0, 12),
                         ),
                       ],
                     ),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 200,
+                      height: 200,
+                      semanticLabel: 'لهما',
+                    ),
                   ),
-                  const SizedBox(height: AppSpacing.ms),
+                  const SizedBox(height: AppSpacing.lg),
                   Text(
                     'قرآنٌ يُتلى، وأجرٌ يُهدى.',
                     textAlign: TextAlign.center,

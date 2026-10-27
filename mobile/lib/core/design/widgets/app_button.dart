@@ -3,9 +3,10 @@ import 'package:flutter/services.dart';
 import '../app_colors.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import 'app_surface.dart';
 
 enum AppButtonVariant {
-  /// Solid accent — the one primary action on a screen.
+  /// Accent gradient with a lit edge — the one primary action on a screen.
   filled,
 
   /// Accent wash with accent label — secondary actions.
@@ -97,8 +98,11 @@ class AppButton extends StatelessWidget {
         AppColors.onAccent,
       AppButtonVariant.tinted || AppButtonVariant.plain => c.accent,
     };
+    // The enabled filled button paints its gradient behind the CupertinoButton
+    // (which only takes a flat colour); disabled it falls back to `fill`.
+    final gradient = variant == AppButtonVariant.filled && enabled;
     final Color? background = switch (variant) {
-      AppButtonVariant.filled => c.accent,
+      AppButtonVariant.filled => gradient ? null : c.accent,
       AppButtonVariant.destructive => c.destructive,
       AppButtonVariant.tinted => c.accentTint,
       AppButtonVariant.plain => null,
@@ -109,7 +113,9 @@ class AppButton extends StatelessWidget {
 
     final content = loading
         ? CupertinoActivityIndicator(
-            color: background == null ? c.secondaryLabel : AppColors.onAccent,
+            color: background == null && !gradient
+                ? c.secondaryLabel
+                : AppColors.onAccent,
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
@@ -130,7 +136,10 @@ class AppButton extends StatelessWidget {
             ],
           );
 
-    final button = CupertinoButton(
+    final radius = small ? AppRadius.full : AppRadius.medium;
+    final hasSurface = background != null || variant == AppButtonVariant.filled;
+
+    Widget button = CupertinoButton(
       onPressed: enabled
           ? () {
               if (variant != AppButtonVariant.plain) {
@@ -140,19 +149,40 @@ class AppButton extends StatelessWidget {
             }
           : null,
       color: background,
-      disabledColor: background == null ? CupertinoColors.transparent : c.fill,
+      disabledColor: hasSurface ? c.fill : CupertinoColors.transparent,
       padding: EdgeInsetsDirectional.symmetric(
         horizontal: small ? AppSpacing.ms : AppSpacing.ml,
         vertical: small ? AppSpacing.xs + 2 : AppSpacing.ms + 2,
       ),
       minimumSize: Size(
         AppSpacing.minTouchTarget,
-        small ? 32 : (background == null ? AppSpacing.minTouchTarget : 50),
+        small ? 32 : (hasSurface ? 50 : AppSpacing.minTouchTarget),
       ),
-      borderRadius:
-          BorderRadius.circular(small ? AppRadius.full : AppRadius.medium),
+      borderRadius: BorderRadius.circular(radius),
       child: content,
     );
+
+    if (gradient) {
+      final ShapeBorder shape =
+          small ? const StadiumBorder() : AppRadius.continuous(radius);
+      button = CustomPaint(
+        foregroundPainter: AppEdgeHighlight(shape: shape),
+        child: DecoratedBox(
+          decoration: ShapeDecoration(
+            shape: shape,
+            gradient: AppColors.accentGradient,
+            shadows: [
+              BoxShadow(
+                color: context.palette.shadow(0.6),
+                offset: const Offset(0, 10),
+                blurRadius: 24,
+              ),
+            ],
+          ),
+          child: button,
+        ),
+      );
+    }
 
     // A spinner must not change the button's width.
     final semantics = Semantics(
@@ -186,7 +216,8 @@ class AppIconButton extends StatelessWidget {
   /// Accessibility label (and tooltip-equivalent). Required.
   final String label;
 
-  /// Draws a subtle circular fill behind the glyph (floating over content).
+  /// Draws an accent-gradient disc behind a white glyph (floating over
+  /// content); [color] is ignored then.
   final bool filled;
   final Color? color;
   final double size;
@@ -194,7 +225,11 @@ class AppIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    final glyph = Icon(icon, size: size, color: color ?? c.accent);
+    final glyph = Icon(
+      icon,
+      size: filled ? size * 0.8 : size,
+      color: filled ? AppColors.onAccent : (color ?? c.accent),
+    );
     return Semantics(
       button: true,
       label: label,
@@ -208,7 +243,16 @@ class AppIconButton extends StatelessWidget {
                 height: 34,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                    color: c.tertiaryFill, shape: BoxShape.circle),
+                  gradient: AppColors.accentGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: c.shadow(0.5),
+                      offset: const Offset(0, 6),
+                      blurRadius: 14,
+                    ),
+                  ],
+                ),
                 child: glyph,
               )
             : glyph,

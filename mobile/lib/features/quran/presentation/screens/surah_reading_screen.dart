@@ -17,6 +17,7 @@ import '../../../dedication/presentation/dedication_labels.dart';
 import '../../../dedication/presentation/dedication_providers.dart';
 import '../../../notes/presentation/notes_providers.dart';
 import '../../../reading_progress/presentation/reading_progress_providers.dart';
+import '../../../settings/data/settings_repository.dart';
 import '../../../settings/presentation/settings_providers.dart';
 import '../../domain/ayah.dart';
 import '../../domain/surah_detail.dart';
@@ -45,7 +46,8 @@ class SurahReadingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detailAsync = ref.watch(surahDetailProvider(surahNumber));
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final background =
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
 
     return Scaffold(
       backgroundColor: background,
@@ -78,7 +80,8 @@ class SurahReadingScreen extends ConsumerWidget {
               Expanded(
                 child: ErrorRetry(
                   error: e,
-                  onRetry: () => ref.invalidate(surahDetailProvider(surahNumber)),
+                  onRetry: () =>
+                      ref.invalidate(surahDetailProvider(surahNumber)),
                 ),
               ),
             ],
@@ -98,7 +101,8 @@ void _leave(BuildContext context) {
 }
 
 class _SurahBody extends ConsumerStatefulWidget {
-  const _SurahBody({super.key, required this.detail, required this.initialAyah});
+  const _SurahBody(
+      {super.key, required this.detail, required this.initialAyah});
 
   final SurahDetail detail;
   final int initialAyah;
@@ -110,9 +114,17 @@ class _SurahBody extends ConsumerStatefulWidget {
 class _SurahBodyState extends ConsumerState<_SurahBody> {
   final _scroll = ItemScrollController();
   final _positions = ItemPositionsListener.create();
+  final _offset = ScrollOffsetController();
   late final ReadingTracker _tracker;
   Timer? _debounce;
   int? _pendingAyah;
+
+  /// Auto-scroll: [_autoScroll] shows the controls, [_autoPaused] holds the
+  /// motion (user dragged, or reached the end). [_autoRun] cancels old loops.
+  bool _autoScroll = false;
+  bool _autoPaused = false;
+  int _autoRun = 0;
+  double _extentAfter = double.infinity;
 
   SurahDetail get _detail => widget.detail;
   int get _count => _detail.ayahs.length;
@@ -134,6 +146,7 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
 
   @override
   void dispose() {
+    _autoRun++;
     _positions.itemPositions.removeListener(_onPositions);
     _debounce?.cancel();
     final pending = _pendingAyah;
@@ -155,7 +168,8 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
     if (visible.isEmpty) return;
 
     int ayah;
-    if (visible.any((p) => p.index == _footerIndex && p.itemLeadingEdge < 0.9)) {
+    if (visible
+        .any((p) => p.index == _footerIndex && p.itemLeadingEdge < 0.9)) {
       // The closing dua is on screen: every ayah has been read.
       ayah = _count + 1;
     } else {
@@ -188,6 +202,81 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
     } else {
       _scroll.jumpTo(index: index, alignment: 0.02);
     }
+  }
+
+  // ── Auto-scroll ───────────────────────────────────────────────────────────
+
+  static const _autoStep = Duration(milliseconds: 400);
+
+  /// Speed level 1–10 → pixels per second.
+  static double _pixelsPerSecond(int level) => level * 12.0;
+
+  void _startAutoScroll() {
+    setState(() {
+      _autoScroll = true;
+      _autoPaused = false;
+    });
+    _runAutoScroll();
+  }
+
+  void _pauseAutoScroll() {
+    _autoRun++;
+    if (mounted) setState(() => _autoPaused = true);
+  }
+
+  void _resumeAutoScroll() {
+    if (_extentAfter < 1) return;
+    setState(() => _autoPaused = false);
+    _runAutoScroll();
+  }
+
+  void _stopAutoScroll() {
+    _autoRun++;
+    setState(() {
+      _autoScroll = false;
+      _autoPaused = false;
+    });
+  }
+
+  /// Chains short linear animations so the text glides at a steady pace.
+  Future<void> _runAutoScroll() async {
+    final run = ++_autoRun;
+    while (mounted && run == _autoRun && _scroll.isAttached) {
+      final step = _pixelsPerSecond(ref.read(autoScrollSpeedProvider)) *
+          _autoStep.inMilliseconds /
+          1000;
+      final offset = step < _extentAfter ? step : _extentAfter;
+      if (offset < 1) {
+        _pauseAutoScroll();
+        return;
+      }
+      try {
+        await _offset.animateScroll(
+          offset: offset,
+          duration: _autoStep,
+          curve: Curves.linear,
+        );
+      } catch (_) {
+        return;
+      }
+    }
+  }
+
+  bool _onScrollNotification(ScrollNotification n) {
+    _extentAfter = n.metrics.extentAfter;
+    // A finger on the page takes over from auto-scroll.
+    if (_autoScroll &&
+        !_autoPaused &&
+        n is ScrollStartNotification &&
+        n.dragDetails != null) {
+      _pauseAutoScroll();
+    }
+    return false;
+  }
+
+  void _changeSpeed(int delta) {
+    final current = ref.read(autoScrollSpeedProvider);
+    ref.read(autoScrollSpeedProvider.notifier).update(current + delta);
   }
 
   // ── Ayah actions ──────────────────────────────────────────────────────────
@@ -274,14 +363,16 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
       onNote: () => _editNote(ayah),
       onTafseer: () => AyahTextSheet.show(
         context,
-        title: '${context.tr('التفسير الميسّر', 'Tafsir al-Muyassar')} · ${_detail.arabicName}',
+        title:
+            '${context.tr('التفسير الميسّر', 'Tafsir al-Muyassar')} · ${_detail.arabicName}',
         ayahNumber: number,
         provider: tafsirProvider(_detail.number),
         rtl: true,
       ),
       onTranslation: () => AyahTextSheet.show(
         context,
-        title: '${context.tr('الترجمة الإنجليزية', 'English translation')} · ${_detail.arabicName}',
+        title:
+            '${context.tr('الترجمة الإنجليزية', 'English translation')} · ${_detail.arabicName}',
         ayahNumber: number,
         provider: translationProvider(_detail.number),
         rtl: false,
@@ -303,7 +394,9 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
     final playback = ref.watch(ayahAudioProvider);
 
     ref.listen(ayahAudioProvider, (prev, next) {
-      if (next != null && next.surah == _detail.number && prev?.ayah != next.ayah) {
+      if (next != null &&
+          next.surah == _detail.number &&
+          prev?.ayah != next.ayah) {
         _scrollToAyah(next.ayah);
       }
     });
@@ -332,6 +425,11 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
               ),
               const Spacer(),
               LahumaIconButton(
+                icon: Icons.keyboard_double_arrow_down_rounded,
+                tooltip: context.tr('التمرير التلقائي', 'Auto-scroll'),
+                onTap: _autoScroll ? _stopAutoScroll : _startAutoScroll,
+              ),
+              LahumaIconButton(
                 icon: Icons.text_fields_rounded,
                 tooltip: context.tr('خيارات القراءة', 'Reading options'),
                 onTap: () => ReaderOptionsSheet.show(
@@ -344,52 +442,200 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
           ),
         ),
         Expanded(
-          child: ScrollablePositionedList.builder(
-            itemScrollController: _scroll,
-            itemPositionsListener: _positions,
-            initialScrollIndex: _startAyah <= 1 ? 0 : _startAyah,
-            initialAlignment: _startAyah <= 1 ? 0 : 0.02,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-            itemCount: _count + 2,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _Header(
-                  detail: _detail,
-                  translationFailed: translationAsync?.hasError ?? false,
-                );
-              }
-              if (index == _footerIndex) {
-                return _Footer(detail: _detail);
-              }
+          child: Stack(
+            children: [
+              NotificationListener<ScrollNotification>(
+                onNotification: _onScrollNotification,
+                child: ScrollablePositionedList.builder(
+                  itemScrollController: _scroll,
+                  itemPositionsListener: _positions,
+                  scrollOffsetController: _offset,
+                  initialScrollIndex: _startAyah <= 1 ? 0 : _startAyah,
+                  initialAlignment: _startAyah <= 1 ? 0 : 0.02,
+                  physics: const BouncingScrollPhysics(),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                  itemCount: _count + 2,
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      return _Header(
+                        detail: _detail,
+                        translationFailed: translationAsync?.hasError ?? false,
+                      );
+                    }
+                    if (index == _footerIndex) {
+                      return _Footer(detail: _detail);
+                    }
 
-              final ayah = _detail.ayahs[index - 1];
-              final isBookmarked = bookmarks.any((b) =>
-                  b.surahId == _detail.number &&
-                  b.ayahNumber == ayah.numberInSurah);
-              final note = notes['${_detail.number}:${ayah.numberInSurah}'];
-              final isPlaying = playback != null &&
-                  playback.surah == _detail.number &&
-                  playback.ayah == ayah.numberInSurah &&
-                  playback.playing;
+                    final ayah = _detail.ayahs[index - 1];
+                    final isBookmarked = bookmarks.any((b) =>
+                        b.surahId == _detail.number &&
+                        b.ayahNumber == ayah.numberInSurah);
+                    final note =
+                        notes['${_detail.number}:${ayah.numberInSurah}'];
+                    final isPlaying = playback != null &&
+                        playback.surah == _detail.number &&
+                        playback.ayah == ayah.numberInSurah &&
+                        playback.playing;
 
-              return AyahWidget(
-                ayah: ayah,
-                surahNumber: _detail.number,
-                fontSize: fontSize,
-                translation: translationAsync?.valueOrNull?[ayah.numberInSurah],
-                note: note,
-                isBookmarked: isBookmarked,
-                isPlaying: isPlaying,
-                onPlayToggle: () => _togglePlay(ayah),
-                onBookmarkToggle: () => _toggleBookmark(ayah, isBookmarked),
-                onShare: () => _share(ayah),
-                onTap: () => _openActions(ayah, isBookmarked, note != null),
-              );
-            },
+                    return AyahWidget(
+                      ayah: ayah,
+                      surahNumber: _detail.number,
+                      fontSize: fontSize,
+                      translation:
+                          translationAsync?.valueOrNull?[ayah.numberInSurah],
+                      note: note,
+                      isBookmarked: isBookmarked,
+                      isPlaying: isPlaying,
+                      onPlayToggle: () => _togglePlay(ayah),
+                      onBookmarkToggle: () =>
+                          _toggleBookmark(ayah, isBookmarked),
+                      onShare: () => _share(ayah),
+                      onTap: () =>
+                          _openActions(ayah, isBookmarked, note != null),
+                    );
+                  },
+                ),
+              ),
+              PositionedDirectional(
+                start: AppSpacing.lg,
+                end: AppSpacing.lg,
+                bottom: AppSpacing.md,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween(
+                        begin: const Offset(0, 0.4),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: _autoScroll
+                      ? _AutoScrollBar(
+                          speed: ref.watch(autoScrollSpeedProvider),
+                          paused: _autoPaused,
+                          onPlayPause: _autoPaused
+                              ? _resumeAutoScroll
+                              : _pauseAutoScroll,
+                          onSlower: () => _changeSpeed(-1),
+                          onFaster: () => _changeSpeed(1),
+                          onClose: _stopAutoScroll,
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Floating controls while auto-scrolling: pause/resume, speed −/+, close.
+class _AutoScrollBar extends StatelessWidget {
+  const _AutoScrollBar({
+    required this.speed,
+    required this.paused,
+    required this.onPlayPause,
+    required this.onSlower,
+    required this.onFaster,
+    required this.onClose,
+  });
+
+  final int speed;
+  final bool paused;
+  final VoidCallback onPlayPause;
+  final VoidCallback onSlower;
+  final VoidCallback onFaster;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = isDark ? AppColors.textDark : AppColors.textLight;
+    final muted = isDark ? AppColors.mutedDark : AppColors.mutedLight;
+
+    Widget button(IconData icon, String tooltip, VoidCallback? onTap,
+        {Color? color}) {
+      return IconButton(
+        onPressed: onTap,
+        tooltip: tooltip,
+        icon: Icon(icon, size: 22),
+        color: color ?? text,
+        disabledColor: muted,
+      );
+    }
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        decoration: BoxDecoration(
+          color:
+              isDark ? AppColors.surfaceElevatedDark : AppColors.surfaceLight,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            button(
+              paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+              paused
+                  ? context.tr('متابعة', 'Resume')
+                  : context.tr('إيقاف مؤقت', 'Pause'),
+              onPlayPause,
+              color: AppColors.primary,
+            ),
+            button(
+              Icons.remove_rounded,
+              context.tr('أبطأ', 'Slower'),
+              speed > SettingsRepository.minAutoScrollSpeed ? onSlower : null,
+            ),
+            Semantics(
+              label: context.tr('السرعة $speed', 'Speed $speed'),
+              child: SizedBox(
+                width: 48,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$speed',
+                      style: GoogleFonts.cairo(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                        color: text,
+                      ),
+                    ),
+                    Text(
+                      context.tr('السرعة', 'Speed'),
+                      style: GoogleFonts.cairo(
+                          fontSize: 10, height: 1.1, color: muted),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            button(
+              Icons.add_rounded,
+              context.tr('أسرع', 'Faster'),
+              speed < SettingsRepository.maxAutoScrollSpeed ? onFaster : null,
+            ),
+            button(Icons.close_rounded, context.tr('إغلاق', 'Close'), onClose,
+                color: muted),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -404,7 +650,8 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final meccan = detail.revelationType.toLowerCase() == 'meccan';
-    final meta = '${meccan ? context.tr('مكية', 'Meccan') : context.tr('مدنية', 'Medinan')}'
+    final meta =
+        '${meccan ? context.tr('مكية', 'Meccan') : context.tr('مدنية', 'Medinan')}'
         ' • ${context.tr('${detail.numberOfAyahs} آية', '${detail.numberOfAyahs} ayahs')}';
 
     return Column(
@@ -465,19 +712,22 @@ class _Footer extends ConsumerWidget {
     final hasNext = detail.number < 114;
 
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xxl),
+      padding:
+          const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xxl),
       child: Column(
         children: [
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: isDark ? AppColors.surfaceElevatedDark : AppColors.cardMint,
+              color:
+                  isDark ? AppColors.surfaceElevatedDark : AppColors.cardMint,
               borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
             child: Column(
               children: [
-                const Icon(Icons.favorite_rounded, color: AppColors.primary, size: 22),
+                const Icon(Icons.favorite_rounded,
+                    color: AppColors.primary, size: 22),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   dedication.target.dua(context),
@@ -486,11 +736,13 @@ class _Footer extends ConsumerWidget {
                       ? GoogleFonts.scheherazadeNew(
                           fontSize: 20,
                           height: 1.8,
-                          color: isDark ? AppColors.textDark : AppColors.inkDark)
+                          color:
+                              isDark ? AppColors.textDark : AppColors.inkDark)
                       : GoogleFonts.cairo(
                           fontSize: 14,
                           height: 1.6,
-                          color: isDark ? AppColors.textDark : AppColors.inkDark),
+                          color:
+                              isDark ? AppColors.textDark : AppColors.inkDark),
                 ),
                 if (dedication.names.trim().isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.xs),

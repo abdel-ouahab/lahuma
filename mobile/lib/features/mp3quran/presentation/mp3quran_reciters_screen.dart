@@ -6,6 +6,8 @@ import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/error_retry.dart';
+import '../../quran/presentation/providers/reciter_providers.dart';
+import '../../quran/presentation/widgets/lahuma_reciters_section.dart';
 import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
 
@@ -27,8 +29,9 @@ class Mp3QuranRecitersScreen extends StatelessWidget {
   }
 }
 
-/// Searchable, refreshable list of MP3Quran reciters. Used by the Reciters
-/// tab and by [Mp3QuranRecitersScreen].
+/// Searchable, refreshable list of MP3Quran reciters, headed by the reciters
+/// uploaded to the Lahuma backend (when it is reachable and has any). Used
+/// by the Reciters tab and by [Mp3QuranRecitersScreen].
 class Mp3QuranRecitersList extends ConsumerWidget {
   const Mp3QuranRecitersList({super.key});
 
@@ -37,6 +40,11 @@ class Mp3QuranRecitersList extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final async = ref.watch(mp3RecitersProvider);
     final query = ref.watch(mp3RecitersSearchProvider);
+    final favorites = ref.watch(reciterFavoritesProvider);
+    // The backend is optional: while it loads or fails, the section is left
+    // out and the MP3Quran list works on its own.
+    final lahuma = playableReciters(
+        ref.watch(reciterListProvider).valueOrNull ?? const [], query);
 
     return Column(
       children: [
@@ -72,16 +80,22 @@ class Mp3QuranRecitersList extends ConsumerWidget {
               onRetry: () => ref.invalidate(mp3RecitersProvider),
             ),
             data: (all) {
-              final list = filterReciters(all, query);
+              final list =
+                  sortFavoritesFirst(filterReciters(all, query), favorites);
+              final header = lahuma.isEmpty
+                  ? null
+                  : LahumaRecitersSection(reciters: lahuma);
+              final headerCount = header == null ? 0 : 1;
               return RefreshIndicator(
                 color: AppColors.primary,
                 onRefresh: () async {
                   ref.invalidate(mp3RecitersProvider);
+                  ref.invalidate(reciterListProvider);
                   try {
                     await ref.read(mp3RecitersProvider.future);
                   } catch (_) {}
                 },
-                child: list.isEmpty
+                child: list.isEmpty && header == null
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [
@@ -116,10 +130,20 @@ class Mp3QuranRecitersList extends ConsumerWidget {
                           MediaQuery.paddingOf(context).bottom +
                               AppSpacing.md,
                         ),
-                        itemCount: list.length,
+                        itemCount: headerCount + list.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (_, i) => _ReciterTile(reciter: list[i]),
+                        itemBuilder: (_, i) {
+                          if (i < headerCount) return header!;
+                          final reciter = list[i - headerCount];
+                          return _ReciterTile(
+                            reciter: reciter,
+                            favorite: favorites.contains(reciter.id),
+                            onToggleFavorite: () => ref
+                                .read(reciterFavoritesProvider.notifier)
+                                .toggle(reciter),
+                          );
+                        },
                       ),
               );
             },
@@ -131,9 +155,15 @@ class Mp3QuranRecitersList extends ConsumerWidget {
 }
 
 class _ReciterTile extends StatelessWidget {
-  const _ReciterTile({required this.reciter});
+  const _ReciterTile({
+    required this.reciter,
+    required this.favorite,
+    required this.onToggleFavorite,
+  });
 
   final Mp3Reciter reciter;
+  final bool favorite;
+  final VoidCallback onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -147,15 +177,34 @@ class _ReciterTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            reciter.name,
-            style: GoogleFonts.cairo(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.textDark : AppColors.textLight,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  reciter.name,
+                  style: GoogleFonts.cairo(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textDark : AppColors.textLight,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: onToggleFavorite,
+                visualDensity: VisualDensity.compact,
+                tooltip: favorite
+                    ? context.tr('إزالة من المفضلة', 'Remove from favorites')
+                    : context.tr('إضافة إلى المفضلة', 'Add to favorites'),
+                icon: Icon(
+                  favorite ? Icons.star_rounded : Icons.star_border_rounded,
+                  color: favorite
+                      ? AppColors.primary
+                      : (isDark ? AppColors.mutedDark : AppColors.mutedLight),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.xs),
           Wrap(
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.xs,
