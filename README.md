@@ -1,0 +1,201 @@
+# Lahuma (لهما)
+
+> لهما — قرآنٌ يُتلى، وأجرٌ يُهدى.
+
+Lahuma is a Quran mobile application created with the intention of being a **continuous charity (Sadaqah Jariyah) for parents**. This repository contains the preliminary MVP: a Flutter mobile app and a Node.js/TypeScript backend.
+
+## Overview
+
+The MVP lets anyone browse and read the full Quran **as a guest, with no login required**, track their last reading position locally, and bookmark Ayahs. A minimal backend with email/password + JWT auth is scaffolded for future account sync (Phase 3) but is not required for using the app today.
+
+## Features
+
+- Splash screen, Home with "Last read", today's wird (daily goal + streak) and reading intention
+- Surahs (search by name or number), 30 juz', and reciters tabs; reader opens at the exact ayah (last read, bookmark, juz')
+- Reader: saves your real position, text size, jump to ayah, English translation (Sahih International), Arabic tafsir (Al-Muyassar), per-ayah audio that continues through the surah, copy/share, personal notes
+- Reading intention: dedicate your recitation to your parents (or someone else); every ayah read is counted and the dua closes each surah
+- Offline: any surah/translation/tafsir you've opened once is cached and readable without a connection
+- Bookmarks with swipe-to-delete and undo
+- Settings: language (Arabic/English, whole UI), theme, text size, goal, intention, optional account
+- Optional account (sign in / create / sign out) against the backend; the whole app works as a guest
+- Backend: register / login / get current user (JWT), plus a thin Quran API proxy
+
+## Tech Stack
+
+**Mobile:** Flutter, Dart, Material 3, Riverpod, GoRouter, Dio, SharedPreferences, Hive  
+**Backend:** Node.js, TypeScript, Express, PostgreSQL, Prisma, JWT, Docker  
+**Client Admin Panel:** React.js, Vite, TypeScript, React Router, Lucide Icons, Custom CSS Design System  
+
+## Project Structure
+
+```text
+lahuma/
+├── mobile/           # Flutter mobile application
+├── backend/          # Node.js TypeScript API
+├── client/           # React.js Admin Panel Dashboard
+│   └── src/
+│       ├── components/   # Sidebar, Navbar, StatCard, StatusBadge
+│       ├── context/      # AuthContext, ThemeContext
+│       ├── pages/        # Dashboard, Users, Quran, Settings, Login
+│       ├── services/     # API client & backend connection
+│       └── types/        # TypeScript interfaces
+├── docker-compose.yml
+└── README.md
+```
+
+## Requirements
+
+- Flutter SDK ≥ 3.22 (Dart ≥ 3.3)
+- Node.js ≥ 20
+- Docker & Docker Compose
+- PostgreSQL 16 (via Docker, or local install)
+
+## Installation
+
+```bash
+git clone <this-repo>
+cd lahuma
+```
+
+## Flutter Setup
+
+```bash
+cd mobile
+flutter pub get
+flutter run
+```
+
+The app points to `http://10.0.2.2:4000/api` by default (Android emulator loopback to host). Override at build/run time:
+
+```bash
+flutter run --dart-define=API_BASE_URL=http://localhost:4000/api
+```
+
+> Note: models are hand-written (no Freezed codegen) so the project builds immediately with `flutter pub get` alone. If you'd like to migrate `Surah`/`Ayah`/`Bookmark` to Freezed later, add `freezed`/`freezed_annotation` and run `dart run build_runner build`.
+
+## Backend Setup
+
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run prisma:generate
+npm run prisma:migrate
+npm run dev
+```
+
+## Client Admin Panel Setup
+
+```bash
+cd client
+npm install
+npm run dev
+```
+
+Only accounts with the `ADMIN` role can sign in to the panel or use its API routes (reciter uploads, user management). Register an account, then promote it:
+
+```bash
+cd backend
+npm run make-admin -- you@example.com
+```
+
+## Database Setup
+
+```bash
+docker compose up -d postgres
+```
+
+This starts PostgreSQL on `localhost:5432` with the credentials in `docker-compose.yml` (also reflected in `backend/.env.example`).
+
+## Environment Variables
+
+See `backend/.env.example`:
+
+```env
+PORT=4000
+NODE_ENV=development
+DATABASE_URL="postgresql://lahuma:lahuma@localhost:5432/lahuma?schema=public"
+JWT_SECRET="change-me-in-production"
+JWT_EXPIRES_IN="7d"
+CORS_ORIGIN="*"
+```
+
+## Running the Application
+
+```bash
+# Full backend stack
+docker compose up -d
+
+# Or run backend locally against Dockerized Postgres
+docker compose up -d postgres
+cd backend && npm run dev
+
+# Mobile
+cd mobile && flutter run
+```
+
+Stop everything:
+
+```bash
+docker compose down
+```
+
+## Running Tests
+
+```bash
+# Backend
+cd backend && npm test
+
+# Mobile
+cd mobile && flutter test
+```
+
+## API Endpoints
+
+| Method | Path                | Auth required | Description             |
+|--------|---------------------|----------------|--------------------------|
+| POST   | `/api/auth/register`| No             | Create an account        |
+| POST   | `/api/auth/login`   | No             | Log in, receive JWT      |
+| GET    | `/api/auth/me`      | Yes            | Get current user         |
+| GET    | `/api/quran/surahs` | No             | List all Surahs (proxy)  |
+| GET    | `/api/quran/surahs/:number` | No     | Get one Surah's Ayahs    |
+| GET    | `/health`            | No             | Health check              |
+
+The mobile app currently talks to the Quran data provider (`api.alquran.cloud`) directly from `QuranRemoteDataSource`; the backend's `/api/quran/*` proxy is available for when you want centralized caching or an offline bundle later — swapping it in only requires a new `QuranRepository` implementation.
+
+## Known Limitations
+
+- First read of each surah needs a connection (api.alquran.cloud); after that it is cached. No bundled offline dataset yet.
+- Per-ayah audio streams from cdn.islamic.network (Alafasy) and needs a connection.
+- Signing in does not sync anything yet: bookmarks, progress, wird and notes are device-local. The auth token is kept in SharedPreferences, not secure storage.
+- Reading credit is counted when you scroll past an ayah (capped per scroll event); it is an honest approximation, not a guarantee of reading.
+- Daily reminders / push notifications are not implemented.
+- Memorization (hifz) review is not implemented.
+- Rate limiting is applied to auth routes only.
+
+## Future Roadmap
+
+### Phase 2
+- Quran audio & multiple reciters
+- Tafsir
+- Ayah sharing
+- Daily Quran reminders / daily ورد
+- Advanced search
+
+### Phase 3
+- Account-based sync (bookmarks, reading progress → `Bookmark`, `ReadingProgress`, `UserSettings` Prisma models)
+- Cloud bookmarks
+- Reading statistics
+- Khatmah tracking
+- Push notifications
+
+### Phase 4
+- Adhkar & Duas (including Duas for parents)
+- Sadaqah features
+- Community initiatives
+
+## Next Recommended Steps
+
+1. Sync bookmarks, progress, wird and notes to the account. Add `Bookmark`/`ReadingProgress`/`UserSettings` Prisma models once sync is prioritized.
+2. Bundle an offline Quran dataset for full offline reading.
+3. Add integration tests for the auth flow and E2E tests for Quran reading + bookmarking.

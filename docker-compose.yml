@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lahuma-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lahuma
+      POSTGRES_PASSWORD: lahuma
+      POSTGRES_DB: lahuma
+    ports:
+      - "5432:5432"
+    volumes:
+      - lahuma_postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: lahuma-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file:
+      - ./backend/.env
+    ports:
+      - "4000:4000"
+
+volumes:
+  lahuma_postgres_data:

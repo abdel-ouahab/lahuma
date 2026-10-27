@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Preliminary MVP: only User is implemented.
+// Bookmark / ReadingProgress / UserSettings are reserved for Phase 3
+// (cloud sync) and intentionally not modeled yet — the mobile app
+// keeps this data locally for the MVP.
+// Only ADMIN may use the admin-panel routes (reciter uploads, user list).
+// MODERATOR mirrors the admin panel's role picker and has no extra rights yet.
+enum Role {
+  USER
+  MODERATOR
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// A Quran reciter. Creating one also creates its 114 ReciterSurah rows
+// (one per Surah) with no audio yet; audio is attached by upload.
+model Reciter {
+  id        String         @id @default(uuid())
+  name      String
+  nameAr    String?
+  slug      String         @unique
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  surahs    ReciterSurah[]
+}
+
+model ReciterSurah {
+  id          String   @id @default(uuid())
+  reciterId   String
+  reciter     Reciter  @relation(fields: [reciterId], references: [id], onDelete: Cascade)
+  surahNumber Int // 1..114
+  audioPath   String? // relative to public/audio, null until uploaded
+  updatedAt   DateTime @updatedAt
+
+  @@unique([reciterId, surahNumber])
+}
