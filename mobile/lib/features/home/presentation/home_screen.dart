@@ -11,6 +11,8 @@ import '../../adhkar/domain/dhikr.dart';
 import '../../adhkar/presentation/adhkar_providers.dart';
 import '../../dedication/presentation/dedication_providers.dart';
 import '../../dedication/presentation/dedication_sheet.dart';
+import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
+import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
 import '../../wird/presentation/goal_sheet.dart';
 import '../../wird/presentation/wird_providers.dart';
@@ -139,6 +141,15 @@ class HomeScreen extends ConsumerWidget {
                   onTap: () => GoalSheet.show(context),
                 ),
               ),
+              const SizedBox(height: AppSpacing.ms),
+              FeatureCard(
+                title: context.tr('نداء الفجر', 'Fajr Call'),
+                icon: CupertinoIcons.sunrise_fill,
+                iconColor: AppColors.tileOrange,
+                subtitle: context.tr('أيقظ والديك ومن تحب للصلاة',
+                    'Wake your parents and loved ones for prayer'),
+                onTap: () => context.go(FajrCallListsScreen.path),
+              ),
             ],
           ),
           top: 0,
@@ -183,6 +194,7 @@ class HomeScreen extends ConsumerWidget {
           ),
           top: 0,
         ),
+        box(const FajrCallStatusCard(), top: AppSpacing.ms),
 
         // ── Dedication ──────────────────────────────────────────────────────
         box(SectionTitle(title: context.tr('نية القراءة', 'Your intention')),

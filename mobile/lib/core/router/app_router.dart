@@ -17,6 +17,11 @@ import '../../features/auth/presentation/account_screen.dart';
 import '../../features/adhkar/domain/dhikr.dart';
 import '../../features/adhkar/presentation/screens/adhkar_reader_screen.dart';
 import '../../features/adhkar/presentation/screens/adhkar_screen.dart';
+import '../../features/fajr_call/presentation/screens/fajr_call_edit_screen.dart';
+import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dart';
+import '../../features/fajr_call/presentation/screens/fajr_call_log_screen.dart';
+import '../../features/fajr_call/presentation/screens/fajr_call_permissions_screen.dart';
+import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart';
 
 /// Every screen is an iOS page: slide transition with the interactive
 /// edge-swipe back gesture (from the right edge in RTL).
@@ -59,6 +64,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // ── Fajr wake list (outside shell — opened from the Fajr notification)
+      GoRoute(
+        path: '/fajr-call/wake/:id',
+        pageBuilder: (context, state) {
+          final at = int.tryParse(state.uri.queryParameters['at'] ?? '');
+          return _page(
+            state,
+            FajrWakeListScreen(
+              listId: state.pathParameters['id']!,
+              firedAt:
+                  at == null ? null : DateTime.fromMillisecondsSinceEpoch(at),
+            ),
+          );
+        },
+      ),
+
       // ── Account (optional sign in) ──────────────────────────────────────
       GoRoute(
         path: '/account',
@@ -95,6 +116,46 @@ final routerProvider = Provider<GoRouter>((ref) {
                             AdhkarTab.parse(state.uri.queryParameters['tab']),
                       ),
                     ),
+                  ),
+                  GoRoute(
+                    path: 'fajr-call',
+                    pageBuilder: (context, state) =>
+                        _page(state, const FajrCallListsScreen()),
+                    routes: [
+                      // Before ':id', which would otherwise capture them.
+                      GoRoute(
+                        path: 'new',
+                        pageBuilder: (context, state) =>
+                            _page(state, const FajrCallEditScreen()),
+                      ),
+                      GoRoute(
+                        path: 'permissions',
+                        pageBuilder: (context, state) => _page(
+                          state,
+                          FajrCallPermissionsScreen(
+                            firstRun: state.uri.queryParameters['first'] == '1',
+                          ),
+                        ),
+                      ),
+                      GoRoute(
+                        path: ':id',
+                        pageBuilder: (context, state) => _page(
+                          state,
+                          FajrCallEditScreen(
+                              listId: state.pathParameters['id']!),
+                        ),
+                        routes: [
+                          GoRoute(
+                            path: 'log',
+                            pageBuilder: (context, state) => _page(
+                              state,
+                              FajrCallLogScreen(
+                                  listId: state.pathParameters['id']!),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),

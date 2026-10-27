@@ -4,8 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants/app_settings_enum.dart';
 import 'core/constants/storage_keys.dart';
+import 'core/notifications/local_notifications.dart';
+import 'core/notifications/notification_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/design/app_theme.dart';
+import 'features/fajr_call/presentation/fajr_call_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
 
 Future<void> main() async {
@@ -16,14 +19,50 @@ Future<void> main() async {
   await Hive.openBox<String>(StorageKeys.bookmarksBox);
   await Hive.openBox<String>(StorageKeys.quranCacheBox);
 
-  runApp(const ProviderScope(child: LahumaApp()));
+  // Timezone + notification plugin; permissions are asked later, in context.
+  final notifications = LocalNotifications();
+  await notifications.init();
+
+  runApp(ProviderScope(
+    overrides: [localNotificationsProvider.overrideWithValue(notifications)],
+    child: const LahumaApp(),
+  ));
 }
 
-class LahumaApp extends ConsumerWidget {
+class LahumaApp extends ConsumerStatefulWidget {
   const LahumaApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LahumaApp> createState() => _LahumaAppState();
+}
+
+class _LahumaAppState extends ConsumerState<LahumaApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Loads the Fajr lists and reschedules them: Fajr moves every day, so
+    // every launch refreshes the upcoming times.
+    ref.read(fajrCallProvider);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Picks up results the Android call engine wrote while we were away.
+      ref.read(fajrCallProvider.notifier).refresh();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
     final localeOption = ref.watch(localeOptionProvider);
@@ -46,7 +85,11 @@ class LahumaApp extends ConsumerWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: router,
-      builder: AppTheme.builder,
+      builder: (context, child) => NotificationTapListener(
+        notifications: ref.read(localNotificationsProvider),
+        onRoute: router.push,
+        child: AppTheme.builder(context, child),
+      ),
       scrollBehavior: AppTheme.scrollBehavior,
     );
   }

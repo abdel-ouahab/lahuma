@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/design/design.dart';
+import '../../core/notifications/notification_providers.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,7 +32,14 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     Future.delayed(const Duration(milliseconds: 1800), () {
-      if (mounted) context.go('/home');
+      if (!mounted) return;
+      // A tapped notification (e.g. the Fajr wake list) launched the app:
+      // open it on top of Home so "back" lands somewhere sensible.
+      final launch = ProviderScope.containerOf(context, listen: false)
+          .read(localNotificationsProvider)
+          .takeLaunchRoute();
+      context.go('/home');
+      if (launch != null) context.push(launch);
     });
   }
 

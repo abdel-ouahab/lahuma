@@ -1,3 +1,6 @@
 /* Home-screen name on Arabic devices. */
 "CFBundleDisplayName" = "لهما";
 "CFBundleName" = "لهما";
+
+/* Fajr Call: one-time location for prayer times. */
+"NSLocationWhenInUseUsageDescription" = "يستخدم لهما موقعك التقريبي مرة واحدة لحساب وقت الفجر على جهازك، ولا يُرسله إلى أي مكان.";

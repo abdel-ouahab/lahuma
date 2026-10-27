@@ -11,6 +11,7 @@ import '../../../auth/presentation/auth_providers.dart';
 import '../../../dedication/presentation/dedication_labels.dart';
 import '../../../dedication/presentation/dedication_providers.dart';
 import '../../../dedication/presentation/dedication_sheet.dart';
+import '../../../fajr_call/presentation/fajr_call_providers.dart';
 import '../../../wird/presentation/goal_sheet.dart';
 import '../../../wird/presentation/wird_providers.dart';
 import '../../data/settings_repository.dart';
@@ -131,6 +132,24 @@ class SettingsScreen extends ConsumerWidget {
                     context.tr('عرض الترجمة الإنجليزية', 'Show English translation'),
                     style: GoogleFonts.cairo(fontSize: 14, color: text),
                   ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
+            // ── Fajr ─────────────────────────────────────────────────────
+            _SectionHeader(title: context.tr('الفجر', 'Fajr')),
+            _Card(
+              isDark: isDark,
+              children: [
+                _NavTile(
+                  icon: Icons.wb_twilight_rounded,
+                  label: context.tr('نداء الفجر', 'Fajr Call'),
+                  detail: ref.watch(fajrUpcomingProvider) == null
+                      ? context.tr('متوقف', 'Off')
+                      : context.tr('مفعّل', 'On'),
+                  isDark: isDark,
+                  onTap: () => context.go('/home/fajr-call'),
                 ),
               ],
             ),
