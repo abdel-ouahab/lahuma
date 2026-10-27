@@ -30,8 +30,18 @@ class FajrSchedule {
     tz.Location? location,
   }) {
     final loc = location ?? tz.local;
+    if (count <= 0) return const [];
     if (list.startMode == FajrStartMode.fajr && !settings.hasLocation) {
       return const [];
+    }
+    // A one-off list keeps its single occurrence (the first after it was
+    // armed) and has none left once that has passed.
+    final armedAt = list.armedAt;
+    if (!list.repeatDaily && armedAt != null && armedAt.isBefore(from)) {
+      // Recurses once: `from == armedAt` takes the normal path below.
+      final only = nextFireTimes(list, settings,
+          from: armedAt, count: 1, location: loc);
+      return only.where((t) => t.isAfter(from)).toList();
     }
     final want = list.repeatDaily ? count : 1;
     final start = tz.TZDateTime.from(from, loc);

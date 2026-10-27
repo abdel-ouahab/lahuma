@@ -78,6 +78,7 @@ class FajrCallList {
     this.loopRepeats = 1,
     this.mode = FajrCallMode.auto,
     this.phoneAccountId,
+    this.armedAt,
   });
 
   static const int defaultRingTimeoutSec = 20;
@@ -126,6 +127,10 @@ class FajrCallList {
   /// phone's default.
   final String? phoneAccountId;
 
+  /// When a one-off list (`repeatDaily == false`) was switched on: it fires
+  /// at its first occurrence after this moment, then turns itself off.
+  final DateTime? armedAt;
+
   bool runsOn(int weekday) => weekdays.isEmpty || weekdays.contains(weekday);
 
   FajrCallList copyWith({
@@ -148,6 +153,7 @@ class FajrCallList {
     FajrCallMode? mode,
     String? phoneAccountId,
     bool clearPhoneAccount = false,
+    DateTime? armedAt,
   }) =>
       FajrCallList(
         id: id,
@@ -170,6 +176,7 @@ class FajrCallList {
         mode: mode ?? this.mode,
         phoneAccountId:
             clearPhoneAccount ? null : (phoneAccountId ?? this.phoneAccountId),
+        armedAt: armedAt ?? this.armedAt,
       );
 
   Map<String, dynamic> toJson() => {
@@ -192,6 +199,7 @@ class FajrCallList {
         'loopRepeats': loopRepeats,
         'mode': mode.name,
         if (phoneAccountId != null) 'phoneAccountId': phoneAccountId,
+        if (armedAt != null) 'armedAt': armedAt!.millisecondsSinceEpoch,
       };
 
   /// Tolerant of missing or out-of-range fields, so older saved lists and
@@ -209,6 +217,7 @@ class FajrCallList {
     }
 
     final rawDays = json['weekdays'];
+    final armed = json['armedAt'];
     final rawContacts = json['contacts'];
     return FajrCallList(
       id: json['id'] as String? ?? '',
@@ -242,6 +251,9 @@ class FajrCallList {
       loopRepeats: intOf('loopRepeats', 1, 1, maxLoopRepeats),
       mode: FajrCallMode.parse(json['mode']),
       phoneAccountId: json['phoneAccountId'] as String?,
+      armedAt: armed is num
+          ? DateTime.fromMillisecondsSinceEpoch(armed.toInt())
+          : null,
     );
   }
 

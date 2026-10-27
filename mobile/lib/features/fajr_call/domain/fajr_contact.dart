@@ -131,23 +131,20 @@ String normalizePhone(String raw, {String? dialCode}) {
   return digits;
 }
 
-/// International dialling codes for the countries Lahuma users are most
-/// likely in, keyed by ISO 3166 country code. Used to normalise local
-/// numbers; a missing country just leaves numbers as dialled.
+/// International dialling codes, keyed by ISO 3166 country code, for the
+/// countries Lahuma users are most likely in **whose local numbers start
+/// with the trunk prefix 0** (dropped in international format). Countries
+/// without one (Gulf states, Spain, North America) or that keep the 0
+/// (Italy) are left out on purpose: their numbers are dialled as entered.
 const Map<String, String> kDialCodes = {
   'DZ': '213',
   'MA': '212',
   'TN': '216',
   'LY': '218',
   'EG': '20',
-  'MR': '222',
   'SD': '249',
   'SA': '966',
   'AE': '971',
-  'QA': '974',
-  'KW': '965',
-  'BH': '973',
-  'OM': '968',
   'YE': '967',
   'JO': '962',
   'PS': '970',
@@ -159,8 +156,5 @@ const Map<String, String> kDialCodes = {
   'BE': '32',
   'DE': '49',
   'GB': '44',
-  'ES': '34',
-  'IT': '39',
-  'CA': '1',
-  'US': '1',
+  'NL': '31',
 };
