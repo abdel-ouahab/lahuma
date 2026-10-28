@@ -3,7 +3,6 @@ import '../../../../core/localization/tr.dart';
 import '../../domain/call_attempt.dart';
 import '../../domain/fajr_call_list.dart';
 import '../../domain/fajr_contact.dart';
-import '../../domain/prayer_settings.dart';
 
 /// Clock time: "4:36 ص" / "4:36 AM". Digits stay LTR inside Arabic text.
 String formatClock(BuildContext context, DateTime t) {
@@ -121,28 +120,6 @@ Color statusColor(CallStatus s) => switch (s) {
       CallStatus.noAnswer => AppColors.warning,
       CallStatus.failed => AppColors.destructive,
       CallStatus.called => AppColors.tileBlue,
-    };
-
-String methodLabel(BuildContext context, PrayerMethod m) => switch (m) {
-      PrayerMethod.algeria =>
-        context.tr('وزارة الشؤون الدينية الجزائرية', 'Algeria (Ministry)'),
-      PrayerMethod.morocco =>
-        context.tr('وزارة الأوقاف المغربية', 'Morocco (Habous)'),
-      PrayerMethod.tunisia => context.tr('تونس', 'Tunisia'),
-      PrayerMethod.muslimWorldLeague =>
-        context.tr('رابطة العالم الإسلامي', 'Muslim World League'),
-      PrayerMethod.egyptian =>
-        context.tr('الهيئة المصرية العامة للمساحة', 'Egyptian Authority'),
-      PrayerMethod.ummAlQura => context.tr('أم القرى', 'Umm al-Qura'),
-      PrayerMethod.karachi => context.tr('جامعة كراتشي', 'Karachi'),
-      PrayerMethod.northAmerica =>
-        context.tr('أمريكا الشمالية (ISNA)', 'North America (ISNA)'),
-      PrayerMethod.dubai => context.tr('دبي', 'Dubai'),
-      PrayerMethod.kuwait => context.tr('الكويت', 'Kuwait'),
-      PrayerMethod.qatar => context.tr('قطر', 'Qatar'),
-      PrayerMethod.singapore => context.tr('سنغافورة', 'Singapore'),
-      PrayerMethod.turkey => context.tr('تركيا (ديانت)', 'Turkey (Diyanet)'),
-      PrayerMethod.tehran => context.tr('طهران', 'Tehran'),
     };
 
 String modeLabel(BuildContext context, FajrCallMode m) => switch (m) {

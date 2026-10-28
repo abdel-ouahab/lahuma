@@ -278,6 +278,21 @@ void main() {
     expect(find.text('Fajr today'), findsNothing);
   });
 
+  testWidgets('location comes from Settings: no method, sheet only if unset',
+      (tester) async {
+    seed();
+    await pump(tester, '/home/fajr-call', locale: 'en');
+    expect(find.text('Location & method'), findsNothing);
+
+    seed(location: false);
+    await pump(tester, '/home/fajr-call/l1', locale: 'en');
+    await tester.tap(find.text('Set your location in Settings'));
+    await settle(tester);
+    expect(find.text('Your location'), findsOneWidget);
+    expect(find.text('Use my current location'), findsOneWidget);
+    expect(find.text('Calculation method'), findsNothing);
+  });
+
   testWidgets('log: ticking someone counts them as awake', (tester) async {
     final semantics = tester.ensureSemantics();
     seed(sessions: true);

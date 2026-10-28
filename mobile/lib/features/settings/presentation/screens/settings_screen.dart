@@ -12,6 +12,7 @@ import '../../../dedication/presentation/dedication_labels.dart';
 import '../../../dedication/presentation/dedication_providers.dart';
 import '../../../dedication/presentation/dedication_sheet.dart';
 import '../../../fajr_call/presentation/fajr_call_providers.dart';
+import '../../../fajr_call/presentation/widgets/prayer_settings_sheet.dart';
 import '../../../wird/presentation/goal_sheet.dart';
 import '../../../wird/presentation/wird_providers.dart';
 import '../../data/settings_repository.dart';
@@ -29,6 +30,7 @@ class SettingsScreen extends ConsumerWidget {
     final goal = ref.watch(wirdProvider.select((w) => w.goal));
     final dedication = ref.watch(dedicationProvider);
     final user = ref.watch(authProvider);
+    final prayer = ref.watch(fajrCallProvider.select((s) => s.prayer));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final background = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final text = isDark ? AppColors.textDark : AppColors.textLight;
@@ -137,11 +139,22 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSpacing.lg),
 
-            // ── Fajr ─────────────────────────────────────────────────────
-            _SectionHeader(title: context.tr('الفجر', 'Fajr')),
+            // ── Prayer ───────────────────────────────────────────────────
+            _SectionHeader(title: context.tr('الصلاة', 'Prayer')),
             _Card(
               isDark: isDark,
               children: [
+                _NavTile(
+                  icon: Icons.location_on_outlined,
+                  label: context.tr('الموقع', 'Location'),
+                  detail: prayer.hasLocation
+                      ? prayer.placeName
+                      : context.tr('غير محدد. يُستخدم لمواقيت الصلاة ونداء الفجر.',
+                          'Not set. Used for prayer times and Fajr Call.'),
+                  isDark: isDark,
+                  onTap: () => PrayerSettingsSheet.show(context),
+                ),
+                _Divider(isDark: isDark),
                 _NavTile(
                   icon: Icons.wb_twilight_rounded,
                   label: context.tr('نداء الفجر', 'Fajr Call'),

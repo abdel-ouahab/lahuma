@@ -181,7 +181,7 @@ At Fajr, Lahuma calls the people you chose (your parents first) one by one to wa
 
 - **Android, auto mode:** a foreground service places the calls with the app killed and the screen off, hangs up after the ring time, retries the people not reached, and shows a Stop button. Results appear in the log.
 - **iOS, and Android manual mode:** a time-sensitive notification opens a wake list. Each person has a call button and an "استيقظ ✓" tick.
-- **Fajr time** is calculated offline (`adhan`; Algeria's 18°/17° by default, other methods selectable) from one coarse GPS fix or a city list. A list can also use a fixed time, an offset, or chosen weekdays.
+- **Fajr time** is calculated offline (`adhan`; Algeria's 18°/17° by default, otherwise the method of the location's country) from the location set in Settings (one coarse GPS fix or a city list). A list can also use a fixed time, an offset, or chosen weekdays.
 - **Privacy:** lists, numbers, results and location stay on the device. Contacts come from the system picker, so no contacts permission is needed.
 - **Permissions** are asked one by one with an explanation. Without them the feature degrades to manual mode.
 - **Answer detection:** the Play build can't detect answers; a build made with `--android-project-arg=fajrCallLog=true` reads the call log to tell answered calls apart.

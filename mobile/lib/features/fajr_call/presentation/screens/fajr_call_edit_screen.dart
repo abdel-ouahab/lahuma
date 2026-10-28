@@ -379,15 +379,20 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
                         ),
                       ),
                       if (_draft.startMode == FajrStartMode.fajr) ...[
+                        // The location lives in Settings; this row only
+                        // offers it when it is still missing.
                         AppListTile(
                           title: context.tr('الفجر اليوم', 'Fajr today'),
                           subtitle: state.prayer.hasLocation
-                              ? '${state.prayer.placeName} · ${methodLabel(context, state.prayer.method)}'
-                              : null,
+                              ? state.prayer.placeName
+                              : context.tr('حدّد موقعك في الإعدادات',
+                                  'Set your location in Settings'),
                           value: fajrToday == null
-                              ? context.tr('حدّد موقعك', 'Set location')
+                              ? null
                               : formatClock(context, fajrToday),
-                          onTap: () => PrayerSettingsSheet.show(context),
+                          onTap: state.prayer.hasLocation
+                              ? null
+                              : () => PrayerSettingsSheet.show(context),
                         ),
                         AppStepperRow(
                           title: context.tr('التوقيت', 'Timing'),

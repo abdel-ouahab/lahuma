@@ -6,12 +6,12 @@ import '../../data/location_service.dart';
 import '../../data/places.dart';
 import '../../domain/prayer_settings.dart';
 import '../fajr_call_providers.dart';
-import 'fajr_call_labels.dart';
 
 final locationServiceProvider = Provider((ref) => const LocationService());
 
-/// Location and calculation method for prayer times, with today's Fajr as
-/// live feedback.
+/// The app's location, opened from Settings. Fajr Call and the prayer times
+/// read it. The calculation method follows the location's country and has
+/// no setting of its own.
 class PrayerSettingsSheet extends ConsumerStatefulWidget {
   const PrayerSettingsSheet({super.key, required this.controller});
 
@@ -19,7 +19,7 @@ class PrayerSettingsSheet extends ConsumerStatefulWidget {
 
   static Future<void> show(BuildContext context) => showAppSheet<void>(
         context,
-        title: context.tr('الموقع وطريقة الحساب', 'Location & method'),
+        title: context.tr('موقعك', 'Your location'),
         builder: (_, controller) =>
             PrayerSettingsSheet(controller: controller),
       );
@@ -104,25 +104,9 @@ class _PrayerSettingsSheetState extends ConsumerState<PrayerSettingsSheet> {
         );
   }
 
-  Future<void> _pickMethod(PrayerSettings current) async {
-    final method = await showAppPicker<PrayerMethod>(
-      context,
-      title: context.tr('طريقة الحساب', 'Calculation method'),
-      items: PrayerMethod.values,
-      selected: current.method,
-      labelOf: (m) => methodLabel(context, m),
-    );
-    if (method == null || !mounted) return;
-    await ref
-        .read(fajrCallProvider.notifier)
-        .setPrayerSettings(current.copyWith(method: method));
-  }
-
   @override
   Widget build(BuildContext context) {
     final prayer = ref.watch(fajrCallProvider.select((s) => s.prayer));
-    final now = ref.watch(fajrClockProvider)();
-    final fajr = ref.watch(fajrScheduleProvider).prayerTimes.fajrOn(prayer, now);
 
     return ListView(
       controller: widget.controller,
@@ -131,24 +115,9 @@ class _PrayerSettingsSheetState extends ConsumerState<PrayerSettingsSheet> {
         AppListSection(
           hasLeading: true,
           footer: context.tr(
-            'يُحسب الوقت على جهازك دون إنترنت، ولا يُرسل موقعك إلى أي مكان.',
-            'Times are calculated on your device, offline. Your location is never sent anywhere.',
+            'يُستخدم لمواقيت الصلاة ولوقت نداء الفجر، ويُحفظ على جهازك.',
+            'Used for prayer times and the Fajr Call time. Saved on your device.',
           ),
-          children: [
-            AppListTile(
-              leading: const AppIconTile(
-                  icon: CupertinoIcons.sunrise_fill,
-                  color: AppColors.tileOrange),
-              title: context.tr('الفجر اليوم', 'Fajr today'),
-              value: fajr == null
-                  ? context.tr('حدّد موقعك', 'Set your location')
-                  : formatClock(context, fajr),
-            ),
-          ],
-        ),
-        AppListSection(
-          header: context.tr('الموقع', 'Location'),
-          hasLeading: true,
           children: [
             AppListTile(
               leading: const AppIconTile(
@@ -172,19 +141,6 @@ class _PrayerSettingsSheetState extends ConsumerState<PrayerSettingsSheet> {
                   ? prayer.placeName
                   : null,
               onTap: _pickCity,
-            ),
-          ],
-        ),
-        AppListSection(
-          header: context.tr('طريقة الحساب', 'Calculation method'),
-          footer: context.tr(
-            'تختار المدينة طريقة بلدها تلقائيًا، ويمكنك تغييرها. قارن الوقت بتقويم مسجدك.',
-            "Choosing a city picks its country's method; you can change it. Compare with your mosque's timetable.",
-          ),
-          children: [
-            AppListTile(
-              title: methodLabel(context, prayer.method),
-              onTap: () => _pickMethod(prayer),
             ),
           ],
         ),

@@ -90,16 +90,6 @@ class FajrCallListsScreen extends ConsumerWidget {
               children: [
                 AppListTile(
                   leading: const AppIconTile(
-                      icon: CupertinoIcons.location_fill,
-                      color: AppColors.tileBlue),
-                  title: context.tr('الموقع وطريقة الحساب', 'Location & method'),
-                  value: state.prayer.hasLocation
-                      ? state.prayer.placeName
-                      : context.tr('غير محدد', 'Not set'),
-                  onTap: () => PrayerSettingsSheet.show(context),
-                ),
-                AppListTile(
-                  leading: const AppIconTile(
                       icon: CupertinoIcons.lock_shield_fill,
                       color: AppColors.tileGreen),
                   title: context.tr('الأذونات', 'Permissions'),
@@ -123,8 +113,8 @@ class FajrCallListsScreen extends ConsumerWidget {
     final next = ref.watch(fajrNextFireProvider(list.id));
     if (next == null) {
       return list.startMode == FajrStartMode.fajr
-          ? context.tr('حدّد موقعك لحساب وقت الفجر',
-              'Set your location to work out Fajr')
+          ? context.tr('حدّد موقعك في الإعدادات لحساب الفجر',
+              'Set your location in Settings to work out Fajr')
           : context.tr('لا موعد قادم', 'Nothing scheduled');
     }
     return '${formatFire(context, next, now)} · $people';
