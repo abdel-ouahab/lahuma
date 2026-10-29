@@ -20,8 +20,7 @@ class PrayerSettingsSheet extends ConsumerStatefulWidget {
   static Future<void> show(BuildContext context) => showAppSheet<void>(
         context,
         title: context.tr('موقعك', 'Your location'),
-        builder: (_, controller) =>
-            PrayerSettingsSheet(controller: controller),
+        builder: (_, controller) => PrayerSettingsSheet(controller: controller),
       );
 
   @override
@@ -110,7 +109,7 @@ class _PrayerSettingsSheetState extends ConsumerState<PrayerSettingsSheet> {
 
     return ListView(
       controller: widget.controller,
-      children: [
+      children: <Widget>[
         const SizedBox(height: AppSpacing.md),
         AppListSection(
           hasLeading: true,
@@ -123,11 +122,13 @@ class _PrayerSettingsSheetState extends ConsumerState<PrayerSettingsSheet> {
               leading: const AppIconTile(
                   icon: CupertinoIcons.location_fill,
                   color: AppColors.tileBlue),
-              title: context.tr('استخدم موقعي الحالي', 'Use my current location'),
-              subtitle: prayer.source == LocationSource.gps && prayer.hasLocation
-                  ? prayer.placeName
-                  : context.tr('مرة واحدة، بدقة المدينة',
-                      'Once, at city-level accuracy'),
+              title:
+                  context.tr('استخدم موقعي الحالي', 'Use my current location'),
+              subtitle:
+                  prayer.source == LocationSource.gps && prayer.hasLocation
+                      ? prayer.placeName
+                      : context.tr('مرة واحدة، بدقة المدينة',
+                          'Once, at city-level accuracy'),
               trailing: _locating ? const CupertinoActivityIndicator() : null,
               chevron: !_locating,
               onTap: _locating ? null : _useGps,
@@ -137,15 +138,16 @@ class _PrayerSettingsSheetState extends ConsumerState<PrayerSettingsSheet> {
                   icon: CupertinoIcons.building_2_fill,
                   color: AppColors.tileIndigo),
               title: context.tr('اختر مدينة', 'Choose a city'),
-              value: prayer.source == LocationSource.manual && prayer.hasLocation
-                  ? prayer.placeName
-                  : null,
+              value:
+                  prayer.source == LocationSource.manual && prayer.hasLocation
+                      ? prayer.placeName
+                      : null,
               onTap: _pickCity,
             ),
           ],
         ),
         SizedBox(height: MediaQuery.paddingOf(context).bottom + AppSpacing.lg),
-      ],
+      ].listEntrance(),
     );
   }
 }
@@ -175,7 +177,7 @@ class _CityPickerState extends State<_CityPicker> {
     ];
     return ListView(
       controller: widget.controller,
-      children: [
+      children: <Widget>[
         Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: AppSearchField(
@@ -187,8 +189,7 @@ class _CityPickerState extends State<_CityPicker> {
           AppEmptyState(
             icon: CupertinoIcons.search,
             title: context.tr('لا نتائج', 'No results'),
-            message: context.tr(
-                'جرّب اسمًا آخر، أو استخدم موقعك الحالي.',
+            message: context.tr('جرّب اسمًا آخر، أو استخدم موقعك الحالي.',
                 'Try another name, or use your current location.'),
           )
         else
@@ -204,7 +205,7 @@ class _CityPickerState extends State<_CityPicker> {
             ],
           ),
         SizedBox(height: MediaQuery.paddingOf(context).bottom + AppSpacing.lg),
-      ],
+      ].listEntrance(),
     );
   }
 }

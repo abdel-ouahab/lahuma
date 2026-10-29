@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adhan sounds shared with the system as channel sounds (Android 7–9).
+     See adhan/AdhanSoundChannel.kt. -->
+<paths>
+    <files-path name="adhan_sounds" path="adhan_sounds/" />
+</paths>

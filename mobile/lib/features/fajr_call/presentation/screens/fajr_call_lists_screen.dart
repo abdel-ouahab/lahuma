@@ -80,7 +80,7 @@ class FajrCallListsScreen extends ConsumerWidget {
                     onTap: () => context.push('$path/${list.id}'),
                     onToggle: (on) => toggle(list, on),
                   ),
-              ],
+              ].listEntrance(),
             ),
           ),
           SliverToBoxAdapter(
@@ -108,7 +108,8 @@ class FajrCallListsScreen extends ConsumerWidget {
     final people = peopleCount(context, list.contacts.length);
     if (!list.enabled) return '${context.tr('متوقفة', 'Off')} · $people';
     if (list.contacts.isEmpty) {
-      return context.tr('أضف شخصًا واحدًا على الأقل', 'Add at least one person');
+      return context.tr(
+          'أضف شخصًا واحدًا على الأقل', 'Add at least one person');
     }
     final next = ref.watch(fajrNextFireProvider(list.id));
     if (next == null) {

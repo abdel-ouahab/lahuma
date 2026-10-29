@@ -242,9 +242,8 @@ class AppSegmentedControl<T extends Object> extends StatelessWidget {
                     .weight(
                         entry.key == value ? FontWeight.w600 : FontWeight.w500)
                     .copyWith(
-                        color: entry.key == value
-                            ? c.accent
-                            : c.secondaryLabel),
+                        color:
+                            entry.key == value ? c.accent : c.secondaryLabel),
               ),
             ),
         },

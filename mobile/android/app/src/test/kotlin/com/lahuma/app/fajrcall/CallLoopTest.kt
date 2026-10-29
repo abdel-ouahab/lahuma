@@ -92,7 +92,8 @@ class CallLoopTest {
         maxRetries: Int = 1,
         repeat: Boolean = false,
         loops: Int = 1,
-    ) = CallLoop.LoopConfig(contacts, ring, wait, gap, stopFirst, retry, maxRetries, repeat, loops)
+        autoHangUp: Boolean = true,
+    ) = CallLoop.LoopConfig(contacts, ring, wait, gap, stopFirst, retry, maxRetries, repeat, loops, autoHangUp)
 
     private fun loop(cfg: CallLoop.LoopConfig): CallLoop {
         val l = CallLoop(cfg, dialer, clock, { clock.now }, object : CallLoop.Listener {
@@ -260,6 +261,17 @@ class CallLoopTest {
         assertEquals(Status.NO_ANSWER, l.results.single().status)
         clock.advance(3_000)
         assertEquals(listOf("Mum", "Dad"), dialer.placed)
+    }
+
+    @Test
+    fun withAutoHangUpOffTheCallRunsUntilTheOtherSideEndsIt() {
+        val l = loop(config(contacts = listOf(mum, dad), ring = 20, autoHangUp = false))
+        l.start()
+        clock.advance(90_000) // well past the 20 s duration
+        assertEquals(0, dialer.hangUps)
+        assertTrue(l.results.isEmpty())
+        dialer.remoteEnds()
+        assertEquals(Status.CALLED, l.results.single().status)
     }
 
     @Test

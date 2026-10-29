@@ -103,11 +103,11 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
       // nav bar and home indicator (MediaQuery padding) and scrolls under them.
       child: ListView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        children: [
+        children: <Widget>[
           const SizedBox(height: AppSpacing.md),
           ...user != null ? _signedIn(context, user) : _form(context),
           const SizedBox(height: AppSpacing.md),
-        ],
+        ].listEntrance(),
       ),
     );
   }

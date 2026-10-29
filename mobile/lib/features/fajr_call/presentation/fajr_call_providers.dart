@@ -17,8 +17,8 @@ import '../domain/prayer_settings.dart';
 final fajrCallRepositoryProvider = Provider((ref) => FajrCallRepository());
 final fajrCallPlatformProvider = Provider((ref) => const FajrCallPlatform());
 final fajrScheduleProvider = Provider((ref) => const FajrSchedule());
-final fajrNotificationsProvider = Provider(
-    (ref) => FajrNotifications(ref.watch(localNotificationsProvider)));
+final fajrNotificationsProvider =
+    Provider((ref) => FajrNotifications(ref.watch(localNotificationsProvider)));
 
 /// Injectable clock (tests pin it).
 final fajrClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
@@ -51,8 +51,10 @@ class FajrCallState {
     return null;
   }
 
-  List<CallSession> sessionsOf(String listId) =>
-      [for (final s in sessions) if (s.listId == listId) s];
+  List<CallSession> sessionsOf(String listId) => [
+        for (final s in sessions)
+          if (s.listId == listId) s
+      ];
 
   /// The mode a list really runs in: auto needs the engine and the call
   /// permissions, otherwise it falls back to the notification + wake list.
@@ -181,7 +183,10 @@ class FajrCallNotifier extends StateNotifier<FajrCallState> {
   }
 
   Future<void> deleteList(String id) async {
-    await _setLists([for (final l in state.lists) if (l.id != id) l]);
+    await _setLists([
+      for (final l in state.lists)
+        if (l.id != id) l
+    ]);
   }
 
   Future<void> setPrayerSettings(PrayerSettings prayer) async {
@@ -212,8 +217,8 @@ class FajrCallNotifier extends StateNotifier<FajrCallState> {
   /// Logs a call placed from the wake list.
   Future<void> logManualCall(CallSession session, FajrContact contact) async {
     final now = _now();
-    final previous =
-        session.attempts.where((a) => a.contact.id == contact.id && a.status.isCall);
+    final previous = session.attempts
+        .where((a) => a.contact.id == contact.id && a.status.isCall);
     await _upsertSession(session.copyWith(attempts: [
       ...session.attempts,
       CallAttempt(
@@ -234,7 +239,10 @@ class FajrCallNotifier extends StateNotifier<FajrCallState> {
   Future<void> clearLog({String? listId}) async {
     final kept = listId == null
         ? <CallSession>[]
-        : [for (final s in state.sessions) if (s.listId != listId) s];
+        : [
+            for (final s in state.sessions)
+              if (s.listId != listId) s
+          ];
     await _repository.saveSessions(kept);
     state = state.copyWith(sessions: kept);
   }
@@ -342,8 +350,9 @@ final fajrNextFireProvider =
   final state = ref.watch(fajrCallProvider);
   final list = state.listById(listId);
   if (list == null || !list.enabled) return null;
-  return ref.watch(fajrScheduleProvider).next(list, state.prayer,
-      from: ref.watch(fajrClockProvider)());
+  return ref
+      .watch(fajrScheduleProvider)
+      .next(list, state.prayer, from: ref.watch(fajrClockProvider)());
 });
 
 /// The earliest upcoming fire among enabled lists, for the Home card.

@@ -24,11 +24,11 @@ An auto list falls back to manual mode by itself when the device can't place cal
 - **Fajr time** is calculated offline with [`adhan`](https://pub.dev/packages/adhan). The default method is Algeria's Ministry of Religious Affairs (Fajr 18°, Isha 17°). The method follows the location's country (Morocco 19°/17°, Tunisia 18°/18°, Umm al-Qura, Egypt…); there is no method setting. The location is the app's own, set in **Settings → Location** (المزيد ← الصلاة ← الموقع) from one coarse GPS fix or from a bundled list of the 58 wilayas plus major cities. Fajr Call has no location screen of its own: when a Fajr list needs one and none is set, it opens that same sheet.
 - **Accuracy:** tests compare Algiers and Paris (including a daylight-saving change) against api.aladhan.com and require a match within 1 minute.
 - Flutter computes the next **14 fire times** and sends them to Android with the config. Kotlin never calculates prayer times. If the app isn't opened for two weeks, Android repeats the last time every 24 hours (so it drifts by about a minute a day) until the app is opened and resyncs. Every launch and every resume resyncs.
-- Manual mode schedules up to 14 notifications per list, within iOS's limit of 64 pending notifications in total.
+- Manual mode schedules up to 14 notifications per list. On iOS, which allows 64 pending notifications per app, Fajr Call shares 19 of them across all lists; the [adhan](adhan.md) takes the other 45. Android has no such cap (60 per Fajr Call).
 
 ### The call loop (auto mode)
 
-For each person in list order: dial → ring for up to `ringTimeoutSec` (10–60 s, default 20) → hang up → wait. The wait is `waitAfterAnswerSec` (default 30 s) after a call the other side ended or answered, and `gapBetweenSec` (default 3 s) otherwise.
+For each person in list order: dial → after `ringTimeoutSec` (10–180 s, default 20) the app hangs up → wait. Turning off **End the call automatically** (`autoHangUp`) skips the hang-up: the call runs until the other side or the network ends it, and without the call log it is logged as "called". The wait is `waitAfterAnswerSec` (default 30 s) after a call the other side ended or answered, and `gapBetweenSec` (default 3 s) otherwise.
 
 - **Stop after the first answer** ends the loop as soon as someone is reached.
 - **Retry when there's no answer** calls the people not reached again, up to `maxRetries` extra passes.

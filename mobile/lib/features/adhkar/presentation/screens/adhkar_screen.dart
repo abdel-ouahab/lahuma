@@ -107,7 +107,14 @@ class _AdhkarScreenState extends ConsumerState<AdhkarScreen> {
       ),
       slivers: adhkarAsync.when(
         loading: () => const [
-          SliverFillRemaining(hasScrollBody: false, child: AppLoader()),
+          SliverToBoxAdapter(
+            child: AppSkeletonList(
+              itemCount: 5,
+              lines: 4,
+              leadingSize: null,
+              spacing: AppSpacing.lg,
+            ),
+          ),
         ],
         error: (error, _) => [
           SliverFillRemaining(
@@ -178,7 +185,7 @@ class _AdhkarScreenState extends ConsumerState<AdhkarScreen> {
                     onTap: () => _open(d),
                     onToggleFavorite: () =>
                         ref.read(adhkarFavoritesProvider.notifier).toggle(d),
-                  );
+                  ).listEntrance(i);
                 },
               ),
             ),

@@ -51,3 +51,25 @@ model ReciterSurah {
 
   @@unique([reciterId, surahNumber])
 }
+
+// A muezzin whose adhan the mobile app plays at prayer times. The audio
+// lives in object storage; only its URLs are stored. A URL starting with
+// "/" is resolved against MEDIA_BASE_URL. Bump `version` whenever a file
+// changes so apps download it again.
+model Muezzin {
+  id              String   @id @default(uuid())
+  nameAr          String
+  nameFr          String
+  country         String // ISO 3166 alpha-2, e.g. "DZ"
+  regularUrl      String // full-length adhan (mp3)
+  fajrUrl         String // full-length Fajr adhan, with «الصلاة خير من النوم»
+  regularShortUrl String // ≤30 s, .caf / .wav, for iOS notifications
+  fajrShortUrl    String // ≤30 s, .caf / .wav, for iOS notifications
+  isActive        Boolean  @default(true)
+  sortOrder       Int      @default(0)
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}

@@ -1,12 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- Fajr Call: notifications at Fajr (manual mode / ongoing calls). -->
+    <!-- Fajr Call and the adhan: notifications at prayer times. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- Fajr Call: fire on the minute. User-granted on Android 14+ (not
-         USE_EXACT_ALARM, which Play reserves for alarm / calendar apps). -->
+    <!-- Fajr Call and the adhan: fire on the minute. User-granted on
+         Android 14+ (not USE_EXACT_ALARM, which Play reserves for alarm /
+         calendar apps). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <!-- Fajr Call: reschedule after a reboot. -->
+    <!-- Fajr Call and the adhan: reschedule after a reboot. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Fajr Call: one city-level fix for prayer times. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -72,6 +73,18 @@
                 <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
             </intent-filter>
         </receiver>
+
+        <!-- Adhan: serves downloaded adhan files to the system as channel
+             sounds on Android 7–9 (MediaStore is used from Android 10). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.adhan_sounds"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/adhan_sound_paths" />
+        </provider>
 
         <!-- flutter_local_notifications: scheduled notifications and their
              rescheduling after a reboot / app update. -->

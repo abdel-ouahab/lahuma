@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/design/widgets/app_entrance.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -31,7 +32,8 @@ class BookmarksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final bookmarks = ref.watch(bookmarksProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final background =
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
 
     return Scaffold(
       backgroundColor: background,
@@ -54,7 +56,8 @@ class BookmarksScreen extends ConsumerWidget {
                   const Spacer(),
                   if (bookmarks.isNotEmpty)
                     Text(
-                      context.tr('${bookmarks.length} علامة', '${bookmarks.length} saved'),
+                      context.tr('${bookmarks.length} علامة',
+                          '${bookmarks.length} saved'),
                       style: GoogleFonts.cairo(
                         fontSize: 12,
                         color: AppColors.primary,
@@ -69,8 +72,8 @@ class BookmarksScreen extends ConsumerWidget {
                   ? _EmptyState(isDark: isDark)
                   : ListView.separated(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0,
-                          AppSpacing.lg, AppSpacing.lg),
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
                       itemCount: bookmarks.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(height: AppSpacing.sm),
@@ -88,7 +91,7 @@ class BookmarksScreen extends ConsumerWidget {
                                 '/quran/${bookmark.surahId}?ayah=${bookmark.ayahNumber}'),
                             onDelete: () => _delete(context, ref, bookmark),
                           ),
-                        );
+                        ).listEntrance(index);
                       },
                     ),
             ),

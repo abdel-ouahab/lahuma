@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/design/widgets/app_entrance.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../domain/reciter.dart';
 import '../providers/reciter_providers.dart';
 import 'reciter_card.dart';
+import '../../../../core/design/widgets/app_states.dart' show AppSkeletonList;
 
 /// Renders the list of Quran reciters. Lives inside the القرّاء tab of
 /// [SurahListScreen].
@@ -50,16 +52,11 @@ class ReciterListView extends ConsumerWidget {
               isActive: isActive,
               isPlaying: isActive && isPlaying,
               onTap: () => _onReciterTap(context, ref, reciter),
-            );
+            ).listEntrance(index);
           },
         );
       },
-      loading: () => const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary,
-          strokeWidth: 2,
-        ),
-      ),
+      loading: () => const AppSkeletonList(circleLeading: true),
       error: (error, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.lg),
@@ -132,7 +129,8 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              context.tr('سيتم إضافة ملفات التلاوة قريباً', 'Recitations will be added soon'),
+              context.tr('سيتم إضافة ملفات التلاوة قريباً',
+                  'Recitations will be added soon'),
               style: GoogleFonts.cairo(
                 fontSize: 13,
                 color: isDark ? AppColors.subtextDark : AppColors.subtextLight,

@@ -75,7 +75,8 @@ class SurahListItem extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      context.tr('${surah.ayahCount} آية', '${surah.ayahCount} ayahs'),
+                      context.tr(
+                          '${surah.ayahCount} آية', '${surah.ayahCount} ayahs'),
                       style: GoogleFonts.cairo(
                         fontSize: 11,
                         color: isDark

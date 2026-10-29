@@ -41,8 +41,7 @@ class LahumaBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface =
-        isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
 
     return Container(
       decoration: BoxDecoration(
@@ -104,8 +103,7 @@ class _NavItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final inactiveColor =
-        isDark ? AppColors.mutedDark : AppColors.mutedLight;
+    final inactiveColor = isDark ? AppColors.mutedDark : AppColors.mutedLight;
 
     return GestureDetector(
       onTap: onTap,

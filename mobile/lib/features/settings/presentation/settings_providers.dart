@@ -107,10 +107,12 @@ final autoScrollSpeedProvider =
   return AutoScrollSpeedNotifier(ref.watch(settingsRepositoryProvider));
 });
 
-final themeModeProvider =StateNotifierProvider<ThemeModeNotifier, AppThemeMode>((ref) {
+final themeModeProvider =
+    StateNotifierProvider<ThemeModeNotifier, AppThemeMode>((ref) {
   return ThemeModeNotifier(ref.watch(settingsRepositoryProvider));
 });
 
-final localeOptionProvider = StateNotifierProvider<LocaleNotifier, AppLocaleOption>((ref) {
+final localeOptionProvider =
+    StateNotifierProvider<LocaleNotifier, AppLocaleOption>((ref) {
   return LocaleNotifier(ref.watch(settingsRepositoryProvider));
 });

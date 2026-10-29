@@ -10,6 +10,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../domain/reciter.dart';
 import '../../domain/surah_audio.dart';
 import '../providers/reciter_providers.dart';
+import '../../../../core/design/widgets/app_states.dart' show AppSkeletonList;
 
 /// Full-screen Quran audio player for a specific reciter.
 ///
@@ -97,7 +98,8 @@ class _ReciterPlayerScreenState extends ConsumerState<ReciterPlayerScreen> {
                     size: 56, color: AppColors.error),
                 const SizedBox(height: AppSpacing.md),
                 Text(
-                  context.tr('تعذّر تحميل بيانات القارئ', 'Could not load this reciter'),
+                  context.tr('تعذّر تحميل بيانات القارئ',
+                      'Could not load this reciter'),
                   style: GoogleFonts.cairo(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -194,12 +196,7 @@ class _ReciterPlayerBody extends ConsumerWidget {
             isDark: isDark,
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(
-            color: AppColors.primary,
-            strokeWidth: 2,
-          ),
-        ),
+        loading: () => const AppSkeletonList(),
         error: (e, _) => ErrorRetry(
           error: e,
           onRetry: () => ref.invalidate(surahsForReciterProvider(reciter)),
@@ -259,7 +256,8 @@ class _PlayerContentState extends ConsumerState<_PlayerContent> {
       await ref.read(quranAudioServiceProvider).play(widget.reciter, surah);
     } catch (e) {
       if (mounted) {
-        setState(() => _error = context.tr('تعذّر تشغيل الملف الصوتي', 'Could not play this recitation'));
+        setState(() => _error = context.tr(
+            'تعذّر تشغيل الملف الصوتي', 'Could not play this recitation'));
         _showError(context, _error!);
       }
     } finally {
@@ -411,7 +409,9 @@ class _PlayerContentState extends ConsumerState<_PlayerContent> {
               Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  context.tr('السور المتاحة: ${widget.surahs.where((s) => s.isAvailable).length} من ${widget.surahs.length}', '${widget.surahs.where((s) => s.isAvailable).length} of ${widget.surahs.length} surahs available'),
+                  context.tr(
+                      'السور المتاحة: ${widget.surahs.where((s) => s.isAvailable).length} من ${widget.surahs.length}',
+                      '${widget.surahs.where((s) => s.isAvailable).length} of ${widget.surahs.length} surahs available'),
                   style: GoogleFonts.cairo(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -512,15 +512,15 @@ class _AlbumArtState extends State<_AlbumArt> with TickerProviderStateMixin {
             height: 200,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: const [
+              gradient: const LinearGradient(
+                colors: [
                   AppColors.primary,
                   AppColors.primaryDark,
                   Color(0xFF0D6B64),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                stops: const [0.0, 0.5, 1.0],
+                stops: [0.0, 0.5, 1.0],
               ),
               boxShadow: [
                 BoxShadow(
@@ -813,7 +813,8 @@ class _NoSurahsState extends StatelessWidget {
                 color: isDark ? AppColors.mutedDark : AppColors.mutedLight),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              context.tr('لا توجد سور متاحة لهذا القارئ', 'No surahs available for this reciter yet'),
+              context.tr('لا توجد سور متاحة لهذا القارئ',
+                  'No surahs available for this reciter yet'),
               style: GoogleFonts.cairo(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,

@@ -13,7 +13,8 @@ Future<String?> showAyahNoteDialog(
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: Text('$surahName · ${ctx.tr('الآية $ayahNumber', 'Ayah $ayahNumber')}'),
+      title: Text(
+          '$surahName · ${ctx.tr('الآية $ayahNumber', 'Ayah $ayahNumber')}'),
       content: TextField(
         controller: controller,
         autofocus: true,
@@ -21,7 +22,8 @@ Future<String?> showAyahNoteDialog(
         maxLines: 6,
         maxLength: 500,
         decoration: InputDecoration(
-          hintText: ctx.tr('اكتب ما تأمّلته في هذه الآية', 'Write what you reflected on in this ayah'),
+          hintText: ctx.tr('اكتب ما تأمّلته في هذه الآية',
+              'Write what you reflected on in this ayah'),
         ),
       ),
       actions: [

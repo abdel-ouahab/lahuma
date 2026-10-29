@@ -68,6 +68,7 @@ class FajrCallList {
     this.repeatDaily = true,
     this.weekdays = const {},
     this.contacts = const [],
+    this.autoHangUp = true,
     this.ringTimeoutSec = defaultRingTimeoutSec,
     this.waitAfterAnswerSec = defaultWaitAfterAnswerSec,
     this.gapBetweenSec = defaultGapBetweenSec,
@@ -86,7 +87,7 @@ class FajrCallList {
   static const int defaultGapBetweenSec = 3;
 
   static const int minRingTimeoutSec = 10;
-  static const int maxRingTimeoutSec = 60;
+  static const int maxRingTimeoutSec = 180;
   static const int maxWaitAfterAnswerSec = 120;
   static const int maxGapBetweenSec = 30;
   static const int minFajrOffset = -30;
@@ -110,6 +111,13 @@ class FajrCallList {
   final Set<int> weekdays;
 
   final List<FajrContact> contacts;
+
+  /// When true the app ends each call [ringTimeoutSec] after dialling,
+  /// answered or not (Android can't see the answer). When false the call
+  /// runs until the other side or the network ends it.
+  final bool autoHangUp;
+
+  /// How long a call lasts before the app ends it, counted from dialling.
   final int ringTimeoutSec;
   final int waitAfterAnswerSec;
   final int gapBetweenSec;
@@ -142,6 +150,7 @@ class FajrCallList {
     bool? repeatDaily,
     Set<int>? weekdays,
     List<FajrContact>? contacts,
+    bool? autoHangUp,
     int? ringTimeoutSec,
     int? waitAfterAnswerSec,
     int? gapBetweenSec,
@@ -165,6 +174,7 @@ class FajrCallList {
         repeatDaily: repeatDaily ?? this.repeatDaily,
         weekdays: weekdays ?? this.weekdays,
         contacts: contacts ?? this.contacts,
+        autoHangUp: autoHangUp ?? this.autoHangUp,
         ringTimeoutSec: ringTimeoutSec ?? this.ringTimeoutSec,
         waitAfterAnswerSec: waitAfterAnswerSec ?? this.waitAfterAnswerSec,
         gapBetweenSec: gapBetweenSec ?? this.gapBetweenSec,
@@ -189,6 +199,7 @@ class FajrCallList {
         'repeatDaily': repeatDaily,
         'weekdays': (weekdays.toList()..sort()),
         'contacts': [for (final c in contacts) c.toJson()],
+        'autoHangUp': autoHangUp,
         'ringTimeoutSec': ringTimeoutSec,
         'waitAfterAnswerSec': waitAfterAnswerSec,
         'gapBetweenSec': gapBetweenSec,
@@ -238,10 +249,11 @@ class FajrCallList {
           for (final c in rawContacts)
             if (c is Map) FajrContact.fromJson(Map<String, dynamic>.from(c)),
       ],
+      autoHangUp: boolOf('autoHangUp', true),
       ringTimeoutSec: intOf('ringTimeoutSec', defaultRingTimeoutSec,
           minRingTimeoutSec, maxRingTimeoutSec),
-      waitAfterAnswerSec: intOf('waitAfterAnswerSec',
-          defaultWaitAfterAnswerSec, 0, maxWaitAfterAnswerSec),
+      waitAfterAnswerSec: intOf('waitAfterAnswerSec', defaultWaitAfterAnswerSec,
+          0, maxWaitAfterAnswerSec),
       gapBetweenSec:
           intOf('gapBetweenSec', defaultGapBetweenSec, 0, maxGapBetweenSec),
       stopAfterFirstAnswer: boolOf('stopAfterFirstAnswer', false),

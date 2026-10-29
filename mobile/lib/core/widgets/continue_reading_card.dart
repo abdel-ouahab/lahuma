@@ -11,12 +11,16 @@ class ContinueReadingCard extends StatelessWidget {
     this.ayahNumber,
     this.progressPercent,
     this.onTap,
+    this.onOpenMushaf,
   });
 
   final String? surahName;
   final int? ayahNumber;
   final double? progressPercent;
   final VoidCallback? onTap;
+
+  /// Opens the Mushaf on its last page. Hidden when null.
+  final VoidCallback? onOpenMushaf;
 
   @override
   Widget build(BuildContext context) {
@@ -81,36 +85,84 @@ class ContinueReadingCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
           ],
-          // Single clear action: a white capsule, the card's only bright
-          // element. The whole card is the tap target.
-          DecoratedBox(
-            decoration:
-                const ShapeDecoration(color: onHero, shape: StadiumBorder()),
-            child: Padding(
-              padding: const EdgeInsetsDirectional.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: AppSpacing.sm,
+          // Main action: a white capsule, the card's only bright element.
+          // The whole card is its tap target. The Mushaf capsule beside it
+          // is quieter and handles its own tap.
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _Capsule(
+                icon: CupertinoIcons.play_fill,
+                label: hasProgress
+                    ? context.tr('متابعة القراءة', 'Continue')
+                    : context.tr('ابدأ الآن', 'Begin'),
+                fill: onHero,
+                color: actionColor,
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(CupertinoIcons.play_fill, size: 15, color: actionColor),
-                  const SizedBox(width: AppSpacing.xs + 2),
-                  Flexible(
-                    child: Text(
-                      hasProgress
-                          ? context.tr('متابعة القراءة', 'Continue')
-                          : context.tr('ابدأ الآن', 'Begin'),
-                      style: AppTypography.subheadline
-                          .weight(FontWeight.w700)
-                          .copyWith(color: actionColor),
+              if (onOpenMushaf != null)
+                Semantics(
+                  button: true,
+                  excludeSemantics: true,
+                  label: context.tr(
+                      'متابعة القراءة في المصحف', 'Continue in the Mushaf'),
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: onOpenMushaf,
+                    child: _Capsule(
+                      icon: CupertinoIcons.book_fill,
+                      label: context.tr(
+                          'متابعة القراءة في المصحف', 'Continue in the Mushaf'),
+                      fill: onHero.withValues(alpha: 0.18),
+                      color: onHero,
                     ),
                   ),
-                ],
-              ),
-            ),
+                ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Capsule extends StatelessWidget {
+  const _Capsule({
+    required this.icon,
+    required this.label,
+    required this.fill,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final Color fill;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: ShapeDecoration(color: fill, shape: const StadiumBorder()),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: color),
+            const SizedBox(width: AppSpacing.xs + 2),
+            Flexible(
+              child: Text(
+                label,
+                style: AppTypography.subheadline
+                    .weight(FontWeight.w700)
+                    .copyWith(color: color),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

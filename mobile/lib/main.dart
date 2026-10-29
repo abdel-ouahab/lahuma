@@ -1,3 +1,4 @@
+import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'core/notifications/local_notifications.dart';
 import 'core/notifications/notification_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/design/app_theme.dart';
+import 'features/adhan/presentation/adhan_providers.dart';
 import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
@@ -49,9 +51,12 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     // Loads the Fajr lists and reschedules them: Fajr moves every day, so
     // every launch refreshes the upcoming times.
     ref.read(fajrCallProvider);
+    // Loads the adhan settings and tops up the rolling week of adhans.
+    ref.read(adhanProvider);
     ref.read(fajrCallPlatformProvider).setHandlers(
           onRoute: (route) => ref.read(routerProvider).push(route),
-          onSessionsChanged: () => ref.read(fajrCallProvider.notifier).refresh(),
+          onSessionsChanged: () =>
+              ref.read(fajrCallProvider.notifier).refresh(),
         );
   }
 
@@ -66,6 +71,8 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     if (state == AppLifecycleState.resumed) {
       // Picks up results the Android call engine wrote while we were away.
       ref.read(fajrCallProvider.notifier).refresh();
+      // Back from the exact-alarm settings, or a day later: reschedule.
+      ref.read(adhanProvider.notifier).reschedule();
     }
   }
 
@@ -75,30 +82,46 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     final themeMode = ref.watch(themeModeProvider);
     final localeOption = ref.watch(localeOptionProvider);
 
-    return MaterialApp.router(
-      title: 'لهما',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: switch (themeMode) {
-        AppThemeMode.light => ThemeMode.light,
-        AppThemeMode.dark => ThemeMode.dark,
-        AppThemeMode.system => ThemeMode.system,
-      },
-      locale: Locale(localeOption.languageCode),
-      supportedLocales: const [Locale('ar'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      routerConfig: router,
-      builder: (context, child) => NotificationTapListener(
-        notifications: ref.read(localNotificationsProvider),
-        onRoute: router.push,
-        child: AppTheme.builder(context, child),
+    // ThemeProvider snapshots the app for the circular theme reveal (see
+    // ThemeModeSwitcher); the themes themselves still come from MaterialApp.
+    return ThemeProvider(
+      initTheme: AppTheme.light,
+      child: MaterialApp.router(
+        title: 'لهما',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: switch (themeMode) {
+          AppThemeMode.light => ThemeMode.light,
+          AppThemeMode.dark => ThemeMode.dark,
+          AppThemeMode.system => ThemeMode.system,
+        },
+        // The reveal is the transition; a cross-fade under it would smear.
+        themeAnimationDuration: Duration.zero,
+        locale: Locale(localeOption.languageCode),
+        supportedLocales: const [Locale('ar'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        routerConfig: router,
+        builder: (context, child) => ThemeSwitchingArea(
+          // The area re-themes its child with the switcher's last theme;
+          // MaterialApp's resolved theme wins so system/startup changes hold.
+          child: Theme(
+            data: Theme.of(context),
+            child: NotificationTapListener(
+              notifications: ref.read(localNotificationsProvider),
+              onRoute: router.push,
+              child: Builder(
+                builder: (context) => AppTheme.builder(context, child),
+              ),
+            ),
+          ),
+        ),
+        scrollBehavior: AppTheme.scrollBehavior,
       ),
-      scrollBehavior: AppTheme.scrollBehavior,
     );
   }
 }

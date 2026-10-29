@@ -25,6 +25,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.4.1"
+  animated_theme_switcher:
+    dependency: "direct main"
+    description:
+      name: animated_theme_switcher
+      sha256: "24ccd74437b8db78f6d1ec701804702817bced5f925b1b3419c7a93071e3d3e9"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.10"
   args:
     dependency: transitive
     description:
@@ -201,6 +209,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.9"
+  cupertino_ui:
+    dependency: transitive
+    description:
+      name: cupertino_ui
+      sha256: a47c4e7c66fd7444a063a602597fceb238f705c3f6b1322bc0053d0a2638ee6e
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.4"
   dart_style:
     dependency: transitive
     description:
@@ -286,6 +302,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_animate:
+    dependency: "direct main"
+    description:
+      name: flutter_animate
+      sha256: "7befe2d3252728afb77aecaaea1dec88a89d35b9b1d2eea6d04479e8af9117b5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.5.2"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -355,6 +379,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.6.1"
+  flutter_shaders:
+    dependency: transitive
+    description:
+      name: flutter_shaders
+      sha256: "16cd456daf2fd6ed7ac0c5168716c5e2fe18f91d82631b775f1af9100fb3f586"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.5"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -389,6 +421,38 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.1"
+  geocoding:
+    dependency: "direct main"
+    description:
+      name: geocoding
+      sha256: "40f845e0a5505d4b47da991057f2ab25cd1c68bc4570255c7d4cfbb03a952063"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.0"
+  geocoding_android:
+    dependency: transitive
+    description:
+      name: geocoding_android
+      sha256: "17e88a69bb0e1ae44597d70df2d2fbdb2f503672cf665421a16ab56ab97e4ead"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.1.0"
+  geocoding_darwin:
+    dependency: transitive
+    description:
+      name: geocoding_darwin
+      sha256: "97552aa24f1453defc17e4d8e40b13ddf097e669c2edfa17ed86349cacdbc1ae"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
+  geocoding_platform_interface:
+    dependency: transitive
+    description:
+      name: geocoding_platform_interface
+      sha256: "5164b8871705af7573698b3aa0746337faf818d72b488988741bcc7aeedd2f6e"
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.0.0"
   geolocator:
     dependency: "direct main"
     description:
@@ -677,6 +741,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.13.0"
+  material_ui:
+    dependency: transitive
+    description:
+      name: material_ui
+      sha256: e4031746f96c8316864d9b92bce375f1320a36ed56e166307e1e1bda9d90b4ab
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.8.0"
   meta:
     dependency: transitive
     description:
@@ -734,7 +806,7 @@ packages:
     source: hosted
     version: "1.9.1"
   path_provider:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: path_provider
       sha256: a7f4874f987173da295a61c181b8ee71dab59b332a486b391babf26a1b884825
@@ -829,6 +901,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.6.0"
+  qcf_quran:
+    dependency: "direct main"
+    description:
+      name: qcf_quran
+      sha256: "86c09ebe96008a3e1f7e73780f2ba4406fa861766b4e67710a41611e57c16f3a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.5"
   record_use:
     dependency: transitive
     description:
@@ -949,6 +1029,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.1"
+  shimmer:
+    dependency: "direct main"
+    description:
+      name: shimmer
+      sha256: "61ef3b8de6bdb9f16db1bb78d502cb991a12b5223fd2c0b9114d41e782227b55"
+      url: "https://pub.dev"
+    source: hosted
+    version: "4.0.0"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -1219,5 +1307,5 @@ packages:
     source: hosted
     version: "3.1.4"
 sdks:
-  dart: ">=3.12.0 <4.0.0"
-  flutter: ">=3.44.0"
+  dart: ">=3.13.0 <4.0.0"
+  flutter: ">=3.47.0"

@@ -12,8 +12,8 @@ import '../widgets/fajr_call_labels.dart';
 /// Opens the phone app with [phone] ready to call.
 typedef Dialer = Future<bool> Function(String phone);
 
-final dialerProvider = Provider<Dialer>((ref) => (phone) =>
-    launchUrl(Uri(scheme: 'tel', path: phone)));
+final dialerProvider = Provider<Dialer>(
+    (ref) => (phone) => launchUrl(Uri(scheme: 'tel', path: phone)));
 
 /// The wake list (manual mode and iOS): opened from the Fajr notification,
 /// one tap calls a person, a tick marks them awake. Calls and ticks are
@@ -83,7 +83,7 @@ class FajrWakeListScreen extends ConsumerWidget {
         automaticallyImplyLeading: false,
       ),
       child: ListView(
-        children: [
+        children: <Widget>[
           const SizedBox(height: AppSpacing.lg),
           Padding(
             padding: AppSpacing.screenInsets,
@@ -142,7 +142,7 @@ class FajrWakeListScreen extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: AppSpacing.lg),
-        ],
+        ].listEntrance(),
       ),
     );
   }
@@ -199,7 +199,8 @@ class _WakeRow extends StatelessWidget {
           Semantics(
             container: true,
             button: true,
-            label: context.tr('اتصل بـ ${contact.name}', 'Call ${contact.name}'),
+            label:
+                context.tr('اتصل بـ ${contact.name}', 'Call ${contact.name}'),
             onTap: onCall,
             excludeSemantics: true,
             child: AppButton.tinted(

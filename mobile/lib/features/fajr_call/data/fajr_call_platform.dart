@@ -43,8 +43,7 @@ class FajrNativePermissions {
         answerCalls: m['answerCalls'] == true,
         callLog: m['callLog'] == true,
         callLogAvailable: m['callLogAvailable'] == true,
-        ignoringBatteryOptimizations:
-            m['ignoringBatteryOptimizations'] == true,
+        ignoringBatteryOptimizations: m['ignoringBatteryOptimizations'] == true,
       );
 }
 

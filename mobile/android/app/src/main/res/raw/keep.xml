@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The adhan fallback sounds are only referenced by name from Dart
+     (RawResourceAndroidNotificationSound), so R8's resource shrinking
+     would otherwise strip them from release builds. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@raw/*" />

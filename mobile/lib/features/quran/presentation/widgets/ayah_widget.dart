@@ -47,7 +47,8 @@ class AyahWidget extends StatelessWidget {
     final textColor = isDark ? AppColors.textDark : AppColors.textLight;
     final mutedColor = isDark ? AppColors.mutedDark : AppColors.mutedLight;
     final subtext = isDark ? AppColors.subtextDark : AppColors.subtextLight;
-    final dividerColor = isDark ? AppColors.dividerDark : AppColors.dividerLight;
+    final dividerColor =
+        isDark ? AppColors.dividerDark : AppColors.dividerLight;
 
     return GestureDetector(
       onTap: onTap,
@@ -78,7 +79,8 @@ class AyahWidget extends StatelessWidget {
                   color: isPlaying ? AppColors.primary : mutedColor,
                   tooltip: isPlaying
                       ? context.tr('إيقاف مؤقت', 'Pause')
-                      : context.tr('استماع من هذه الآية', 'Listen from this ayah'),
+                      : context.tr(
+                          'استماع من هذه الآية', 'Listen from this ayah'),
                   onTap: onPlayToggle,
                 ),
                 _ActionIcon(

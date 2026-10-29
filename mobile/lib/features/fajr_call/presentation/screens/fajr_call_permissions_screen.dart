@@ -79,7 +79,9 @@ class _FajrCallPermissionsScreenState
   }
 
   Future<void> _askBattery() async {
-    await ref.read(fajrCallPlatformProvider).requestIgnoreBatteryOptimizations();
+    await ref
+        .read(fajrCallPlatformProvider)
+        .requestIgnoreBatteryOptimizations();
     await _check();
   }
 
@@ -93,7 +95,7 @@ class _FajrCallPermissionsScreenState
     return AppScaffold(
       title: context.tr('الأذونات', 'Permissions'),
       child: ListView(
-        children: [
+        children: <Widget>[
           const SizedBox(height: AppSpacing.md),
           Padding(
             padding: const EdgeInsetsDirectional.fromSTEB(
@@ -106,7 +108,8 @@ class _FajrCallPermissionsScreenState
                 'ليعمل نداء الفجر في وقته والهاتف مقفل، يحتاج التطبيق بعض الأذونات. كلها اختيارية، ويمكنك تغييرها لاحقًا.',
                 'For Fajr Call to work on time with the phone locked, the app needs a few permissions. All are optional and can be changed later.',
               ),
-              style: AppTypography.subheadline.copyWith(color: c.secondaryLabel),
+              style:
+                  AppTypography.subheadline.copyWith(color: c.secondaryLabel),
             ),
           ),
           _Step(
@@ -187,7 +190,7 @@ class _FajrCallPermissionsScreenState
               ),
             ),
           const SizedBox(height: AppSpacing.lg),
-        ],
+        ].listEntrance(),
       ),
     );
   }
@@ -235,7 +238,8 @@ class _Step extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Semantics(
-              label: '$title: ${ok ? context.tr('مسموح', 'allowed') : context.tr('غير مسموح', 'not allowed')}',
+              label:
+                  '$title: ${ok ? context.tr('مسموح', 'allowed') : context.tr('غير مسموح', 'not allowed')}',
               excludeSemantics: true,
               child: Row(
                 children: [
@@ -267,8 +271,8 @@ class _Step extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(body,
-                style:
-                    AppTypography.subheadline.copyWith(color: c.secondaryLabel)),
+                style: AppTypography.subheadline
+                    .copyWith(color: c.secondaryLabel)),
             if (detail != null) ...[
               const SizedBox(height: AppSpacing.xs),
               Text(detail!,

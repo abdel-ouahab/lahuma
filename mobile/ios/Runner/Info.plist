@@ -30,7 +30,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lahuma uses your approximate location once to calculate Fajr time on your device. It is never sent anywhere.</string>
+	<string>Lahuma uses your approximate location to show prayer times and the city name for your area, and to set the Fajr time for Fajr Call. Only rounded coordinates are sent to the prayer-times service; they are not linked to you.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tel</string>

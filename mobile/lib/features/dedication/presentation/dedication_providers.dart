@@ -16,7 +16,8 @@ class DedicationNotifier extends StateNotifier<Dedication> {
     _loaded = true;
   }
 
-  Future<void> set({required DedicationTarget target, required String names}) async {
+  Future<void> set(
+      {required DedicationTarget target, required String names}) async {
     state = state.copyWith(target: target, names: names.trim());
     await _repository.save(state);
   }

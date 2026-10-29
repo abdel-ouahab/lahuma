@@ -45,7 +45,7 @@ class BookmarkCard extends StatelessWidget {
               color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.bookmark_rounded,
               color: AppColors.primary,
               size: 22,
@@ -67,7 +67,8 @@ class BookmarkCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  context.tr('الآية ${bookmark.ayahNumber}', 'Ayah ${bookmark.ayahNumber}'),
+                  context.tr('الآية ${bookmark.ayahNumber}',
+                      'Ayah ${bookmark.ayahNumber}'),
                   style: GoogleFonts.cairo(
                     fontSize: 12,
                     color: AppColors.primary,
@@ -79,9 +80,7 @@ class BookmarkCard extends StatelessWidget {
                   _formatDate(context, bookmark.createdAt),
                   style: GoogleFonts.cairo(
                     fontSize: 11,
-                    color: isDark
-                        ? AppColors.mutedDark
-                        : AppColors.mutedLight,
+                    color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
                   ),
                 ),
               ],

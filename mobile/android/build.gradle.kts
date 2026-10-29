@@ -19,6 +19,15 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// Plugins (geolocator, …) still compile with Java 8 and deprecated APIs;
+// their warnings are noise we can't fix here.
+subprojects {
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.addAll(listOf("-Xlint:-options", "-Xlint:-deprecation", "-XDsuppressNotes"))
+        options.isWarnings = false
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

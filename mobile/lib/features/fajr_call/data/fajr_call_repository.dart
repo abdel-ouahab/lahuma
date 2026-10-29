@@ -19,8 +19,8 @@ class FajrCallRepository {
     ];
   }
 
-  Future<void> saveLists(List<FajrCallList> lists) => _write(
-      StorageKeys.fajrCallLists, [for (final l in lists) l.toJson()]);
+  Future<void> saveLists(List<FajrCallList> lists) =>
+      _write(StorageKeys.fajrCallLists, [for (final l in lists) l.toJson()]);
 
   /// Newest first.
   Future<List<CallSession>> loadSessions() async {

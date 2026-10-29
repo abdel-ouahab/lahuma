@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show Icons;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../design/design.dart';
@@ -8,8 +9,9 @@ import '../../features/quran/presentation/providers/ayah_audio_provider.dart';
 import '../../features/quran/presentation/providers/reciter_providers.dart';
 import '../../features/quran/presentation/widgets/ayah_mini_player.dart';
 import '../../features/quran/presentation/widgets/quran_mini_player.dart';
+import '../../features/quran/mushaf/presentation/screens/mushaf_screen.dart';
 
-/// Persistent shell wrapping the 4 main destinations.
+/// Persistent shell wrapping the 4 main destinations, plus the Mushaf tab.
 ///
 /// Pages scroll under the floating tab bar; the mini-player (when audio
 /// is loaded) sits just above it. Both heights reach the pages as bottom
@@ -21,6 +23,15 @@ class MainShell extends ConsumerWidget {
 
   final StatefulNavigationShell navigationShell;
 
+  /// The Mushaf tab has no branch: it opens the full-screen Mushaf over the
+  /// shell, so its pages keep the whole screen. Tabs after it map to branch
+  /// `tab - 1`.
+  static const int _mushafTab = 2;
+
+  static int _tabOf(int branch) => branch >= _mushafTab ? branch + 1 : branch;
+
+  static int _branchOf(int tab) => tab > _mushafTab ? tab - 1 : tab;
+
   static List<AppTabItem> _tabs(BuildContext context) => [
         AppTabItem(
           icon: CupertinoIcons.house,
@@ -31,6 +42,11 @@ class MainShell extends ConsumerWidget {
           icon: CupertinoIcons.book,
           activeIcon: CupertinoIcons.book_fill,
           label: context.tr('القرآن', 'Quran'),
+        ),
+        AppTabItem(
+          icon: Icons.menu_book_outlined,
+          activeIcon: Icons.menu_book_rounded,
+          label: context.tr('المصحف', 'Mushaf'),
         ),
         AppTabItem(
           icon: CupertinoIcons.bookmark,
@@ -71,11 +87,18 @@ class MainShell extends ConsumerWidget {
       accessoryHeight: AppMiniPlayerBar.reservedHeight,
       tabBar: AppTabBar(
         items: _tabs(context),
-        currentIndex: navigationShell.currentIndex,
-        onTap: (index) => navigationShell.goBranch(
-          index,
-          initialLocation: index == navigationShell.currentIndex,
-        ),
+        currentIndex: _tabOf(navigationShell.currentIndex),
+        onTap: (tab) {
+          if (tab == _mushafTab) {
+            context.push(MushafScreen.path);
+            return;
+          }
+          final branch = _branchOf(tab);
+          navigationShell.goBranch(
+            branch,
+            initialLocation: branch == navigationShell.currentIndex,
+          );
+        },
       ),
     );
   }

@@ -13,10 +13,14 @@ extension DedicationLabels on DedicationTarget {
       };
 
   String title(BuildContext c) => switch (this) {
-        DedicationTarget.parents => c.tr('إهداء إلى والديّ', 'Dedicated to my parents'),
-        DedicationTarget.father => c.tr('إهداء إلى أبي', 'Dedicated to my father'),
-        DedicationTarget.mother => c.tr('إهداء إلى أمي', 'Dedicated to my mother'),
-        DedicationTarget.other => c.tr('إهداء ثواب القراءة', 'Dedicating this reading'),
+        DedicationTarget.parents =>
+          c.tr('إهداء إلى والديّ', 'Dedicated to my parents'),
+        DedicationTarget.father =>
+          c.tr('إهداء إلى أبي', 'Dedicated to my father'),
+        DedicationTarget.mother =>
+          c.tr('إهداء إلى أمي', 'Dedicated to my mother'),
+        DedicationTarget.other =>
+          c.tr('إهداء ثواب القراءة', 'Dedicating this reading'),
       };
 
   String dua(BuildContext c) => switch (this) {

@@ -28,6 +28,7 @@ data class FajrListConfig(
                         CallLoop.Contact(it.optString("id"), it.optString("name"), it.optString("phone"))
                     },
                     ringTimeoutSec = o.optInt("ringTimeoutSec", 20),
+                    autoHangUp = o.optBoolean("autoHangUp", true),
                     waitAfterAnswerSec = o.optInt("waitAfterAnswerSec", 30),
                     gapBetweenSec = o.optInt("gapBetweenSec", 3),
                     stopAfterFirstAnswer = o.optBoolean("stopAfterFirstAnswer", false),

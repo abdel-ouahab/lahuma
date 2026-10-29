@@ -30,8 +30,7 @@ String _newId() => 'l${DateTime.now().microsecondsSinceEpoch}';
 /// The international code for numbers typed in local format, from the
 /// device region (`ar_DZ` → 213).
 String? _deviceDialCode() {
-  final country =
-      WidgetsBinding.instance.platformDispatcher.locale.countryCode;
+  final country = WidgetsBinding.instance.platformDispatcher.locale.countryCode;
   return country == null ? null : kDialCodes[country.toUpperCase()];
 }
 
@@ -43,8 +42,7 @@ class FajrCallEditScreen extends ConsumerStatefulWidget {
   final String? listId;
 
   @override
-  ConsumerState<FajrCallEditScreen> createState() =>
-      _FajrCallEditScreenState();
+  ConsumerState<FajrCallEditScreen> createState() => _FajrCallEditScreenState();
 }
 
 class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
@@ -137,8 +135,10 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
 
   void _removeContact(FajrContact contact) {
     final before = _draft.contacts;
-    _update(_draft.copyWith(
-        contacts: [for (final c in before) if (c.id != contact.id) c]));
+    _update(_draft.copyWith(contacts: [
+      for (final c in before)
+        if (c.id != contact.id) c
+    ]));
     AppToast.show(
       context,
       context.tr('حُذف ${contact.name}', 'Removed ${contact.name}'),
@@ -166,8 +166,8 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
       initial: DateTime(now.year, now.month, now.day, t.hour, t.minute),
     );
     if (picked != null) {
-      _update(_draft.copyWith(
-          fixedTime: TimeOfDayHm(picked.hour, picked.minute)));
+      _update(
+          _draft.copyWith(fixedTime: TimeOfDayHm(picked.hour, picked.minute)));
     }
   }
 
@@ -219,7 +219,8 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
     final shown = prefs.getBool(StorageKeys.fajrCallPermissionsShown) ?? false;
     if (!mounted) return;
     if (list.enabled && !shown) {
-      context.pushReplacement('${FajrCallListsScreen.path}/permissions?first=1');
+      context
+          .pushReplacement('${FajrCallListsScreen.path}/permissions?first=1');
     } else {
       AppToast.show(context, context.tr('حُفظت القائمة', 'List saved'),
           icon: CupertinoIcons.checkmark_alt);
@@ -228,7 +229,8 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
   }
 
   Future<void> _testNow() async {
-    final names = _draft.contacts.map((c) => c.name).join(context.isArabic ? '، ' : ', ');
+    final names =
+        _draft.contacts.map((c) => c.name).join(context.isArabic ? '، ' : ', ');
     final ok = await showAppDialog<bool>(
       context,
       title: context.tr('اتصال حقيقي الآن؟', 'Place real calls now?'),
@@ -284,7 +286,8 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
       context,
       title: context.tr('تجاهل التغييرات؟', 'Discard changes?'),
       actions: [
-        AppDialogAction(label: context.tr('متابعة التعديل', 'Keep editing'), value: false),
+        AppDialogAction(
+            label: context.tr('متابعة التعديل', 'Keep editing'), value: false),
         AppDialogAction(
             label: context.tr('تجاهل', 'Discard'),
             value: true,
@@ -308,9 +311,10 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
     final fajrToday = schedule.prayerTimes.fajrOn(state.prayer, now);
     final next = _draft.contacts.isEmpty
         ? null
-        : schedule.next(_draft.copyWith(enabled: true), state.prayer, from: now);
-    final accounts =
-        ref.watch(phoneAccountsProvider).valueOrNull ?? const <PhoneAccountOption>[];
+        : schedule.next(_draft.copyWith(enabled: true), state.prayer,
+            from: now);
+    final accounts = ref.watch(phoneAccountsProvider).valueOrNull ??
+        const <PhoneAccountOption>[];
     final effective = state.effectiveMode(_draft);
     final auto = _draft.mode == FajrCallMode.auto;
 
@@ -321,8 +325,8 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
         if (await _confirmDiscard() && context.mounted) {
           setState(() => _original = _draft);
           // Leave on the next frame, once canPop reflects the decision.
-          WidgetsBinding.instance
-              .addPostFrameCallback((_) => context.mounted ? context.pop() : null);
+          WidgetsBinding.instance.addPostFrameCallback(
+              (_) => context.mounted ? context.pop() : null);
         }
       },
       child: AppScaffold(
@@ -333,7 +337,7 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
           children: [
             Expanded(
               child: ListView(
-                children: [
+                children: <Widget>[
                   const SizedBox(height: AppSpacing.md),
 
                   // ── Name & switch ───────────────────────────────────
@@ -488,13 +492,13 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
                                 m: modeLabel(context, m),
                             },
                             value: _draft.mode,
-                            onChanged: (m) =>
-                                _update(_draft.copyWith(mode: m)),
+                            onChanged: (m) => _update(_draft.copyWith(mode: m)),
                           ),
                         ),
                         if (auto && effective != FajrCallMode.auto)
                           AppListTile(
-                            title: context.tr('منح الأذونات', 'Grant permissions'),
+                            title:
+                                context.tr('منح الأذونات', 'Grant permissions'),
                             onTap: () => context.push(
                                 '${FajrCallListsScreen.path}/permissions'),
                           ),
@@ -574,7 +578,7 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
                       ],
                     ),
                   const SizedBox(height: AppSpacing.md),
-                ],
+                ].listEntrance(),
               ),
             ),
 
@@ -590,15 +594,28 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
   }
 
   List<Widget> _advancedRows(List<PhoneAccountOption> accounts) => [
-        AppSliderRow(
-          title: context.tr('مدة الرنين', 'Ring for'),
-          value: _draft.ringTimeoutSec,
-          min: FajrCallList.minRingTimeoutSec,
-          max: FajrCallList.maxRingTimeoutSec,
-          step: 5,
-          label: (s) => seconds(context, s),
-          onChanged: (s) => _update(_draft.copyWith(ringTimeoutSec: s)),
+        AppListTile(
+          title: context.tr('إنهاء المكالمة تلقائيًا', 'End the call automatically'),
+          subtitle: _draft.autoHangUp
+              ? context.tr('من لحظة الاتصال، رُدّ عليها أم لا',
+                  'Counted from dialling, answered or not')
+              : context.tr('تستمر حتى يُنهيها الطرف الآخر',
+                  'Runs until the other side hangs up'),
+          trailing: AppSwitch(
+            value: _draft.autoHangUp,
+            onChanged: (v) => _update(_draft.copyWith(autoHangUp: v)),
+          ),
         ),
+        if (_draft.autoHangUp)
+          AppSliderRow(
+            title: context.tr('إنهاء بعد', 'End after'),
+            value: _draft.ringTimeoutSec,
+            min: FajrCallList.minRingTimeoutSec,
+            max: FajrCallList.maxRingTimeoutSec,
+            step: 5,
+            label: (s) => seconds(context, s),
+            onChanged: (s) => _update(_draft.copyWith(ringTimeoutSec: s)),
+          ),
         AppSliderRow(
           title: context.tr('الانتظار بعد الرد', 'Wait after an answer'),
           value: _draft.waitAfterAnswerSec,
@@ -620,8 +637,7 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
           title: context.tr('توقّف عند أول رد', 'Stop after the first answer'),
           trailing: AppSwitch(
             value: _draft.stopAfterFirstAnswer,
-            onChanged: (v) =>
-                _update(_draft.copyWith(stopAfterFirstAnswer: v)),
+            onChanged: (v) => _update(_draft.copyWith(stopAfterFirstAnswer: v)),
           ),
         ),
         AppListTile(
@@ -782,8 +798,8 @@ class _ContactRow extends StatelessWidget {
         color: c.destructive,
         alignment: AlignmentDirectional.centerEnd,
         padding: const EdgeInsetsDirectional.only(end: AppSpacing.lg),
-        child: Icon(CupertinoIcons.trash, color: c.onAccent,
-            semanticLabel: context.tr('حذف', 'Delete')),
+        child: Icon(CupertinoIcons.trash,
+            color: c.onAccent, semanticLabel: context.tr('حذف', 'Delete')),
       ),
       child: ColoredBox(
         color: c.secondaryGroupedBackground,
@@ -820,7 +836,8 @@ class _ContactRow extends StatelessWidget {
               Padding(
                 padding: const EdgeInsetsDirectional.only(
                     start: AppSpacing.md + 30 + 12),
-                child: Container(height: AppSpacing.hairline, color: c.separator),
+                child:
+                    Container(height: AppSpacing.hairline, color: c.separator),
               ),
           ],
         ),
@@ -847,8 +864,8 @@ class _SaveBar extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm,
-              AppSpacing.md, AppSpacing.sm),
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
           child: AppButton.filled(
             label: context.tr('حفظ القائمة', 'Save list'),
             expand: true,

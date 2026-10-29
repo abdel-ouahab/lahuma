@@ -114,7 +114,12 @@ class _AdhkarReaderScreenState extends ConsumerState<AdhkarReaderScreen> {
             ),
       child: SafeArea(
         child: adhkarAsync.when(
-          loading: () => const AppLoader(),
+          loading: () => const Padding(
+            padding: EdgeInsets.all(AppSpacing.lg),
+            child: AppShimmer(
+              child: AppSkeletonText(lines: 8, lineHeight: 14),
+            ),
+          ),
           error: (error, _) => AdhkarErrorView(
             error: error,
             onRetry: () => ref.invalidate(adhkarProvider),

@@ -10,6 +10,7 @@ export 'app_typography.dart';
 export 'widgets/app_button.dart';
 export 'widgets/app_card.dart';
 export 'widgets/app_direction.dart';
+export 'widgets/app_entrance.dart';
 export 'widgets/app_inputs.dart';
 export 'widgets/app_list.dart';
 export 'widgets/app_mini_player.dart';

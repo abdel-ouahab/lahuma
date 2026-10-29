@@ -3,10 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_settings_enum.dart';
+import '../../../../core/constants/features.dart';
+import '../../../../core/design/widgets/app_entrance.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../adhan/presentation/adhan_providers.dart';
+import '../../../adhan/presentation/screens/adhan_settings_screen.dart';
 import '../../../auth/presentation/auth_providers.dart';
 import '../../../dedication/presentation/dedication_labels.dart';
 import '../../../dedication/presentation/dedication_providers.dart';
@@ -17,6 +21,7 @@ import '../../../wird/presentation/goal_sheet.dart';
 import '../../../wird/presentation/wird_providers.dart';
 import '../../data/settings_repository.dart';
 import '../settings_providers.dart';
+import '../theme_mode_switcher.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -31,8 +36,10 @@ class SettingsScreen extends ConsumerWidget {
     final dedication = ref.watch(dedicationProvider);
     final user = ref.watch(authProvider);
     final prayer = ref.watch(fajrCallProvider.select((s) => s.prayer));
+    final adhan = ref.watch(adhanProvider.select((s) => s.settings));
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final background =
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     final text = isDark ? AppColors.textDark : AppColors.textLight;
 
     return Scaffold(
@@ -40,9 +47,9 @@ class SettingsScreen extends ConsumerWidget {
       body: SafeArea(
         child: ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md,
-              AppSpacing.lg, AppSpacing.lg),
-          children: [
+          padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+          children: <Widget>[
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.lg),
               child: Text(
@@ -53,21 +60,23 @@ class SettingsScreen extends ConsumerWidget {
             ),
 
             // ── Account ──────────────────────────────────────────────────
-            _Card(
-              isDark: isDark,
-              children: [
-                _NavTile(
-                  icon: Icons.person_outline_rounded,
-                  label: user?.name ?? context.tr('تسجيل الدخول', 'Sign in'),
-                  detail: user?.email ??
-                      context.tr('اختياري. التطبيق يعمل بدون حساب.',
-                          'Optional. The app works without an account.'),
-                  isDark: isDark,
-                  onTap: () => context.push('/account'),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
+            if (Features.accounts) ...[
+              _Card(
+                isDark: isDark,
+                children: [
+                  _NavTile(
+                    icon: Icons.person_outline_rounded,
+                    label: user?.name ?? context.tr('تسجيل الدخول', 'Sign in'),
+                    detail: user?.email ??
+                        context.tr('اختياري. التطبيق يعمل بدون حساب.',
+                            'Optional. The app works without an account.'),
+                    isDark: isDark,
+                    onTap: () => context.push('/account'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.lg),
+            ],
 
             // ── Reading ──────────────────────────────────────────────────
             _SectionHeader(title: context.tr('القراءة', 'Reading')),
@@ -113,7 +122,8 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(readerFontSizeProvider.notifier).update(v),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   child: Directionality(
                     textDirection: TextDirection.rtl,
                     child: Text(
@@ -131,7 +141,8 @@ class SettingsScreen extends ConsumerWidget {
                   secondary: const Icon(Icons.translate_outlined,
                       size: 18, color: AppColors.primary),
                   title: Text(
-                    context.tr('عرض الترجمة الإنجليزية', 'Show English translation'),
+                    context.tr(
+                        'عرض الترجمة الإنجليزية', 'Show English translation'),
                     style: GoogleFonts.cairo(fontSize: 14, color: text),
                   ),
                 ),
@@ -149,10 +160,24 @@ class SettingsScreen extends ConsumerWidget {
                   label: context.tr('الموقع', 'Location'),
                   detail: prayer.hasLocation
                       ? prayer.placeName
-                      : context.tr('غير محدد. يُستخدم لمواقيت الصلاة ونداء الفجر.',
+                      : context.tr(
+                          'غير محدد. يُستخدم لمواقيت الصلاة ونداء الفجر.',
                           'Not set. Used for prayer times and Fajr Call.'),
                   isDark: isDark,
                   onTap: () => PrayerSettingsSheet.show(context),
+                ),
+                _Divider(isDark: isDark),
+                _NavTile(
+                  icon: Icons.volume_up_outlined,
+                  label: context.tr('الأذان', 'Adhan'),
+                  detail: !adhan.enabled
+                      ? context.tr('متوقف', 'Off')
+                      : ref
+                              .watch(adhanProvider.select((s) => s.selected))
+                              ?.name(context.isArabic) ??
+                          context.tr('الأذان الافتراضي', 'Default adhan'),
+                  isDark: isDark,
+                  onTap: () => context.push(AdhanSettingsScreen.path),
                 ),
                 _Divider(isDark: isDark),
                 _NavTile(
@@ -199,34 +224,34 @@ class SettingsScreen extends ConsumerWidget {
             _Card(
               isDark: isDark,
               children: [
-                _SettingTile(
-                  label: context.tr('فاتح', 'Light'),
-                  icon: Icons.wb_sunny_outlined,
-                  isSelected: themeMode == AppThemeMode.light,
-                  isDark: isDark,
-                  onTap: () => ref
-                      .read(themeModeProvider.notifier)
-                      .update(AppThemeMode.light),
+                ThemeModeSwitcher(
+                  builder: (context, switchTo) => _SettingTile(
+                    label: context.tr('فاتح', 'Light'),
+                    icon: Icons.wb_sunny_outlined,
+                    isSelected: themeMode == AppThemeMode.light,
+                    isDark: isDark,
+                    onTap: () => switchTo(AppThemeMode.light),
+                  ),
                 ),
                 _Divider(isDark: isDark),
-                _SettingTile(
-                  label: context.tr('داكن', 'Dark'),
-                  icon: Icons.nightlight_outlined,
-                  isSelected: themeMode == AppThemeMode.dark,
-                  isDark: isDark,
-                  onTap: () => ref
-                      .read(themeModeProvider.notifier)
-                      .update(AppThemeMode.dark),
+                ThemeModeSwitcher(
+                  builder: (context, switchTo) => _SettingTile(
+                    label: context.tr('داكن', 'Dark'),
+                    icon: Icons.nightlight_outlined,
+                    isSelected: themeMode == AppThemeMode.dark,
+                    isDark: isDark,
+                    onTap: () => switchTo(AppThemeMode.dark),
+                  ),
                 ),
                 _Divider(isDark: isDark),
-                _SettingTile(
-                  label: context.tr('تلقائي', 'Match device'),
-                  icon: Icons.brightness_auto_outlined,
-                  isSelected: themeMode == AppThemeMode.system,
-                  isDark: isDark,
-                  onTap: () => ref
-                      .read(themeModeProvider.notifier)
-                      .update(AppThemeMode.system),
+                ThemeModeSwitcher(
+                  builder: (context, switchTo) => _SettingTile(
+                    label: context.tr('تلقائي', 'Match device'),
+                    icon: Icons.brightness_auto_outlined,
+                    isSelected: themeMode == AppThemeMode.system,
+                    isDark: isDark,
+                    onTap: () => switchTo(AppThemeMode.system),
+                  ),
                 ),
               ],
             ),
@@ -254,7 +279,9 @@ class SettingsScreen extends ConsumerWidget {
                     style: GoogleFonts.scheherazadeNew(
                       fontSize: 16,
                       height: 1.7,
-                      color: isDark ? AppColors.subtextDark : AppColors.subtextLight,
+                      color: isDark
+                          ? AppColors.subtextDark
+                          : AppColors.subtextLight,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
@@ -266,13 +293,15 @@ class SettingsScreen extends ConsumerWidget {
                     style: GoogleFonts.cairo(
                       fontSize: 13,
                       height: 1.7,
-                      color: isDark ? AppColors.subtextDark : AppColors.subtextLight,
+                      color: isDark
+                          ? AppColors.subtextDark
+                          : AppColors.subtextLight,
                     ),
                   ),
                 ],
               ),
             ),
-          ],
+          ].listEntrance(),
         ),
       ),
     );
@@ -363,7 +392,9 @@ class _NavTile extends StatelessWidget {
                     detail,
                     style: GoogleFonts.cairo(
                       fontSize: 12,
-                      color: isDark ? AppColors.subtextDark : AppColors.subtextLight,
+                      color: isDark
+                          ? AppColors.subtextDark
+                          : AppColors.subtextLight,
                     ),
                   ),
                 ],

@@ -97,6 +97,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text(morning.first.text), findsOneWidget);
     expect(find.text('لا توجد أذكار مفضلة'), findsNothing);
+    // Let the rows' entrance animations (flutter_animate timers) finish.
+    await tester.pump(const Duration(seconds: 1));
   });
 
   testWidgets('reader counts to the required count, then moves on',

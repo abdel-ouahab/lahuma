@@ -44,6 +44,9 @@ class FajrCallLogScreen extends ConsumerWidget {
 
     final total = sessions.fold<int>(0, (n, s) => n + s.total);
     final awake = sessions.fold<int>(0, (n, s) => n + s.awake);
+    // Calls that ended before the ring timeout (picked up or declined),
+    // plus any the call log confirmed as answered.
+    final ended = sessions.fold<int>(0, (n, s) => n + s.ended + s.answered);
     final noAnswer = sessions.fold<int>(0, (n, s) => n + s.noAnswer);
     final failed = sessions.fold<int>(0, (n, s) => n + s.failed);
 
@@ -67,22 +70,22 @@ class FajrCallLogScreen extends ConsumerWidget {
                   "After the first Fajr you'll see here who was called and who woke up."),
             )
           : ListView(
-              children: [
+              children: <Widget>[
                 const SizedBox(height: AppSpacing.md),
                 Padding(
                   padding: AppSpacing.screenInsets,
                   child: _Stats(
                     total: total,
                     awake: awake,
+                    ended: ended,
                     noAnswer: noAnswer,
                     failed: failed,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                for (final s in sessions)
-                  _SessionSection(session: s, now: now),
+                for (final s in sessions) _SessionSection(session: s, now: now),
                 const SizedBox(height: AppSpacing.lg),
-              ],
+              ].listEntrance(),
             ),
     );
   }
@@ -92,43 +95,51 @@ class _Stats extends StatelessWidget {
   const _Stats({
     required this.total,
     required this.awake,
+    required this.ended,
     required this.noAnswer,
     required this.failed,
   });
 
   final int total;
   final int awake;
+  final int ended;
   final int noAnswer;
   final int failed;
 
   @override
   Widget build(BuildContext context) {
-    Widget pair(Widget a, Widget b) => IntrinsicHeight(
+    Widget row(List<Widget> tiles) => IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: a),
-              const SizedBox(width: AppSpacing.ms),
-              Expanded(child: b),
+              for (var i = 0; i < tiles.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.ms),
+                Expanded(child: tiles[i]),
+              ],
             ],
           ),
         );
     return Column(
       children: [
-        pair(
+        row([
           _StatTile(
               label: context.tr('الاتصالات', 'Calls'),
               value: total,
-              icon: CupertinoIcons.phone_fill,
-              color: AppColors.tileBlue),
+              icon: CupertinoIcons.phone_arrow_up_right,
+              color: AppColors.tilePurple),
           _StatTile(
               label: context.tr('استيقظوا', 'Woke up'),
               value: awake,
               icon: CupertinoIcons.checkmark_circle_fill,
               color: AppColors.success),
-        ),
+        ]),
         const SizedBox(height: AppSpacing.ms),
-        pair(
+        row([
+          _StatTile(
+              label: context.tr('انتهت', 'Ended'),
+              value: ended,
+              icon: CupertinoIcons.phone_fill,
+              color: AppColors.tileBlue),
           _StatTile(
               label: context.tr('لم يردّوا', 'No answer'),
               value: noAnswer,
@@ -139,7 +150,7 @@ class _Stats extends StatelessWidget {
               value: failed,
               icon: CupertinoIcons.exclamationmark_circle_fill,
               color: AppColors.destructive),
-        ),
+        ]),
       ],
     );
   }
@@ -200,8 +211,7 @@ class _SessionSection extends ConsumerWidget {
     final awakeIds = session.awakeContactIds;
     final header = [
       formatFire(context, session.firedAt, now),
-      if (session.mode == FajrCallMode.manual)
-        context.tr('يدوي', 'Manual'),
+      if (session.mode == FajrCallMode.manual) context.tr('يدوي', 'Manual'),
       if (session.stoppedByUser) context.tr('أُوقف', 'Stopped'),
     ].join(' · ');
     return AppListSection(
@@ -248,10 +258,11 @@ class _ContactResult extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            statusIcon(awake ? CallStatus.markedAwake : last ?? CallStatus.called),
+            statusIcon(
+                awake ? CallStatus.markedAwake : last ?? CallStatus.called),
             size: 26,
-            color: c.resolve(
-                statusColor(awake ? CallStatus.markedAwake : last ?? CallStatus.called)),
+            color: c.resolve(statusColor(
+                awake ? CallStatus.markedAwake : last ?? CallStatus.called)),
           ),
           const SizedBox(width: AppSpacing.ms),
           Expanded(
@@ -297,7 +308,8 @@ class _ContactResult extends StatelessWidget {
               ],
             ),
           ),
-          AwakeToggle(value: awake, onChanged: onToggleAwake, name: contact.name),
+          AwakeToggle(
+              value: awake, onChanged: onToggleAwake, name: contact.name),
         ],
       ),
     );

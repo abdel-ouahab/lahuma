@@ -62,6 +62,7 @@ void main() {
   group('FajrCallList', () {
     test('defaults match the product brief', () {
       const l = FajrCallList(id: 'l', name: 'والداي');
+      expect(l.autoHangUp, isTrue);
       expect(l.ringTimeoutSec, 20);
       expect(l.waitAfterAnswerSec, 30);
       expect(l.gapBetweenSec, 3);
@@ -85,6 +86,7 @@ void main() {
         repeatDaily: false,
         weekdays: {DateTime.friday, DateTime.monday},
         contacts: [mother, friend],
+        autoHangUp: false,
         ringTimeoutSec: 45,
         waitAfterAnswerSec: 10,
         gapBetweenSec: 5,
@@ -121,6 +123,7 @@ void main() {
       expect(l.contacts, [mother]);
       expect(l.fixedTime, const TimeOfDayHm(4, 30));
       expect(l.mode, FajrCallMode.auto);
+      expect(l.autoHangUp, isTrue); // lists saved before the setting existed
     });
 
     test('runsOn: empty weekdays means every day', () {

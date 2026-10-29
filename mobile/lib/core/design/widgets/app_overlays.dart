@@ -75,6 +75,8 @@ Future<String?> showAppTextInputDialog(
   String? cancelLabel,
   int maxLines = 1,
   int? maxLength,
+  TextInputType? keyboardType,
+  List<TextInputFormatter>? inputFormatters,
 }) async {
   final controller = TextEditingController(text: initialValue);
   try {
@@ -99,6 +101,8 @@ Future<String?> showAppTextInputDialog(
                 minLines: maxLines > 1 ? 3 : 1,
                 maxLines: maxLines,
                 maxLength: maxLength,
+                keyboardType: keyboardType,
+                inputFormatters: inputFormatters,
                 style: AppTypography.subheadline.copyWith(color: c.label),
                 placeholderStyle:
                     AppTypography.subheadline.copyWith(color: c.placeholder),

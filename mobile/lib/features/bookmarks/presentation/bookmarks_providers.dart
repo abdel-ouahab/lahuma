@@ -23,6 +23,7 @@ class BookmarksNotifier extends StateNotifier<List<Bookmark>> {
       _repository.isBookmarked(surahId, ayahNumber);
 }
 
-final bookmarksProvider = StateNotifierProvider<BookmarksNotifier, List<Bookmark>>((ref) {
+final bookmarksProvider =
+    StateNotifierProvider<BookmarksNotifier, List<Bookmark>>((ref) {
   return BookmarksNotifier(ref.watch(bookmarksRepositoryProvider));
 });

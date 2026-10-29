@@ -86,7 +86,8 @@ class _LanternPainter extends CustomPainter {
     final horizon = Paint()
       ..shader = RadialGradient(
         colors: [dawn.withValues(alpha: 0.35), dawn.withValues(alpha: 0)],
-      ).createShader(Rect.fromCircle(center: Offset(w / 2, h), radius: w * 0.6));
+      ).createShader(
+          Rect.fromCircle(center: Offset(w / 2, h), radius: w * 0.6));
     canvas.drawCircle(Offset(w / 2, h), w * 0.6, horizon);
 
     canvas.save();

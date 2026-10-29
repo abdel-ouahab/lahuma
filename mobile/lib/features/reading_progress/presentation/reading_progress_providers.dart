@@ -4,10 +4,10 @@ import '../../wird/presentation/wird_providers.dart';
 import '../data/reading_progress_repository.dart';
 import '../domain/reading_progress.dart';
 
-final readingProgressRepositoryProvider = Provider((ref) => ReadingProgressRepository());
+final readingProgressRepositoryProvider =
+    Provider((ref) => ReadingProgressRepository());
 
-final readingProgressProvider =
-    FutureProvider<ReadingProgress?>((ref) async {
+final readingProgressProvider = FutureProvider<ReadingProgress?>((ref) async {
   return ref.watch(readingProgressRepositoryProvider).getLastProgress();
 });
 

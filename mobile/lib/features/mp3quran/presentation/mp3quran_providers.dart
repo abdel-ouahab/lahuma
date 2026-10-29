@@ -74,7 +74,8 @@ class ReciterFavoritesNotifier extends StateNotifier<Set<int>> {
 
 final reciterFavoritesProvider =
     StateNotifierProvider<ReciterFavoritesNotifier, Set<int>>((ref) {
-  return ReciterFavoritesNotifier(ref.watch(reciterFavoritesRepositoryProvider));
+  return ReciterFavoritesNotifier(
+      ref.watch(reciterFavoritesRepositoryProvider));
 });
 
 // ── Playback ────────────────────────────────────────────────────────────────

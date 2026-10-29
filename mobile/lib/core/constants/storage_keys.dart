@@ -37,6 +37,16 @@ class StorageKeys {
   static const String fajrCallPrayerSettings = 'fajrCall.prayerSettings';
   static const String fajrCallPermissionsShown = 'fajrCall.permissionsShown';
 
+  static const String prayerTimesCache = 'prayerTimes.cache';
+
+  static const String adhanSettings = 'adhan.settings';
+  static const String adhanMuezzins = 'adhan.muezzins';
+  static const String adhanDownload = 'adhan.download';
+
+  static const String mushafLastPage = 'mushaf.lastPage';
+  static const String mushafBookmarks = 'mushaf.bookmarks';
+  static const String mushafTheme = 'mushaf.theme';
+
   static const String authToken = 'auth.token';
   static const String authUser = 'auth.user';
 

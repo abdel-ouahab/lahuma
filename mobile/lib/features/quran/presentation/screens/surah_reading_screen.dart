@@ -29,6 +29,8 @@ import '../widgets/ayah_text_sheet.dart';
 import '../widgets/ayah_widget.dart';
 import '../widgets/reader_options_sheet.dart';
 import '../widgets/surah_header.dart';
+import '../../../../core/design/widgets/app_states.dart'
+    show AppShimmer, AppSkeletonText;
 
 class SurahReadingScreen extends ConsumerWidget {
   const SurahReadingScreen({
@@ -58,10 +60,10 @@ class SurahReadingScreen extends ConsumerWidget {
             detail: detail,
             initialAyah: initialAyah,
           ),
-          loading: () => const Center(
-            child: CircularProgressIndicator(
-              color: AppColors.primary,
-              strokeWidth: 2,
+          loading: () => const Padding(
+            padding: EdgeInsets.all(AppSpacing.lg),
+            child: AppShimmer(
+              child: AppSkeletonText(lines: 12, lineHeight: 16),
             ),
           ),
           error: (e, _) => Column(

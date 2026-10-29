@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/design/widgets/app_entrance.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -9,9 +10,11 @@ import '../../../../core/widgets/error_retry.dart';
 import '../../../../core/widgets/lahuma_icon_button.dart';
 import '../../domain/juz_data.dart';
 import '../../domain/surah.dart';
+import '../../mushaf/presentation/widgets/mushaf_entry_card.dart';
 import '../providers/quran_providers.dart';
 import '../../../mp3quran/presentation/mp3quran_reciters_screen.dart';
 import '../widgets/surah_card.dart';
+import '../../../../core/design/widgets/app_states.dart' show AppSkeletonList;
 
 class SurahListScreen extends ConsumerStatefulWidget {
   const SurahListScreen({super.key, this.initialTab = 0});
@@ -63,7 +66,8 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
     final surahListAsync = ref.watch(surahListProvider);
     final query = ref.watch(surahSearchQueryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    final background =
+        isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
 
     return Scaffold(
       backgroundColor: background,
@@ -92,6 +96,13 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                   ),
                 ],
               ),
+            ),
+
+            // ── Mushaf ──────────────────────────────────────────────────────
+            const Padding(
+              padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+              child: MushafEntryCard(),
             ),
 
             // ── Tab Bar ─────────────────────────────────────────────────────
@@ -142,10 +153,12 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                   focusNode: _searchFocus,
                   textInputAction: TextInputAction.search,
                   decoration: InputDecoration(
-                    hintText: context.tr('ابحث بالاسم أو الرقم...', 'Search by name or number...'),
+                    hintText: context.tr('ابحث بالاسم أو الرقم...',
+                        'Search by name or number...'),
                     prefixIcon: Icon(
                       Icons.search_rounded,
-                      color: isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                      color:
+                          isDark ? AppColors.mutedDark : AppColors.mutedLight,
                       size: 20,
                     ),
                     filled: true,
@@ -186,8 +199,8 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                         physics: const BouncingScrollPhysics(),
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
-                        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0,
-                            AppSpacing.lg, AppSpacing.lg),
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.sm),
@@ -196,15 +209,15 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                           return SurahListItem(
                             surah: surah,
                             onTap: () => context.push('/quran/${surah.number}'),
-                          );
+                          ).listEntrance(index);
                         },
                       );
                     },
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                        strokeWidth: 2,
-                      ),
+                    loading: () => const AppSkeletonList(
+                      itemCount: 10,
+                      padding: EdgeInsets.fromLTRB(
+                          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                      spacing: AppSpacing.sm,
                     ),
                     error: (e, _) => ErrorRetry(
                       error: e,
@@ -239,8 +252,8 @@ class _JuzList extends StatelessWidget {
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg,
-          AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
       itemCount: juzStarts.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
@@ -290,11 +303,14 @@ class _JuzList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          context.tr('الجزء ${arabicJuzNames[index]}', 'Juz\' ${juz.juz}'),
+                          context.tr('الجزء ${arabicJuzNames[index]}',
+                              'Juz\' ${juz.juz}'),
                           style: GoogleFonts.cairo(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: isDark ? AppColors.textDark : AppColors.textLight,
+                            color: isDark
+                                ? AppColors.textDark
+                                : AppColors.textLight,
                           ),
                         ),
                         if (subtitle != null)
@@ -314,7 +330,7 @@ class _JuzList extends StatelessWidget {
               ),
             ),
           ),
-        );
+        ).listEntrance(index);
       },
     );
   }

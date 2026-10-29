@@ -9,12 +9,17 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/quran/presentation/screens/surah_list_screen.dart';
 import '../../features/quran/presentation/screens/surah_reading_screen.dart';
 import '../../features/quran/presentation/screens/reciter_player_screen.dart';
+import '../../features/quran/mushaf/presentation/screens/mushaf_index_screen.dart';
+import '../../features/quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../features/mp3quran/presentation/mp3quran_player_screen.dart';
 import '../../features/mp3quran/presentation/mp3quran_reciters_screen.dart';
 import '../../features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/account_screen.dart';
+import '../../features/adhan/presentation/screens/adhan_player_screen.dart';
+import '../../features/adhan/presentation/screens/adhan_settings_screen.dart';
 import '../../features/adhkar/domain/dhikr.dart';
+import '../../features/prayer_times/domain/prayer_times.dart';
 import '../../features/adhkar/presentation/screens/adhkar_reader_screen.dart';
 import '../../features/adhkar/presentation/screens/adhkar_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_edit_screen.dart';
@@ -51,6 +56,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
 
+      // ── Mushaf (outside shell — full-screen pages) ─────────────────────
+      GoRoute(
+        path: MushafScreen.path,
+        pageBuilder: (context, state) => _page(
+          state,
+          MushafScreen(
+            initialPage: int.tryParse(state.uri.queryParameters['page'] ?? ''),
+          ),
+        ),
+        routes: [
+          GoRoute(
+            path: 'index',
+            pageBuilder: (context, state) => _page(
+              state,
+              MushafIndexScreen(
+                currentPage:
+                    int.tryParse(state.uri.queryParameters['page'] ?? ''),
+              ),
+            ),
+          ),
+        ],
+      ),
+
       // ── Adhkar reader (outside shell — counter needs the full screen) ───
       GoRoute(
         path: '/adhkar/:period(morning|evening)',
@@ -77,6 +105,19 @@ final routerProvider = Provider<GoRouter>((ref) {
                   at == null ? null : DateTime.fromMillisecondsSinceEpoch(at),
             ),
           );
+        },
+      ),
+
+      // ── Adhan player (outside shell — opened from an adhan notification)
+      GoRoute(
+        path: AdhanPlayerScreen.path,
+        pageBuilder: (context, state) {
+          final name = state.uri.queryParameters['prayer'];
+          final prayer = PrayerKind.values
+                  .where((p) => p.name == name && p != PrayerKind.sunrise)
+                  .firstOrNull ??
+              PrayerKind.dhuhr;
+          return _page(state, AdhanPlayerScreen(prayer: prayer));
         },
       ),
 
@@ -227,6 +268,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 path: '/settings',
                 pageBuilder: (context, state) =>
                     _page(state, const SettingsScreen()),
+                routes: [
+                  GoRoute(
+                    path: 'adhan',
+                    pageBuilder: (context, state) =>
+                        _page(state, const AdhanSettingsScreen()),
+                  ),
+                ],
               ),
             ],
           ),

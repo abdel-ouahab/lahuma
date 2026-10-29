@@ -103,7 +103,8 @@ class _ContactFormSheetState extends State<ContactFormSheet> {
             children: [
               AppTextFormRow(
                 controller: _name,
-                placeholder: context.tr('الاسم (مثلًا: أمي)', 'Name (e.g. Mum)'),
+                placeholder:
+                    context.tr('الاسم (مثلًا: أمي)', 'Name (e.g. Mum)'),
                 textInputAction: TextInputAction.next,
                 validator: (v) => (v ?? '').trim().isEmpty
                     ? context.tr('اكتب اسمًا', 'Enter a name')
@@ -118,7 +119,8 @@ class _ContactFormSheetState extends State<ContactFormSheet> {
                 onFieldSubmitted: (_) => _save(),
                 validator: (v) =>
                     normalizePhone(v ?? '').replaceAll('+', '').length < 3
-                        ? context.tr('اكتب رقمًا صحيحًا', 'Enter a valid number')
+                        ? context.tr(
+                            'اكتب رقمًا صحيحًا', 'Enter a valid number')
                         : null,
               ),
               AppListTile(
@@ -131,8 +133,8 @@ class _ContactFormSheetState extends State<ContactFormSheet> {
             ],
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm,
-                AppSpacing.md, AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.sm),
             child: AppButton.filled(
               label: context.tr('حفظ', 'Save'),
               expand: true,

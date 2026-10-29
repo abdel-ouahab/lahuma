@@ -5,6 +5,8 @@ import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/error_retry.dart';
+import '../../../../core/design/widgets/app_states.dart'
+    show AppShimmer, AppSkeletonText;
 
 /// Shows one ayah's entry from a secondary edition (tafsir or translation) in
 /// a bottom sheet.
@@ -70,14 +72,16 @@ class AyahTextSheet extends ConsumerWidget {
               ),
               Text(
                 context.tr('الآية $ayahNumber', 'Ayah $ayahNumber'),
-                style: GoogleFonts.cairo(fontSize: 12, color: AppColors.primary),
+                style:
+                    GoogleFonts.cairo(fontSize: 12, color: AppColors.primary),
               ),
               const SizedBox(height: AppSpacing.md),
               Flexible(
                 child: async.when(
                   data: (map) => SingleChildScrollView(
                     child: Directionality(
-                      textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
+                      textDirection:
+                          rtl ? TextDirection.rtl : TextDirection.ltr,
                       child: SizedBox(
                         width: double.infinity,
                         child: Text(
@@ -103,11 +107,8 @@ class AyahTextSheet extends ConsumerWidget {
                   ),
                   loading: () => const Padding(
                     padding: EdgeInsets.all(AppSpacing.xl),
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primary,
-                        strokeWidth: 2,
-                      ),
+                    child: AppShimmer(
+                      child: AppSkeletonText(lines: 4, lineHeight: 14),
                     ),
                   ),
                   error: (e, _) => ErrorRetry(

@@ -6,20 +6,59 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+/// A custom notification sound, per platform.
+///
+/// Android: a `content://` [androidUri] (never `file://`, which the system
+/// cannot read) or a [androidRaw] resource name in `res/raw`. iOS: a file
+/// name in `Library/Sounds` or the app bundle ([iosName], ≤ 30 s,
+/// .caf / .wav / .aiff).
+class NotificationSound {
+  const NotificationSound({this.androidUri, this.androidRaw, this.iosName});
+
+  final String? androidUri;
+  final String? androidRaw;
+  final String? iosName;
+
+  AndroidNotificationSound? get _android => androidUri != null
+      ? UriAndroidNotificationSound(androidUri!)
+      : androidRaw != null
+          ? RawResourceAndroidNotificationSound(androidRaw)
+          : null;
+}
+
 /// A notification channel (Android) and how loud it is. iOS has no channels;
 /// [timeSensitive] maps to the Time Sensitive interruption level there.
+///
+/// An Android channel's sound is fixed once the channel exists, so a
+/// channel with a custom [sound] needs an id unique to that sound.
 class NotificationChannelSpec {
   const NotificationChannelSpec({
     required this.id,
     required this.name,
     required this.description,
     this.timeSensitive = false,
+    this.alarm = false,
+    this.sound,
   });
 
   final String id;
   final String name;
   final String description;
   final bool timeSensitive;
+
+  /// Android: plays on the alarm stream (alarm volume, heard in silent
+  /// mode) at max importance.
+  final bool alarm;
+  final NotificationSound? sound;
+
+  Importance get _importance => alarm
+      ? Importance.max
+      : timeSensitive
+          ? Importance.max
+          : Importance.defaultImportance;
+
+  AudioAttributesUsage get _usage =>
+      alarm ? AudioAttributesUsage.alarm : AudioAttributesUsage.notification;
 }
 
 /// App-wide local notifications (wraps `flutter_local_notifications`).
@@ -113,19 +152,21 @@ class LocalNotifications {
     return route;
   }
 
-  AndroidFlutterLocalNotificationsPlugin? get _android => _plugin
-      .resolvePlatformSpecificImplementation<
+  AndroidFlutterLocalNotificationsPlugin? get _android =>
+      _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
 
-  IOSFlutterLocalNotificationsPlugin? get _ios => _plugin
-      .resolvePlatformSpecificImplementation<
+  IOSFlutterLocalNotificationsPlugin? get _ios =>
+      _plugin.resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin>();
 
   /// Whether notifications may be shown (Android 13+ / iOS permission).
   Future<bool> areEnabled() async {
     await init();
     if (!_supported) return false;
-    if (_android != null) return await _android!.areNotificationsEnabled() ?? false;
+    if (_android != null) {
+      return await _android!.areNotificationsEnabled() ?? false;
+    }
     final ios = await _ios?.checkPermissions();
     return ios?.isEnabled ?? false;
   }
@@ -183,22 +224,58 @@ class LocalNotifications {
           channel.id,
           channel.name,
           channelDescription: channel.description,
-          importance:
-              channel.timeSensitive ? Importance.max : Importance.defaultImportance,
-          priority:
-              channel.timeSensitive ? Priority.high : Priority.defaultPriority,
-          category: channel.timeSensitive
-              ? AndroidNotificationCategory.reminder
-              : null,
+          importance: channel._importance,
+          priority: channel.timeSensitive || channel.alarm
+              ? Priority.high
+              : Priority.defaultPriority,
+          category: channel.alarm
+              ? AndroidNotificationCategory.alarm
+              : channel.timeSensitive
+                  ? AndroidNotificationCategory.reminder
+                  : null,
+          sound: channel.sound?._android,
+          audioAttributesUsage: channel._usage,
         ),
         iOS: DarwinNotificationDetails(
           presentSound: true,
+          sound: channel.sound?.iosName,
           interruptionLevel: channel.timeSensitive
               ? InterruptionLevel.timeSensitive
               : InterruptionLevel.active,
         ),
       ),
     );
+  }
+
+  /// Android: creates [channel] up front with its sound and audio usage
+  /// (a no-op when it exists; its sound can't change after that).
+  Future<void> ensureChannel(NotificationChannelSpec channel) async {
+    await init();
+    if (!_supported || _android == null) return;
+    await _android!.createNotificationChannel(AndroidNotificationChannel(
+      channel.id,
+      channel.name,
+      description: channel.description,
+      importance: channel._importance,
+      sound: channel.sound?._android,
+      audioAttributesUsage: channel._usage,
+    ));
+  }
+
+  /// Android: deletes the channels whose id starts with [prefix], except
+  /// [keep] (channels left behind by an old sound or version).
+  Future<void> deleteChannels({
+    required String prefix,
+    required Set<String> keep,
+  }) async {
+    await init();
+    if (!_supported || _android == null) return;
+    final channels = await _android!.getNotificationChannels() ?? const [];
+    for (final c in channels) {
+      if (c.id.startsWith(prefix) && !keep.contains(c.id)) {
+        await _android!.deleteNotificationChannel(channelId: c.id);
+      }
+    }
   }
 
   /// Ids and routes of the notifications still waiting to fire.

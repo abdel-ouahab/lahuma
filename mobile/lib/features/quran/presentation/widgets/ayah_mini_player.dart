@@ -32,9 +32,8 @@ class AyahMiniPlayer extends ConsumerWidget {
         'Ayah ${playback.ayah} · $reciter',
       ),
       playing: playback.playing,
-      progress: playback.totalAyahs > 0
-          ? playback.ayah / playback.totalAyahs
-          : null,
+      progress:
+          playback.totalAyahs > 0 ? playback.ayah / playback.totalAyahs : null,
       onTap: () =>
           context.push('/quran/${playback.surah}?ayah=${playback.ayah}'),
       onTogglePlay: playback.playing ? audio.pause : audio.resume,

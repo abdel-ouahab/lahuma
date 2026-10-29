@@ -12,12 +12,15 @@ class LocationException implements Exception {
 class LocationService {
   const LocationService();
 
-  Future<({double latitude, double longitude})> currentPosition() async {
+  /// With [request] false a missing permission is reported ([denied]) instead
+  /// of prompting, for background refreshes that must not nag.
+  Future<({double latitude, double longitude})> currentPosition(
+      {bool request = true}) async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw const LocationException(LocationFailure.serviceDisabled);
     }
     var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    if (permission == LocationPermission.denied && request) {
       permission = await Geolocator.requestPermission();
     }
     if (permission == LocationPermission.deniedForever) {

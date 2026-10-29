@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:shimmer/shimmer.dart';
 import '../app_colors.dart';
 import '../app_motion.dart';
 import '../app_spacing.dart';
@@ -27,6 +28,157 @@ class AppLoader extends StatelessWidget {
                     AppTypography.footnote.copyWith(color: c.secondaryLabel)),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Sweeps a highlight across [child]'s shapes while content loads. Build the
+/// placeholder from [AppSkeleton] bones; under reduce motion they stay still.
+class AppShimmer extends StatelessWidget {
+  const AppShimmer({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    final content = Semantics(
+      label: Localizations.localeOf(context).languageCode == 'ar'
+          ? 'جارٍ التحميل'
+          : 'Loading',
+      excludeSemantics: true,
+      child: child,
+    );
+    if (MediaQuery.disableAnimationsOf(context)) return content;
+    return Shimmer.fromColors(
+      baseColor: c.fill,
+      highlightColor: c.quaternaryLabel,
+      period: const Duration(seconds: 1),
+      child: content,
+    );
+  }
+}
+
+/// One placeholder bone. Width defaults to the available width.
+class AppSkeleton extends StatelessWidget {
+  const AppSkeleton({
+    super.key,
+    this.width,
+    required this.height,
+    this.radius = AppRadius.small,
+  });
+
+  /// A circle (avatars, reciter photos).
+  const AppSkeleton.circle({super.key, required double size})
+      : width = size,
+        height = size,
+        radius = AppRadius.full;
+
+  final double? width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: width ?? double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          // Visible on its own (reduce motion); Shimmer repaints it otherwise.
+          color: context.palette.fill,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      );
+}
+
+/// Lines of placeholder text; the last one is shorter, like a paragraph end.
+class AppSkeletonText extends StatelessWidget {
+  const AppSkeletonText({super.key, this.lines = 3, this.lineHeight = 12});
+
+  final int lines;
+  final double lineHeight;
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < lines; i++) ...[
+            if (i > 0) SizedBox(height: lineHeight * 0.75),
+            FractionallySizedBox(
+              alignment: AlignmentDirectional.centerStart,
+              widthFactor: i == lines - 1 && lines > 1 ? 0.6 : 1,
+              child: AppSkeleton(height: lineHeight, radius: lineHeight / 2),
+            ),
+          ],
+        ],
+      );
+}
+
+/// Shimmering stand-in for a list of rows: optional leading tile, a title and
+/// [lines] - 1 subtitle lines each. Fills the height it is given without
+/// scrolling, so it can sit where the real list will appear.
+class AppSkeletonList extends StatelessWidget {
+  const AppSkeletonList({
+    super.key,
+    this.itemCount = 8,
+    this.lines = 2,
+    this.leadingSize = 44,
+    this.circleLeading = false,
+    this.padding = const EdgeInsets.all(AppSpacing.md),
+    this.spacing = AppSpacing.ms,
+  });
+
+  final int itemCount;
+  final int lines;
+
+  /// Null drops the leading tile (text-only rows such as adhkar).
+  final double? leadingSize;
+  final bool circleLeading;
+  final EdgeInsetsGeometry padding;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    final leading = leadingSize;
+    return AppShimmer(
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: padding,
+        child: Column(
+          children: [
+            for (var i = 0; i < itemCount; i++) ...[
+              if (i > 0) SizedBox(height: spacing),
+              Row(
+                children: [
+                  if (leading != null) ...[
+                    circleLeading
+                        ? AppSkeleton.circle(size: leading)
+                        : AppSkeleton(width: leading, height: leading),
+                    const SizedBox(width: AppSpacing.ms),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Staggered widths so the rows don't read as a grid.
+                        FractionallySizedBox(
+                          alignment: AlignmentDirectional.centerStart,
+                          widthFactor: const [0.55, 0.7, 0.45, 0.62][i % 4],
+                          child: const AppSkeleton(height: 14, radius: 7),
+                        ),
+                        if (lines > 1) ...[
+                          const SizedBox(height: AppSpacing.sm),
+                          AppSkeletonText(lines: lines - 1, lineHeight: 10),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

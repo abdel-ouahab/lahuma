@@ -107,7 +107,8 @@ class _ReaderOptionsSheetState extends ConsumerState<ReaderOptionsSheet> {
               onChanged: (v) =>
                   ref.read(showTranslationProvider.notifier).update(v),
               title: Text(
-                context.tr('عرض الترجمة الإنجليزية', 'Show English translation'),
+                context.tr(
+                    'عرض الترجمة الإنجليزية', 'Show English translation'),
                 style: GoogleFonts.cairo(fontSize: 14, color: text),
               ),
               subtitle: Text(

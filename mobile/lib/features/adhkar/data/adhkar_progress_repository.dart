@@ -132,7 +132,8 @@ class AdhkarProgressRepository {
     final raw = prefs.getString(StorageKeys.adhkarCompletions);
     if (raw == null) return const AdhkarCompletions();
     try {
-      return AdhkarCompletions.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return AdhkarCompletions.fromJson(
+          jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       return const AdhkarCompletions();
     }

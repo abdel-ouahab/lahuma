@@ -16,4 +16,6 @@ export const env = {
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
+  // Public origin of the object-storage bucket that holds the adhan audio.
+  mediaBaseUrl: process.env.MEDIA_BASE_URL ?? "",
 };

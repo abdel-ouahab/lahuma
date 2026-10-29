@@ -39,8 +39,8 @@ class FajrSchedule {
     final armedAt = list.armedAt;
     if (!list.repeatDaily && armedAt != null && armedAt.isBefore(from)) {
       // Recurses once: `from == armedAt` takes the normal path below.
-      final only = nextFireTimes(list, settings,
-          from: armedAt, count: 1, location: loc);
+      final only =
+          nextFireTimes(list, settings, from: armedAt, count: 1, location: loc);
       return only.where((t) => t.isAfter(from)).toList();
     }
     final want = list.repeatDaily ? count : 1;
@@ -68,8 +68,8 @@ class FajrSchedule {
     required DateTime from,
     tz.Location? location,
   }) {
-    final times = nextFireTimes(list, settings,
-        from: from, count: 1, location: location);
+    final times =
+        nextFireTimes(list, settings, from: from, count: 1, location: location);
     return times.isEmpty ? null : times.first;
   }
 

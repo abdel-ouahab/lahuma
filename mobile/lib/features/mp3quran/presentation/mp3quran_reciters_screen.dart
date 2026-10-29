@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/design/widgets/app_entrance.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -10,6 +11,7 @@ import '../../quran/presentation/providers/reciter_providers.dart';
 import '../../quran/presentation/widgets/lahuma_reciters_section.dart';
 import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
+import '../../../core/design/widgets/app_states.dart' show AppSkeletonList;
 
 /// Standalone page wrapper around [Mp3QuranRecitersList].
 class Mp3QuranRecitersScreen extends StatelessWidget {
@@ -71,10 +73,7 @@ class Mp3QuranRecitersList extends ConsumerWidget {
         ),
         Expanded(
           child: async.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(
-                  color: AppColors.primary, strokeWidth: 2),
-            ),
+            loading: () => const AppSkeletonList(circleLeading: true),
             error: (e, _) => ErrorRetry(
               error: e,
               onRetry: () => ref.invalidate(mp3RecitersProvider),
@@ -127,14 +126,13 @@ class Mp3QuranRecitersList extends ConsumerWidget {
                           AppSpacing.lg,
                           AppSpacing.sm,
                           AppSpacing.lg,
-                          MediaQuery.paddingOf(context).bottom +
-                              AppSpacing.md,
+                          MediaQuery.paddingOf(context).bottom + AppSpacing.md,
                         ),
                         itemCount: headerCount + list.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.sm),
                         itemBuilder: (_, i) {
-                          if (i < headerCount) return header!;
+                          if (i < headerCount) return header!.listEntrance(i);
                           final reciter = list[i - headerCount];
                           return _ReciterTile(
                             reciter: reciter,
@@ -142,7 +140,7 @@ class Mp3QuranRecitersList extends ConsumerWidget {
                             onToggleFavorite: () => ref
                                 .read(reciterFavoritesProvider.notifier)
                                 .toggle(reciter),
-                          );
+                          ).listEntrance(i);
                         },
                       ),
               );

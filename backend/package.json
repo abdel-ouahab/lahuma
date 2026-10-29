@@ -9,8 +9,12 @@
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:seed": "prisma db seed",
     "make-admin": "tsc -p tsconfig.json && node dist/scripts/makeAdmin.js",
     "test": "jest"
+  },
+  "prisma": {
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.19.1",

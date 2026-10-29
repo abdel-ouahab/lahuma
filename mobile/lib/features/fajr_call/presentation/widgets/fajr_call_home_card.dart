@@ -37,8 +37,8 @@ class FajrCallStatusCard extends ConsumerWidget {
               children: [
                 Text(
                   context.tr('نداء الفجر القادم', 'Next Fajr call'),
-                  style: AppTypography.footnote
-                      .copyWith(color: c.secondaryLabel),
+                  style:
+                      AppTypography.footnote.copyWith(color: c.secondaryLabel),
                 ),
                 Text(line,
                     style: AppTypography.headline.copyWith(color: c.label)),

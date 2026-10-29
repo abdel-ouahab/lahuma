@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_settings_enum.dart';
+import '../../../core/constants/features.dart';
 import '../../../core/design/design.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/widgets/continue_reading_card.dart';
@@ -13,7 +15,10 @@ import '../../dedication/presentation/dedication_providers.dart';
 import '../../dedication/presentation/dedication_sheet.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
+import '../../prayer_times/presentation/widgets/prayer_times_section.dart';
+import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
+import '../../settings/presentation/theme_mode_switcher.dart';
 import '../../wird/presentation/goal_sheet.dart';
 import '../../wird/presentation/wird_providers.dart';
 
@@ -27,6 +32,7 @@ class HomeScreen extends ConsumerWidget {
     final dedication = ref.watch(dedicationProvider);
     final adhkarDone = ref.watch(adhkarCompletionsProvider);
     final c = context.palette;
+    final isDark = c.isDark;
 
     const margin = AppSpacing.screenMargin;
 
@@ -53,17 +59,29 @@ class HomeScreen extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Flips what is on screen now; from "system" it pins the opposite.
+          ThemeModeSwitcher(
+            builder: (context, switchTo) => AppIconButton(
+              icon: isDark ? CupertinoIcons.sun_max : CupertinoIcons.moon,
+              label: isDark
+                  ? context.tr('الوضع الفاتح', 'Light mode')
+                  : context.tr('الوضع الداكن', 'Dark mode'),
+              onPressed: () =>
+                  switchTo(isDark ? AppThemeMode.light : AppThemeMode.dark),
+            ),
+          ),
           AppIconButton(
             icon: CupertinoIcons.slider_horizontal_3,
             label: context.tr('الإعدادات', 'Settings'),
             onPressed: () => context.go('/settings'),
           ),
-          AppIconButton(
-            icon: CupertinoIcons.person_crop_circle,
-            size: 26,
-            label: context.tr('حسابي', 'My account'),
-            onPressed: () => context.push('/account'),
-          ),
+          if (Features.accounts)
+            AppIconButton(
+              icon: CupertinoIcons.person_crop_circle,
+              size: 26,
+              label: context.tr('حسابي', 'My account'),
+              onPressed: () => context.push('/account'),
+            ),
         ],
       ),
       slivers: [
@@ -77,6 +95,9 @@ class HomeScreen extends ConsumerWidget {
           top: 0,
         ),
 
+        // ── Prayer times ────────────────────────────────────────────────────
+        box(const PrayerTimesSection(), top: AppSpacing.md),
+
         // ── Continue reading ────────────────────────────────────────────────
         box(
           progressAsync.when(
@@ -89,16 +110,18 @@ class HomeScreen extends ConsumerWidget {
                     ? '/quran/${progress.surahId}?ayah=${progress.ayahNumber}'
                     : '/quran/1',
               ),
+              onOpenMushaf: progress != null
+                  ? () => context.push(MushafScreen.path)
+                  : null,
             ),
-            loading: () => AppCard(
-              color: c.tertiaryFill,
-              child: const SizedBox(height: 170, child: AppLoader()),
+            loading: () => const AppShimmer(
+              child: AppSkeleton(height: 170, radius: AppRadius.large),
             ),
             error: (_, __) => ContinueReadingCard(
               onTap: () => context.push('/quran/1'),
             ),
           ),
-          top: AppSpacing.md,
+          top: AppSpacing.ms,
         ),
 
         // ── Shortcuts ───────────────────────────────────────────────────────
@@ -140,6 +163,15 @@ class HomeScreen extends ConsumerWidget {
                       context.tr('${wird.goal} آية', '${wird.goal} ayahs'),
                   onTap: () => GoalSheet.show(context),
                 ),
+              ),
+              const SizedBox(height: AppSpacing.ms),
+              FeatureCard(
+                title: context.tr('المصحف الشريف', 'The Mushaf'),
+                icon: CupertinoIcons.book_circle_fill,
+                iconColor: AppColors.tileGreen,
+                subtitle: context.tr('صفحات مصحف المدينة كما طُبعت',
+                    'The Madinah Mushaf, page by page'),
+                onTap: () => context.push(MushafScreen.path),
               ),
               const SizedBox(height: AppSpacing.ms),
               FeatureCard(

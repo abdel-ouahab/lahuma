@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../../../core/notifications/local_notifications.dart';
 import '../domain/fajr_call_list.dart';
@@ -18,8 +19,10 @@ class FajrNotifications {
 
   static const String routePrefix = '/fajr-call/wake/';
 
-  /// iOS keeps at most 64 pending notifications per app.
-  static const int maxPending = 60;
+  /// iOS keeps at most 64 pending notifications per app, and the adhan
+  /// takes 45 of them (`AdhanPlanner.iosBudget`); Android has no such cap.
+  static int get maxPending =>
+      defaultTargetPlatform == TargetPlatform.iOS ? 19 : 60;
   static const int maxPerList = 14;
 
   static String wakeRoute(String listId, DateTime at) =>
@@ -45,7 +48,8 @@ class FajrNotifications {
     }
     final limit = perList(lists.length);
     for (final e in lists) {
-      final names = e.list.contacts.map((c) => c.name).join(arabic ? '، ' : ', ');
+      final names =
+          e.list.contacts.map((c) => c.name).join(arabic ? '، ' : ', ');
       final times = e.times.take(limit).toList();
       for (var i = 0; i < times.length; i++) {
         await _notifications.scheduleAt(

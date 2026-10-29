@@ -10,7 +10,8 @@ class BookmarksRepository {
 
   List<Bookmark> getAll() {
     return _box.values
-        .map((raw) => Bookmark.fromJson(jsonDecode(raw) as Map<String, dynamic>))
+        .map(
+            (raw) => Bookmark.fromJson(jsonDecode(raw) as Map<String, dynamic>))
         .toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }

@@ -14,7 +14,8 @@ class NotesNotifier extends StateNotifier<Map<String, String>> {
     state = await _repository.loadAll();
   }
 
-  String? noteFor(int surah, int ayah) => state[NotesRepository.key(surah, ayah)];
+  String? noteFor(int surah, int ayah) =>
+      state[NotesRepository.key(surah, ayah)];
 
   /// Saves [text] for the ayah; an empty string removes the note.
   Future<void> setNote(int surah, int ayah, String text) async {

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../../core/audio/audio_focus.dart';
 import '../../../core/utils/arabic_text.dart';
+import '../../../core/design/widgets/app_entrance.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -267,7 +268,7 @@ class _PlayerBody extends ConsumerWidget {
                           subtitle: reciter.name,
                           active: state.surah == n,
                           onTap: () => controller.playSurah(n),
-                        );
+                        ).listEntrance(i);
                       },
                     ),
                   ),
@@ -760,7 +761,8 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                                     key: ValueKey(title),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: _inter(22, FontWeight.w700, _Np.white,
+                                    style: _inter(
+                                        22, FontWeight.w700, _Np.white,
                                         letterSpacing: -0.3),
                                   ),
                                 ),
@@ -794,7 +796,8 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
                             state.error == 'unavailable'
-                                ? context.tr('هذه السورة غير متوفرة لهذه التلاوة',
+                                ? context.tr(
+                                    'هذه السورة غير متوفرة لهذه التلاوة',
                                     'This surah is not available for this recitation')
                                 : context.tr('تعذّر تشغيل التلاوة',
                                     'Could not play this recitation'),
@@ -1311,7 +1314,7 @@ class _SurahSheetState extends ConsumerState<_SurahSheet> {
                                 controller.playSurah(e.number);
                                 Navigator.of(context).pop();
                               },
-                      );
+                      ).listEntrance(i);
                     },
                   ),
           ),

@@ -33,9 +33,8 @@ String formatDate(BuildContext context, DateTime t) => context.isArabic
 String formatFire(BuildContext context, DateTime t, DateTime now) =>
     '${relativeDay(context, t, now)} ${formatClock(context, t)}';
 
-String weekdayName(BuildContext context, int weekday) => context.isArabic
-    ? _weekdaysAr[weekday - 1]
-    : _weekdaysEn[weekday - 1];
+String weekdayName(BuildContext context, int weekday) =>
+    context.isArabic ? _weekdaysAr[weekday - 1] : _weekdaysEn[weekday - 1];
 
 String weekdayShort(BuildContext context, int weekday) => context.isArabic
     ? _weekdaysAr[weekday - 1].replaceFirst('ال', '')
@@ -81,7 +80,8 @@ String relationLabel(BuildContext context, ContactRelation? r) => switch (r) {
     };
 
 IconData relationIcon(ContactRelation? r) => switch (r) {
-      ContactRelation.father || ContactRelation.mother =>
+      ContactRelation.father ||
+      ContactRelation.mother =>
         CupertinoIcons.heart_fill,
       ContactRelation.sibling => CupertinoIcons.person_2_fill,
       ContactRelation.spouse => CupertinoIcons.person_crop_circle_fill,

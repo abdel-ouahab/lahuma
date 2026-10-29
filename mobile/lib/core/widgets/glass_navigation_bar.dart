@@ -85,8 +85,10 @@ class GlassNavigationBar extends StatelessWidget {
                         : const Duration(milliseconds: 380),
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.lerp(
-                      AlignmentDirectional.centerStart.resolve(Directionality.of(context)),
-                      AlignmentDirectional.centerEnd.resolve(Directionality.of(context)),
+                      AlignmentDirectional.centerStart
+                          .resolve(Directionality.of(context)),
+                      AlignmentDirectional.centerEnd
+                          .resolve(Directionality.of(context)),
                       currentIndex / (destinations.length - 1),
                     )!,
                     child: FractionallySizedBox(
@@ -97,7 +99,8 @@ class GlassNavigationBar extends StatelessWidget {
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.12)
                               : Colors.black.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(_borderRadius - 6),
+                          borderRadius:
+                              BorderRadius.circular(_borderRadius - 6),
                         ),
                       ),
                     ),

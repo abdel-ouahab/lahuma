@@ -74,7 +74,8 @@ class AyahActionSheet extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final textColor = isDark ? AppColors.textDark : AppColors.textLight;
-    final subtextColor = isDark ? AppColors.subtextDark : AppColors.subtextLight;
+    final subtextColor =
+        isDark ? AppColors.subtextDark : AppColors.subtextLight;
 
     final actions = [
       _ActionItem(
@@ -84,11 +85,14 @@ class AyahActionSheet extends StatelessWidget {
         onTap: onPlay,
       ),
       _ActionItem(
-        icon: isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+        icon: isBookmarked
+            ? Icons.bookmark_rounded
+            : Icons.bookmark_outline_rounded,
         label: isBookmarked
             ? context.tr('إزالة العلامة', 'Remove bookmark')
             : context.tr('حفظ العلامة', 'Bookmark'),
-        color: isBookmarked ? AppColors.bookmarkActive : const Color(0xFF2E7DC0),
+        color:
+            isBookmarked ? AppColors.bookmarkActive : const Color(0xFF2E7DC0),
         onTap: onBookmark,
       ),
       _ActionItem(
@@ -164,7 +168,8 @@ class AyahActionSheet extends StatelessWidget {
                     ),
                     Text(
                       context.tr('الآية $ayahNumber', 'Ayah $ayahNumber'),
-                      style: GoogleFonts.cairo(fontSize: 12, color: subtextColor),
+                      style:
+                          GoogleFonts.cairo(fontSize: 12, color: subtextColor),
                     ),
                   ],
                 ),
@@ -193,7 +198,8 @@ class AyahActionSheet extends StatelessWidget {
                   .toList(),
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + AppSpacing.sm),
+          SizedBox(
+              height: MediaQuery.of(context).padding.bottom + AppSpacing.sm),
         ],
       ),
     );

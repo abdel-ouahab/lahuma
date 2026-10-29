@@ -35,6 +35,8 @@ class CallLoop(
         val maxRetries: Int,
         val repeatWholeLoop: Boolean,
         val loopRepeats: Int,
+        /** False: never hang up; the other side or the network ends the call. */
+        val autoHangUp: Boolean = true,
     )
 
     enum class Status { ANSWERED, NO_ANSWER, FAILED, CALLED }
@@ -161,8 +163,11 @@ class CallLoop(
             afterCall(Status.FAILED)
             return
         }
-        // Rings for at most ringTimeoutSec, counted from dialling.
-        pendingTimer = timer.schedule(config.ringTimeoutSec * 1000L) { onRingTimeout() }
+        // Ends after ringTimeoutSec, counted from dialling, unless the user
+        // turned automatic hang-up off.
+        if (config.autoHangUp) {
+            pendingTimer = timer.schedule(config.ringTimeoutSec * 1000L) { onRingTimeout() }
+        }
         // A call that never goes off-hook did not go through.
         dialCheck = timer.schedule(DIAL_CHECK_MS) { if (phase == Phase.DIALING) failDial() }
     }

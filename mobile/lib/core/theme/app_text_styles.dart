@@ -78,7 +78,8 @@ class AppTextStyles {
         fontSize: 15,
         fontWeight: FontWeight.w400,
         height: 1.6,
-        color: color ?? (isDark ? AppColors.subtextDark : AppColors.subtextLight),
+        color:
+            color ?? (isDark ? AppColors.subtextDark : AppColors.subtextLight),
       );
 
   static TextStyle bodyMedium({Color? color, bool isDark = false}) =>
@@ -86,7 +87,8 @@ class AppTextStyles {
         fontSize: 13,
         fontWeight: FontWeight.w400,
         height: 1.5,
-        color: color ?? (isDark ? AppColors.subtextDark : AppColors.subtextLight),
+        color:
+            color ?? (isDark ? AppColors.subtextDark : AppColors.subtextLight),
       );
 
   static TextStyle caption({Color? color, bool isDark = false}) =>
