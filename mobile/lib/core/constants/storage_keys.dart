@@ -30,6 +30,10 @@ class StorageKeys {
   static const String adhkarFavorites = 'adhkar.favorites';
   static const String adhkarCompletions = 'adhkar.completions';
 
+  static const String tasbihState = 'tasbih.state';
+  static const String tasbihSettings = 'tasbih.settings';
+  static const String tasbihStats = 'tasbih.stats';
+
   static const String reciterFavorites = 'mp3quran.favoriteReciters';
 
   static const String fajrCallLists = 'fajrCall.lists';

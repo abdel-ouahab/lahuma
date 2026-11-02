@@ -27,6 +27,7 @@ import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dar
 import '../../features/fajr_call/presentation/screens/fajr_call_log_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_permissions_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart';
+import '../../features/tasbih/presentation/screens/tasbih_screen.dart';
 
 /// Every screen is an iOS page: slide transition with the interactive
 /// edge-swipe back gesture (from the right edge in RTL).
@@ -90,6 +91,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 int.tryParse(state.uri.queryParameters['index'] ?? '') ?? 0,
           ),
         ),
+      ),
+
+      // ── Tasbih (outside shell — the beads need the full screen) ─────────
+      GoRoute(
+        path: TasbihScreen.path,
+        pageBuilder: (context, state) => _page(state, const TasbihScreen()),
       ),
 
       // ── Fajr wake list (outside shell — opened from the Fajr notification)

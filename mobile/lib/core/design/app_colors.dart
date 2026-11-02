@@ -178,6 +178,52 @@ class AppColors {
   static const CupertinoDynamicColor tileRed = CupertinoColors.systemRed;
   static const CupertinoDynamicColor tileGreen = CupertinoColors.systemGreen;
   static const CupertinoDynamicColor tileIndigo = CupertinoColors.systemIndigo;
+  static const CupertinoDynamicColor tileTeal = CupertinoColors.systemTeal;
+
+  // ─── Tasbih beads ────────────────────────────────────────────────────────
+  // Lit from the top left: highlight → body → shade, plus the light the
+  // material lets through (amber glows from inside, wood barely does) and
+  // the cord they are strung on. Same in both themes: they are objects.
+  static const BeadColors beadAmber = BeadColors(
+    highlight: Color(0xFFFFE3A3),
+    body: Color(0xFFE39B2D),
+    shade: Color(0xFF8A4B0F),
+    glow: Color(0xFFFFC15A),
+    glowStrength: 0.55,
+    specular: 0.9,
+    cord: Color(0xFF5B3A1E),
+  );
+  static const BeadColors beadWood = BeadColors(
+    highlight: Color(0xFFD9A577),
+    body: Color(0xFF9C6238),
+    shade: Color(0xFF4A2914),
+    glow: Color(0xFFC88A5A),
+    glowStrength: 0.2,
+    specular: 0.35,
+    cord: Color(0xFF3B2A20),
+    grain: Color(0xFF6E3F1F),
+  );
+  static const BeadColors beadPearl = BeadColors(
+    highlight: Color(0xFFFFFFFF),
+    body: Color(0xFFECE6DA),
+    shade: Color(0xFFA9A196),
+    glow: Color(0xFFF6D9E3),
+    glowStrength: 0.5,
+    specular: 1,
+    cord: Color(0xFF9AA0A6),
+  );
+
+  /// The imam bead, separators and tassel: the brand's cyan → indigo as a
+  /// turquoise stone.
+  static const BeadColors beadImam = BeadColors(
+    highlight: Color(0xFFA6EEFA),
+    body: Color(0xFF3D9CEA),
+    shade: Color(0xFF2E2C9A),
+    glow: Color(0xFF34C8E8),
+    glowStrength: 0.45,
+    specular: 0.95,
+    cord: Color(0xFF2E2C9A),
+  );
 
   // ─── Brand gradients ─────────────────────────────────────────────────────
   /// Primary buttons and selected controls: cyan → indigo, top-left to
@@ -344,4 +390,33 @@ class AppPalette {
 extension AppPaletteContext on BuildContext {
   /// Semantic colours resolved for this context. See [AppPalette].
   AppPalette get palette => AppPalette._(this);
+}
+
+/// One tasbih bead material. See [AppColors.beadAmber].
+class BeadColors {
+  const BeadColors({
+    required this.highlight,
+    required this.body,
+    required this.shade,
+    required this.glow,
+    required this.glowStrength,
+    required this.specular,
+    required this.cord,
+    this.grain,
+  });
+
+  final Color highlight;
+  final Color body;
+  final Color shade;
+
+  /// Light passing through the bead, gathered at its lower far side.
+  final Color glow;
+  final double glowStrength;
+
+  /// Opacity of the white glint (gloss).
+  final double specular;
+  final Color cord;
+
+  /// Wood grain lines; null for materials without grain.
+  final Color? grain;
 }

@@ -19,6 +19,9 @@ import '../../prayer_times/presentation/widgets/prayer_times_section.dart';
 import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
 import '../../settings/presentation/theme_mode_switcher.dart';
+import '../../tasbih/presentation/screens/tasbih_screen.dart';
+import '../../tasbih/presentation/tasbih_providers.dart';
+import '../../tasbih/presentation/widgets/tasbih_labels.dart';
 import '../../wird/presentation/goal_sheet.dart';
 import '../../wird/presentation/wird_providers.dart';
 
@@ -31,6 +34,7 @@ class HomeScreen extends ConsumerWidget {
     final wird = ref.watch(wirdProvider);
     final dedication = ref.watch(dedicationProvider);
     final adhkarDone = ref.watch(adhkarCompletionsProvider);
+    final tasbihToday = ref.watch(tasbihTodayProvider);
     final c = context.palette;
     final isDark = c.isDark;
 
@@ -214,6 +218,18 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           top: 0,
+        ),
+        box(
+          FeatureCard(
+            title: context.tr('التسبيح', 'Tasbih'),
+            icon: CupertinoIcons.circle_grid_hex_fill,
+            iconColor: AppColors.tileTeal,
+            subtitle: tasbihToday > 0
+                ? tasbihatToday(context, tasbihToday)
+                : context.tr('مسبحة لعدّ أذكارك', 'Prayer beads for your dhikr'),
+            onTap: () => context.push(TasbihScreen.path),
+          ),
+          top: AppSpacing.ms,
         ),
 
         // ── Today's wird ────────────────────────────────────────────────────
