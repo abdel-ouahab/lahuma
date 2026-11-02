@@ -225,6 +225,14 @@ class AppColors {
     cord: Color(0xFF2E2C9A),
   );
 
+  // ─── Qibla compass ───────────────────────────────────────────────────────
+  // The Kaaba on the dial: the black kiswa lit from the top left, and its
+  // gold band. Same in both themes: it is an object.
+  static const Color kaabaFront = Color(0xFF1C1C1F);
+  static const Color kaabaSide = Color(0xFF0B0B0D);
+  static const Color kaabaTop = Color(0xFF45454B);
+  static const Color kaabaGold = Color(0xFFD9B45A);
+
   // ─── Brand gradients ─────────────────────────────────────────────────────
   /// Primary buttons and selected controls: cyan → indigo, top-left to
   /// bottom-right.

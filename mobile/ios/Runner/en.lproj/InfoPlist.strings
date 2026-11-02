@@ -2,5 +2,5 @@
 "CFBundleDisplayName" = "Lahuma";
 "CFBundleName" = "Lahuma";
 
-/* Fajr Call: one-time location for prayer times. */
-"NSLocationWhenInUseUsageDescription" = "Lahuma uses your approximate location once to calculate Fajr time on your device. It is never sent anywhere.";
+/* Location: prayer times, city name, Qibla and Fajr Call. */
+"NSLocationWhenInUseUsageDescription" = "Lahuma uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.";

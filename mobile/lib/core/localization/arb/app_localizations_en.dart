@@ -69,8 +69,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get about => 'About Lahuma';
 
   @override
-  String get aboutBody =>
-      'Lahuma is a Quran application created with the intention of being a continuous charity for parents.';
+  String get aboutBody => 'Lahuma is a Quran application created with the intention of being a continuous charity for parents.';
 
   @override
   String get arabic => 'Arabic';

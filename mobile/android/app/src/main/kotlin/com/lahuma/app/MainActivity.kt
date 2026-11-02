@@ -4,12 +4,14 @@ import android.content.Intent
 import com.lahuma.app.adhan.AdhanSoundChannel
 import com.lahuma.app.fajrcall.FajrCallChannel
 import com.lahuma.app.fajrcall.FajrNotify
+import com.lahuma.app.qibla.QiblaChannel
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 
 class MainActivity : FlutterActivity() {
     private var fajrCall: FajrCallChannel? = null
     private var adhanSound: AdhanSoundChannel? = null
+    private var qibla: QiblaChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -18,6 +20,7 @@ class MainActivity : FlutterActivity() {
             it.launchRoute = intent?.getStringExtra(FajrNotify.EXTRA_ROUTE)
         }
         adhanSound = AdhanSoundChannel(this, flutterEngine.dartExecutor.binaryMessenger)
+        qibla = QiblaChannel(this, flutterEngine.dartExecutor.binaryMessenger)
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
@@ -25,6 +28,8 @@ class MainActivity : FlutterActivity() {
         fajrCall = null
         adhanSound?.dispose()
         adhanSound = null
+        qibla?.dispose()
+        qibla = null
         super.cleanUpFlutterEngine(flutterEngine)
     }
 

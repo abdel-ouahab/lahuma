@@ -16,6 +16,9 @@ import '../../dedication/presentation/dedication_sheet.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
 import '../../prayer_times/presentation/widgets/prayer_times_section.dart';
+import '../../qibla/presentation/qibla_providers.dart';
+import '../../qibla/presentation/screens/qibla_screen.dart';
+import '../../qibla/presentation/widgets/qibla_labels.dart';
 import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
 import '../../settings/presentation/theme_mode_switcher.dart';
@@ -35,6 +38,7 @@ class HomeScreen extends ConsumerWidget {
     final dedication = ref.watch(dedicationProvider);
     final adhkarDone = ref.watch(adhkarCompletionsProvider);
     final tasbihToday = ref.watch(tasbihTodayProvider);
+    final qibla = ref.watch(qiblaInfoProvider);
     final c = context.palette;
     final isDark = c.isDark;
 
@@ -101,6 +105,21 @@ class HomeScreen extends ConsumerWidget {
 
         // ── Prayer times ────────────────────────────────────────────────────
         box(const PrayerTimesSection(), top: AppSpacing.md),
+
+        // ── Qibla ───────────────────────────────────────────────────────────
+        box(
+          FeatureCard(
+            title: context.tr('اتجاه القبلة', 'Qibla direction'),
+            icon: CupertinoIcons.compass_fill,
+            iconColor: AppColors.tileGreen,
+            subtitle: qibla != null
+                ? qiblaFromNorth(context, qibla.bearing)
+                : context.tr('بوصلة تدلّك على الكعبة',
+                    'A compass that points to the Kaaba'),
+            onTap: () => context.push(QiblaScreen.path),
+          ),
+          top: AppSpacing.ms,
+        ),
 
         // ── Continue reading ────────────────────────────────────────────────
         box(

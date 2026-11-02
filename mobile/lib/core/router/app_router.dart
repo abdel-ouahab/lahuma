@@ -27,6 +27,7 @@ import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dar
 import '../../features/fajr_call/presentation/screens/fajr_call_log_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_permissions_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart';
+import '../../features/qibla/presentation/screens/qibla_screen.dart';
 import '../../features/tasbih/presentation/screens/tasbih_screen.dart';
 
 /// Every screen is an iOS page: slide transition with the interactive
@@ -97,6 +98,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: TasbihScreen.path,
         pageBuilder: (context, state) => _page(state, const TasbihScreen()),
+      ),
+
+      // ── Qibla (outside shell — the compass needs the full screen) ───────
+      GoRoute(
+        path: QiblaScreen.path,
+        pageBuilder: (context, state) => _page(state, const QiblaScreen()),
       ),
 
       // ── Fajr wake list (outside shell — opened from the Fajr notification)

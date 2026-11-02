@@ -27,6 +27,8 @@
     <uses-permission android:name="${fajrCallLogPermission}"/>
     <!-- CALL_PHONE would otherwise hide the app from tablets on Play. -->
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+    <!-- Qibla compass; phones without one get the angle from north instead. -->
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="false"/>
     <application
         android:usesCleartextTraffic="true"
         android:label="@string/app_name"
