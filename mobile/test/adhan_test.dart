@@ -203,10 +203,10 @@ void main() {
     test('without a download: bundled raw sound and .caf, shared channel', () {
       final c = AdhanScheduler.channelFor(
           fajr: true, download: null, muezzinName: null);
-      expect(c.id, 'adhan_default_fajr');
-      expect(c.sound!.androidRaw, 'adhan_default_fajr');
+      expect(c.id, 'adhan_default_fajr_v2');
+      expect(c.sound!.androidRaw, 'adhan_default_regular');
       expect(c.sound!.androidUri, isNull);
-      expect(c.sound!.iosName, 'adhan_default_fajr.caf');
+      expect(c.sound!.iosName, 'adhan_default_regular.caf');
       expect(c.alarm, isTrue);
       expect(c.timeSensitive, isTrue);
     });
@@ -230,7 +230,7 @@ void main() {
       // Fajr has no published file here: falls back to the bundled one.
       final fajr = AdhanScheduler.channelFor(
           fajr: true, download: d, muezzinName: 'مؤذن');
-      expect(fajr.id, 'adhan_default_fajr');
+      expect(fajr.id, 'adhan_default_fajr_v2');
     });
 
     test('reminder text agrees in number', () {

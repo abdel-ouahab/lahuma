@@ -5,10 +5,10 @@ import 'package:just_audio/just_audio.dart';
 import '../../../core/audio/audio_focus.dart';
 import '../data/adhan_scheduler.dart';
 
-/// Bundled full-length fallback adhans (Flutter assets).
-String adhanDefaultAsset({required bool fajr}) => fajr
-    ? 'assets/audio/adhan/default_fajr.mp3'
-    : 'assets/audio/adhan/default_regular.mp3';
+/// Bundled full-length fallback adhan (Flutter asset). There is no Fajr
+/// recording yet, so Fajr plays the same one.
+String adhanDefaultAsset({required bool fajr}) =>
+    'assets/audio/adhan/default_regular.mp3';
 
 /// What the adhan player is doing. [key] names what is loaded (a muezzin
 /// id for a preview, or [AdhanScheduler.playRoute] for the full adhan).

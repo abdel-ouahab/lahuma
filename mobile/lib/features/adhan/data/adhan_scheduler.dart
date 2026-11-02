@@ -23,10 +23,15 @@ class AdhanScheduler {
   static String playRouteFor(PrayerKind prayer) =>
       '$playRoute?prayer=${prayer.name}';
 
-  /// Bundled fallback: `res/raw/adhan_default_{regular,fajr}.mp3` on
-  /// Android, `Runner/adhan_default_{regular,fajr}.caf` on iOS.
+  /// Bundled fallback: `res/raw/adhan_default_regular.mp3` on Android,
+  /// `Runner/adhan_default_regular.caf` on iOS. There is no Fajr recording
+  /// yet, so Fajr uses the same one.
   static String defaultSoundName({required bool fajr}) =>
-      fajr ? 'adhan_default_fajr' : 'adhan_default_regular';
+      'adhan_default_regular';
+
+  /// Bump when the bundled recording changes: a channel's sound is fixed
+  /// once created, so the default channels need new ids.
+  static const int defaultSoundVersion = 2;
 
   static const reminderChannel = NotificationChannelSpec(
     id: 'adhan_reminder',
@@ -52,7 +57,7 @@ class AdhanScheduler {
     return NotificationChannelSpec(
       id: custom
           ? '$channelPrefix${download.muezzinId}_${full.name}_v${download.version}'
-          : '${channelPrefix}default_${full.name}',
+          : '${channelPrefix}default_${full.name}_v$defaultSoundVersion',
       name: custom && muezzinName != null ? '$label · $muezzinName' : label,
       description: 'وقت الصلاة · Prayer time',
       timeSensitive: true,
