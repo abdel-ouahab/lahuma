@@ -69,7 +69,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get about => 'عن لهما';
 
   @override
-  String get aboutBody => 'لهما تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.';
+  String get aboutBody =>
+      'لهما تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.';
 
   @override
   String get arabic => 'العربية';
