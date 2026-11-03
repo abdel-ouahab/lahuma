@@ -39,6 +39,7 @@ class NotificationChannelSpec {
     this.timeSensitive = false,
     this.alarm = false,
     this.silent = false,
+    this.quietInForeground = false,
     this.sound,
   });
 
@@ -53,6 +54,9 @@ class NotificationChannelSpec {
 
   /// No sound: the app plays whatever is heard.
   final bool silent;
+
+  /// iOS: no sound while the app is open (it plays the audio itself).
+  final bool quietInForeground;
   final NotificationSound? sound;
 
   Importance get _importance => alarm
@@ -250,7 +254,7 @@ class LocalNotifications {
           audioAttributesUsage: channel._usage,
         ),
         iOS: DarwinNotificationDetails(
-          presentSound: !channel.silent,
+          presentSound: !channel.silent && !channel.quietInForeground,
           sound: channel.silent ? null : channel.sound?.iosName,
           interruptionLevel: channel.timeSensitive
               ? InterruptionLevel.timeSensitive

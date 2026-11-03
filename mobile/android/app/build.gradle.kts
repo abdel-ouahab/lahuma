@@ -87,5 +87,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
     // Fajr Call engine: notifications, foreground service, permissions.
     implementation("androidx.core:core-ktx:1.16.0")
+    // Adhan: the daily and after-boot headless reschedule.
+    implementation("androidx.work:work-runtime:2.10.1")
     testImplementation("junit:junit:4.13.2")
 }

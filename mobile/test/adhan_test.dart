@@ -95,9 +95,12 @@ class FakeScheduler extends AdhanScheduler {
   final syncs = <({List<AdhanSlot> slots, String? muezzinName})>[];
 
   @override
-  Future<void> sync(List<AdhanSlot> slots,
-      {required String? muezzinName, required bool arabic}) async {
+  Future<bool> sync(List<AdhanSlot> slots,
+      {required String? muezzinName,
+      required bool arabic,
+      AdhanDownload? download}) async {
     syncs.add((slots: slots, muezzinName: muezzinName));
+    return false;
   }
 }
 

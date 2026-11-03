@@ -1,31 +1,59 @@
 # Adhan (الأذان)
 
-At each prayer time, **while the app is open**, Lahuma plays the full adhan of the muezzin the user picked through its own audio player (the adhan player screen, with a stop button). It never plays the adhan as a notification or alarm sound. In the background or with the app closed, nothing plays: the user gets a **silent** notification, and tapping it opens the app and plays the adhan.
+At each prayer time Lahuma plays the full adhan of the muezzin the user picked. Each prayer is set to **adhan**, **silent notification** or **off**.
 
-The settings are under **Settings → الصلاة → الأذان** (`/settings/adhan`).
+- **Android:** an exact alarm starts a native player, a `mediaPlayback` foreground service on the alarm stream. It plays the full adhan whether the app is open, in the background, swiped away, or the phone was restarted. Its notification has a Stop button.
+- **iOS:** a notification whose sound is a clip of the adhan (30 seconds at most). Tapping it opens the app, which plays the full adhan. With the app open, the app plays the full adhan itself.
+
+The settings are under **Settings → الصلاة → الأذان** (`/settings/adhan`). On Android, **ضمان رفع الأذان** (`/settings/adhan/reliability`) checks the permissions and explains each phone maker's battery settings.
 
 ## How it works
 
 | | Android | iOS |
 |---|---|---|
-| Prayer times | From the Home prayer-times feature (Aladhan API, method 19), cached a week ahead | Same |
-| App open at prayer time | `AdhanForeground` opens the player screen, which plays the full mp3 with just_audio (media volume); the silent notification shows too | Same |
-| App in the background or closed | Silent notification (channel `adhan_prayer_silent`, no sound); a tap opens the player | Silent notification (no sound), Time Sensitive |
-| What plays | The downloaded full file, else the bundled `assets/audio/adhan/default_regular_v2.mp3` | Same |
-| Days scheduled | 7 days, plus a reminder before every prayer | 7 days (35 adhans), plus reminders for the next 2 days only (10) |
+| Prayer times | Aladhan API (method 19), from the cache. A background run fetches whole months, and calculates locally only when it is offline with no cached day | Same, but there are no background runs |
+| At prayer time, in any app state | `setAlarmClock` → `AdhanAlarmReceiver` → `AdhanPlaybackService` plays the full file with `MediaPlayer` on `USAGE_ALARM` | A Time Sensitive notification with the clip as its sound |
+| App open | The native player plays it; the app doesn't play it a second time | `AdhanForeground` opens the player screen; the notification stays quiet in the foreground |
+| What plays | The muezzin's downloaded full file (the Fajr file at Fajr), else `res/raw/adhan_default_regular.mp3` | Clip: the muezzin's short .caf, else `adhan_default_regular.caf`. Full: the download, or the bundled asset |
+| Silent prayers and reminders | `flutter_local_notifications` alarm clocks | Same |
+| Days scheduled | 7 days (up to 35 alarms), plus reminders | 7 days (35), plus reminders for 2 days (10): the adhan's 45 of the 64 slots |
+| After a reboot, an update, or a clock or timezone change | `AdhanBootReceiver` re-arms the stored alarms at once, then a WorkManager job runs the Dart reschedule headlessly | iOS keeps the pending notifications itself |
+| Safety net | A daily WorkManager job runs the same reschedule | Every launch and resume |
 
-- **In the app:** `AdhanForeground` (`presentation/adhan_foreground.dart`) is active while the app is in the foreground (resumed, or inactive behind the notification shade). It arms one timer for the next enabled adhan from the same plan as the notifications, and re-arms when the app comes back and when the settings or the times change. When it fires, it opens `/adhan/play?prayer=…`; if the player is already open (the notification was just tapped), it leaves it playing. The silent notification still shows, as it does with the app closed; tapping it while the player is open does nothing. Coming back to the app up to a minute after a prayer time still plays it; later, it doesn't.
-- **Once per prayer:** the id of the last adhan played in the app is kept in prefs (`adhan.lastPlayed`). Ids grow with time, so a resume, a relaunch or the notification's tap never plays the same adhan twice.
-- **Interruptions:** the player is the app's shared adhan player: it stops the Quran players before it starts (`AudioFocus`), and just_audio pauses it for calls. It keeps playing if the user leaves the app mid-adhan, until the system stops the app.
-- **Fajr** uses the muezzin's Fajr recording (with «الصلاة خير من النوم»); the other four prayers use the regular one. The bundled default has a single recording, so it plays at Fajr too.
-- **Prayer times are not calculated on the device.** The adhan schedules from the same timings Home shows (`upcomingPrayerDaysProvider`). The prayer-times notifier keeps 7 days cached: today and tomorrow come from `/timings`, and the rest of the week from the monthly `/calendar` endpoint (1–2 requests). With no location and nothing cached, nothing is scheduled, and the screen offers to set the location.
-- **Notification ids** are stable: `yyyymmdd·10 + prayer` (Fajr 0 … Isha 4), and `+5` for the reminder. They range from 200 000 000 to 220 000 000, clear of Fajr Call's ids.
-- **Rescheduling** (of the notifications) happens on every launch and resume, after a muezzin download, and when the enabled prayers, the reminder, the master switch, the prayer times (that is, the location) or the app language change. Each sync cancels every pending adhan id and schedules the week again.
-- **Android channels:** `adhan_prayer_silent` (no sound, high importance) for the adhans and `adhan_reminder` (default notification sound) for the reminders. Each sync deletes any other `adhan_*` channel, including the old ones that had the adhan as their sound.
-- **Exact timing:** every adhan and reminder is an alarm clock (`AndroidScheduleMode.alarmClock`, i.e. `setAlarmClock`) when "Alarms & reminders" is allowed (Android 12+). It shows the alarm icon in the status bar, but it is the only exact alarm that Doze and OEM battery savers leave alone. ColorOS (OPPO / OnePlus / realme), for one, turns `setExactAndAllowWhileIdle` alarms into a one-hour window, so the notification could arrive up to an hour late. Without the permission the alarms are inexact, with the same one-hour window.
-- **No times, no wipe:** while the adhan is on but the prayer times haven't loaded yet (they load after the settings at launch), a reschedule keeps the pending adhans instead of cancelling them.
-- **Permissions** are asked the first time the user turns the adhan on (or picks a muezzin while it is off), never at launch: notifications first, then a short explanation and the exact-alarm settings page on Android 12+. Afterwards the settings screen shows a warning row for each thing still missing, re-checked whenever the app resumes: notifications off (opens the prompt, or the app's settings page once refused) and exact alarms off. Neither is needed for the adhan to play while the app is open.
-- **Test the adhan:** a row on the settings screen queues the chosen prayer's adhan in `AdhanForeground`, 10 seconds ahead, through the same path as a real one, and schedules its silent notification for the same moment. The sound plays only if the app is still open then; leaving the app drops it, but the notification still comes. Test ids are `220000000 + prayer`, above the planner's range, and don't count as the real prayer having played.
+### Android engine (`android/app/src/main/kotlin/com/lahuma/app/adhan/`)
+
+- `AdhanAlarmChannel` (`lahuma/adhan_alarm`): Dart sends the planned alarms (id, time, prayer, title, body, file) and the native strings. The Dart side is `lib/features/adhan/data/adhan_alarm_platform.dart`.
+- `AdhanAlarmStore` keeps the alarms in their own prefs file, so a reboot can re-arm them without Flutter.
+- `AdhanAlarms` sets one `setAlarmClock` per adhan. The request code is the planner's id, and each PendingIntent has its own data URI, so nothing collides with Fajr Call. Without "Alarms & reminders" it falls back to `setAndAllowWhileIdle`.
+- `AdhanAlarmReceiver` starts `AdhanPlaybackService`. On Android 12–14, an alarm from `setAlarmClock` is one of the exemptions that let a background app start a foreground service. If the start is refused anyway (an inexact alarm, or an OEM), the receiver posts a notification on `adhan_alert` that opens `/adhan/play`. An alarm that arrives more than 10 minutes late is skipped.
+- `AdhanPlaybackService` (`foregroundServiceType="mediaPlayback"`) calls `startForeground` first, then plays with `MediaPlayer` (`USAGE_ALARM`, a partial wake lock, transient audio focus). It stops on any of these:
+  - Stop, or a swipe of the notification;
+  - the end of the file;
+  - an error (a broken download falls back to the bundled file first);
+  - losing audio focus, for example to a call;
+  - 10 minutes, whatever happens.
+
+  Its notification channel is `adhan_playing`: high importance and silent, since the service plays the sound.
+- `AdhanBootReceiver` handles `BOOT_COMPLETED`, `QUICKBOOT_POWERON`, `MY_PACKAGE_REPLACED`, `TIME_SET`, `TIMEZONE_CHANGED` and `SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED`.
+- `AdhanWorker` / `AdhanWork` start a headless Flutter engine at `adhanBackgroundMain` (`lib/main.dart`). That runs `AdhanBackgroundReschedule` (`lib/features/adhan/background/adhan_background.dart`), which reads the saved settings and muezzin, gets the times from `PrayerDaysSource` (no GPS, no BuildContext), then uses the same planner and scheduler as the app. The work is unique: `adhan_daily_reschedule` runs every 24 h, and `adhan_reschedule_now` runs after a boot and the other broadcasts above.
+
+### Shared rules
+
+- **Per-prayer mode:** `AdhanSettings.prayers` holds the prayers that aren't off, and `silent` the ones that get a silent notification. Settings saved before modes existed read as adhan for every enabled prayer.
+- **Fajr** uses the muezzin's Fajr recording (with «الصلاة خير من النوم»); the other four use the regular one. The bundled default has a single recording, so it plays at Fajr too.
+- **Prayer times:** the adhan schedules from the same timings Home shows. `LocalPrayerTimes` (the `adhan` package, Fajr 18°, Isha 17°) is only the offline fallback in background runs. Its days aren't cached, so Aladhan replaces them once online. It can differ from Aladhan by a minute or two.
+- **Ids** are stable: `yyyymmdd·10 + prayer` (Fajr 0 … Isha 4), and `+5` for the reminder. They range from 200 000 000 to 220 000 000, clear of Fajr Call's ids. Test alarms are `220000000 + prayer`.
+- **Rescheduling** happens:
+  - on every launch and resume;
+  - after a muezzin download;
+  - on any settings change;
+  - when the prayer times (that is, the location) or the app language change;
+  - in the Android background runs.
+
+  Each sync replaces every adhan alarm and notification.
+- **Android channels:** `adhan_prayer_silent` (silent prayers, and every adhan if the engine is missing), `adhan_reminder`, and the engine's `adhan_playing` and `adhan_alert`. Each sync deletes any other `adhan_*` channel.
+- **Permissions** are asked when the adhan is turned on: notifications first (Android 13+), then exact alarms (Android 12+, `SCHEDULE_EXACT_ALARM`, granted from "Alarms & reminders"). Battery optimisation is asked from the reliability screen, after an explanation. The settings screen warns about each one still missing.
+- **Test the adhan** plays the chosen prayer in 10 seconds. On Android it is a native test alarm, so it plays even if the app is closed. A long press on the row shows **اختبار: الأذان بعد دقيقة** (always shown in debug builds). It arms a Dhuhr test one minute ahead, long enough to swipe the app away first.
 
 ## Muezzins and downloads
 
@@ -78,11 +106,11 @@ The default is «أذان إدريس من الجزائر» (3:38, mono 96 kbps, 
 
 | File | Format | Used for |
 |---|---|---|
-| `mobile/android/app/src/main/res/raw/adhan_default_regular.mp3` | mp3, full length | Unused since the notifications are silent (kept for now) |
-| `mobile/ios/Runner/adhan_default_regular.caf` | IMA4 caf, first 29 s with a fade | iOS notification fallback |
+| `mobile/android/app/src/main/res/raw/adhan_default_regular.mp3` | mp3, full length | Android native player |
+| `mobile/ios/Runner/adhan_default_regular.caf` | IMA4 caf, first 29 s with a fade | iOS notification sound |
 | `mobile/assets/audio/adhan/default_regular_v2.mp3` | mp3, full length | In-app player (tap) and preview, both platforms |
 
-Only the asset copy is played now (just_audio). The `res/raw` and `.caf` copies, and the publishing of downloaded files as notification sounds (MediaStore, FileProvider, `Library/Sounds`), are left over from when the notification played the adhan; they can be removed in a cleanup.
+The Android MediaStore / FileProvider publishing of downloaded files (`AdhanSoundChannel`) is left over from when a channel played the adhan; the native player reads the downloaded files directly. A replaced default must also replace the `res/raw` copy.
 
 To replace it, add the new recording to `assets/audio/adhan/` under a **new name** (bump the `_v` suffix), point `adhanDefaultAsset` at it and delete the old file. just_audio copies an asset to its cache the first time it plays it and keeps playing that copy, so a recording replaced under the same name keeps playing the old one on phones that already played it. To add a separate Fajr default, add a Fajr file the same way and return it from `adhanDefaultAsset` for Fajr.
 
@@ -117,13 +145,60 @@ iOS notification sounds must be `.caf`, `.wav` or `.aiff` (Linear PCM, IMA4, µL
 
 1. **Backend:** set `MEDIA_BASE_URL` in `backend/.env`, run the migration and the seed (above), and upload the files to the bucket.
 2. **Audio:** the bundled default is in place (see above); only the muezzins' files need uploading.
-3. **Xcode:** nothing to add for the sound: the adhan plays from the Flutter asset. (`adhan_default_regular.caf` is still in the Runner target, unused.)
-4. **Xcode:** the *Time Sensitive Notifications* capability (see [Fajr Call](fajr-call.md#ios)), if it isn't on already. Without it, a Focus mode can hide the prayer-time notification.
-5. **Test on a device:** with the app open, use «تجربة الأذان» for each prayer and check the player opens and plays within 10 seconds, and that Stop stops it. Then set a prayer a minute ahead (or change the device time): with the app open it plays; in the background or closed, only a silent notification appears, and tapping it plays the adhan.
+3. **Xcode:** check that `adhan_default_regular.caf` is in the Runner target's *Copy Bundle Resources*. It is the notification sound.
+4. **Xcode:** turn on the *Time Sensitive Notifications* capability (see [Fajr Call](fajr-call.md#ios)) if it isn't on already. Without it, a Focus mode can hide the prayer-time notification.
+5. **Test on a device:** follow the checklist below.
+
+## Manual test checklist (Android)
+
+Use a real phone, on Android 12, 13 and 14 if possible. Turn the adhan on, allow notifications and "Alarms & reminders", and keep the alarm volume up. `adb logcat -s Adhan flutter` shows what happens.
+
+1. **App killed**
+   1. Long-press «تجربة الأذان» to show the debug row, then tap **اختبار: الأذان بعد دقيقة**.
+   2. Check that the test alarm is listed: `adb shell dumpsys alarm | grep -A3 com.lahuma.app`.
+   3. Swipe Lahuma away from Recents.
+   4. Within a minute, the adhan plays at alarm volume with a «إيقاف» notification.
+
+   Prefer the swipe over `adb shell am force-stop com.lahuma.app`: Android cancels a force-stopped app's alarms.
+2. **Stop**
+   1. While a test plays, tap «إيقاف»: the sound stops and the notification goes.
+   2. Start another test and swipe the notification away (Android 14): it stops too.
+   3. Let a third test run to the end: the notification disappears by itself.
+3. **Reboot**
+   1. With the adhan on, run `adb reboot`.
+   2. After unlocking, without opening the app, check that `adb shell dumpsys alarm | grep -c lahuma-adhan` counts the week's alarms (up to 35).
+   3. Check that `adb shell dumpsys jobscheduler | grep -i lahuma` shows the WorkManager jobs.
+   4. A test alarm armed before the reboot still plays.
+4. **Doze**
+   1. Arm the 1-minute test and turn the screen off.
+   2. Run `adb shell dumpsys deviceidle force-idle`.
+   3. The adhan still plays on time.
+   4. Afterwards, run `adb shell dumpsys deviceidle unforce`.
+5. **Exact alarms denied**
+   1. Revoke "Alarms & reminders" in system settings: the adhan settings show a warning.
+   2. A test may now come late, or only as a notification (`adhan_alert`) that opens the in-app player.
+   3. Grant the permission again: the alarms are re-armed (the permission-changed broadcast).
+6. **Modes:** set Dhuhr to «إشعار صامت» and Asr to «متوقف». `dumpsys alarm` lists no Asr alarm, and Dhuhr arrives as a silent notification.
+7. **Timezone:** change the phone's timezone. The alarms are re-armed and, after the background run, move to the new local times.
+8. **iOS**
+   1. Run the 10-second test with the app in the background: the 29-second clip plays.
+   2. Tap the notification: the full adhan plays.
+   3. With the app open, only the in-app player is heard.
 
 ## Known limits
 
-- **The app must be open** for the adhan to play by itself. With the screen locked or the app in the background, Android and iOS only show the silent notification; this is deliberate (no alarm or notification sound, no background workarounds).
-- Leaving the app mid-adhan keeps it playing until the system stops the app; there is no media notification to stop it from outside.
-- **Android:** on reinstall the app loses ownership of its old MediaStore entries. They stay in `Notifications/Lahuma/` until the user deletes them, and new ones are created.
-- If the phone stays offline for more than a week, the schedule runs out after the last cached day. Opening the app with a connection tops it up.
+**Android**
+- A **force stop** (Settings → Force stop, or some OEM "clean" buttons) cancels all of an app's alarms until it is opened again. That is Android's rule; a swipe from Recents doesn't do it.
+- Some OEM battery savers (Xiaomi, Oppo/Realme, Huawei, older Samsung) still kill the alarms or the service unless the user follows the steps on the reliability screen. The makers' settings pages are private and change between versions, so the app only tries them and falls back to its own settings page.
+- Without "Alarms & reminders" (Android 12+; off by default for new installs on Android 14), the alarm is inexact and Android won't let it start the player. The user then gets a notification that opens the adhan in the app.
+- The adhan plays at **alarm volume**, so it is heard in silent mode. Do Not Disturb set to block alarms mutes it.
+- The status bar shows the alarm-clock icon for the next adhan. That is the cost of `setAlarmClock`.
+- A background run uses the saved location, so a trip is only noticed when the app is opened. There is no background GPS.
+- If the phone stays offline for weeks, background runs use the cached months, then the local calculation, which can differ from Aladhan by a minute or two.
+- Android 15+ forbids starting a `mediaPlayback` service from `BOOT_COMPLETED`. The engine never does: it only starts the service from the alarm.
+- On reinstall, the app loses ownership of its old MediaStore entries in `Notifications/Lahuma/`, left over from when a channel played the adhan.
+
+**iOS**
+- No app code runs at a scheduled time, and a notification sound is 30 seconds at most, so only the clip plays by itself. The full adhan needs a tap, or the app open. The clip has no Stop; it ends on its own.
+- iOS keeps 64 pending notifications per app, shared with Fajr Call (15) and the khatma (4). The adhan keeps 7 days (35) plus 2 days of reminders (10). If the app isn't opened for a week, the schedule runs out.
+- The silent switch mutes the clip, and a Focus can hide it unless Time Sensitive notifications are allowed.

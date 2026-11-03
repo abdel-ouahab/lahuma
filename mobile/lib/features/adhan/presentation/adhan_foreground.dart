@@ -10,7 +10,9 @@ import '../domain/adhan_settings.dart';
 import 'adhan_providers.dart';
 
 /// Plays the adhan through the app's own player when a prayer time comes
-/// while the app is open.
+/// while the app is open: on iOS (where nothing else can play the full
+/// adhan), and on Android only when the native alarm engine is missing.
+/// With the engine, Android's alarms play every adhan themselves.
 ///
 /// Only while [active] (the app in the foreground): one timer for the next
 /// adhan, re-armed whenever the app comes back, the settings or the times
@@ -47,6 +49,9 @@ class AdhanForeground {
 
   /// How long "Test the adhan" waits.
   static const Duration testDelay = Duration(seconds: 10);
+
+  /// The hidden debug test: long enough to close the app first.
+  static const Duration debugDelay = Duration(minutes: 1);
 
   late final Future<void> _lastPlayed;
   int _last = 0;
@@ -95,13 +100,13 @@ class AdhanForeground {
     _next = _timer(slots.first.at.difference(now), refresh);
   }
 
-  /// "Test the adhan": [prayer]'s adhan in [testDelay], if the app is still
+  /// "Test the adhan": [prayer]'s adhan in [delay], if the app is still
   /// open then.
-  void test(PrayerKind prayer) {
+  void test(PrayerKind prayer, {Duration delay = testDelay}) {
     _tests
       ..removeWhere((s) => s.prayer == prayer)
       ..add(AdhanSlot(
-          id: testIdFor(prayer), at: _now().add(testDelay), prayer: prayer));
+          id: testIdFor(prayer), at: _now().add(delay), prayer: prayer));
     refresh();
   }
 

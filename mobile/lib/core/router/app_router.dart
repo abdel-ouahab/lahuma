@@ -17,6 +17,7 @@ import '../../features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/account_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_player_screen.dart';
+import '../../features/adhan/presentation/screens/adhan_reliability_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_settings_screen.dart';
 import '../../features/adhkar/domain/dhikr.dart';
 import '../../features/prayer_times/domain/prayer_times.dart';
@@ -313,6 +314,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'adhan',
                     pageBuilder: (context, state) =>
                         _page(state, const AdhanSettingsScreen()),
+                    routes: [
+                      GoRoute(
+                        path: 'reliability',
+                        pageBuilder: (context, state) =>
+                            _page(state, const AdhanReliabilityScreen()),
+                      ),
+                    ],
                   ),
                 ],
               ),

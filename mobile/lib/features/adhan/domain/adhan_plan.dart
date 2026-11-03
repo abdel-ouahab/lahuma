@@ -8,6 +8,7 @@ class AdhanSlot {
     required this.at,
     required this.prayer,
     this.leadMinutes = 0,
+    this.silent = false,
   });
 
   final int id;
@@ -19,9 +20,16 @@ class AdhanSlot {
 
   bool get reminder => leadMinutes > 0;
 
+  /// The prayer is set to a silent notification ([AdhanMode.silent]).
+  final bool silent;
+
+  /// An adhan that plays its sound (not a reminder, not silent).
+  bool get audible => !reminder && !silent;
+
   @override
   String toString() =>
-      'AdhanSlot($id, ${prayer.name}${reminder ? ' reminder' : ''} @ $at)';
+      'AdhanSlot($id, ${prayer.name}${reminder ? ' reminder' : ''}'
+      '${silent ? ' silent' : ''} @ $at)';
 }
 
 /// Works out which adhan notifications should be pending, from the known
@@ -36,6 +44,10 @@ class AdhanPlanner {
   static const int iosBudget = 45;
   static const int iosReminderDays = 2;
 
+  /// Days planned ahead, today included (5 × 7 = 35 adhans). More days may
+  /// be cached; they are planned as the week rolls on.
+  static const int horizonDays = 7;
+
   /// Stable ids: `yyyymmdd·10 + prayer` for the adhan, `+5` for its
   /// reminder. 2000-01-01 … 2199-12-31 stays inside [minId, maxId), clear
   /// of Fajr Call's ids (< 16 000 000) and within 31 bits.
@@ -49,8 +61,8 @@ class AdhanPlanner {
 
   static bool isAdhanId(int id) => id >= minId && id < maxId;
 
-  /// Every slot after [now] in [days], earliest first. Empty when the
-  /// adhan is off. On [ios] reminders stop after [iosReminderDays] and the
+  /// Every slot after [now] in the first [horizonDays] of [days], earliest
+  /// first. Empty when the adhan is off. On [ios] reminders stop after [iosReminderDays] and the
   /// total is capped at [iosBudget].
   static List<AdhanSlot> plan({
     required List<DayPrayerTimes> days,
@@ -66,13 +78,18 @@ class AdhanPlanner {
       final d = day.date;
       final offset =
           DateTime.utc(d.year, d.month, d.day).difference(today).inDays;
-      if (offset < 0) continue;
+      if (offset < 0 || offset >= horizonDays) continue;
       for (final prayer in adhanPrayers) {
-        if (!settings.prayers.contains(prayer)) continue;
+        final mode = settings.modeOf(prayer);
+        if (mode == AdhanMode.off) continue;
         final at = day[prayer];
         if (at.isAfter(now)) {
-          slots.add(
-              AdhanSlot(id: idFor(day.date, prayer), at: at, prayer: prayer));
+          slots.add(AdhanSlot(
+            id: idFor(day.date, prayer),
+            at: at,
+            prayer: prayer,
+            silent: mode == AdhanMode.silent,
+          ));
         }
         final lead = settings.reminderMinutes;
         if (lead <= 0 || (ios && offset >= iosReminderDays)) continue;

@@ -9,6 +9,7 @@ import 'core/notifications/local_notifications.dart';
 import 'core/notifications/notification_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/design/app_theme.dart';
+import 'features/adhan/background/adhan_background.dart';
 import 'features/adhan/data/adhan_scheduler.dart';
 import 'features/adhan/presentation/adhan_foreground.dart';
 import 'features/adhan/presentation/adhan_providers.dart';
@@ -16,6 +17,12 @@ import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
 import 'features/khatma/presentation/khatma_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
+
+/// Android's background engine (`AdhanWorker.kt`) starts here, with no UI:
+/// it reschedules the adhan after a reboot, an update, a clock change, and
+/// once a day.
+@pragma('vm:entry-point')
+Future<void> adhanBackgroundMain() => runAdhanBackground();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
