@@ -7,8 +7,8 @@ import 'package:lahuma/features/fajr_call/domain/fajr_contact.dart';
 import 'package:lahuma/features/fajr_call/domain/prayer_settings.dart';
 import 'package:timezone/timezone.dart' as tz;
 
-const algiers = PrayerSettings(
-    latitude: 36.754, longitude: 3.059, placeName: 'الجزائر');
+const algiers =
+    PrayerSettings(latitude: 36.754, longitude: 3.059, placeName: 'الجزائر');
 
 const mother = FajrContact(
     id: 'c1',

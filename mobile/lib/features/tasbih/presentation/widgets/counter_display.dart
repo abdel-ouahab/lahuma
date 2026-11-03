@@ -78,8 +78,8 @@ class CounterDisplay extends StatelessWidget {
                           ? targetLabel(context, null)
                           : context.tr('من ${ltr(formatCount(target))}',
                               'of ${formatCount(target)}'),
-                      style: AppTypography.subheadline
-                          .copyWith(color: reached ? c.success : c.secondaryLabel),
+                      style: AppTypography.subheadline.copyWith(
+                          color: reached ? c.success : c.secondaryLabel),
                     ),
                   ],
                 ),
@@ -149,8 +149,8 @@ class _RingPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(rect, 0, 2 * math.pi, false, paint..color = track);
     if (value > 0) {
-      canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * value.clamp(0, 1),
-          false, paint..color = fill);
+      canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * value.clamp(0, 1), false,
+          paint..color = fill);
     }
   }
 

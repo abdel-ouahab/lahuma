@@ -217,8 +217,7 @@ void main() {
       (tester) async {
     await pump(tester, compass: _Compass(has: false));
     expect(find.text('لا توجد بوصلة في هاتفك'), findsOneWidget);
-    expect(
-        tester.widget<CompassDial>(find.byType(CompassDial)).live, isFalse);
+    expect(tester.widget<CompassDial>(find.byType(CompassDial)).live, isFalse);
     expect(find.text('105°'), findsWidgets);
   });
 
@@ -250,7 +249,11 @@ void main() {
   for (final (failure, title, action) in [
     (LocationFailure.denied, 'نحتاج إلى موقعك', 'السماح بالوصول إلى الموقع'),
     (LocationFailure.deniedForever, 'الوصول إلى الموقع متوقف', 'فتح الإعدادات'),
-    (LocationFailure.serviceDisabled, 'خدمة الموقع متوقفة', 'فتح إعدادات الموقع'),
+    (
+      LocationFailure.serviceDisabled,
+      'خدمة الموقع متوقفة',
+      'فتح إعدادات الموقع'
+    ),
   ]) {
     testWidgets('no location (${failure.name}): explains and offers a fix',
         (tester) async {

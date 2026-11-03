@@ -60,8 +60,8 @@ void main() {
     final s = session('s1', DateTime(2026, 1, 1, 5));
     await repo.upsertSessions([s]);
     final ticked = s.markAwake(contact, DateTime(2026, 1, 1, 6));
-    final all = await repo.upsertSessions(
-        [ticked, session('s2', DateTime(2026, 1, 2, 5))]);
+    final all = await repo
+        .upsertSessions([ticked, session('s2', DateTime(2026, 1, 2, 5))]);
     expect(all.map((e) => e.id), ['s2', 's1']);
     expect(all.last.awake, 1);
   });
@@ -75,8 +75,8 @@ void main() {
   });
 
   test('prayer settings round-trip', () async {
-    const s = PrayerSettings(
-        latitude: 36.75, longitude: 3.06, placeName: 'الجزائر');
+    const s =
+        PrayerSettings(latitude: 36.75, longitude: 3.06, placeName: 'الجزائر');
     await repo.savePrayerSettings(s);
     expect(await repo.loadPrayerSettings(), s);
   });

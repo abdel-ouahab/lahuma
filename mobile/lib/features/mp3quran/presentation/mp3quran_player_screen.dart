@@ -92,25 +92,25 @@ class _Pal {
   final Color onInk; // content drawn on top of [ink]
 
   static const light = _Pal(
-    bg: Color(0xFFF4F6FA),
-    bgEdge: Color(0xFFE9EDF4),
-    surface: Color(0xFFFFFFFF),
-    chip: Color(0xFFECEEF3),
-    ink: Color(0xFF171C26),
-    sub: Color(0xFF6C7689),
-    mute: Color(0xFFA4AAB7),
-    onInk: Color(0xFFFFFFFF),
+    bg: AppColors.backgroundLight,
+    bgEdge: AppColors.surfaceElevatedLight,
+    surface: AppColors.surfaceLight,
+    chip: AppColors.surfaceElevatedLight,
+    ink: AppColors.textLight,
+    sub: AppColors.subtextLight,
+    mute: AppColors.mutedLight,
+    onInk: AppColors.surfaceLight,
   );
 
   static const dark = _Pal(
-    bg: Color(0xFF0C0F15),
-    bgEdge: Color(0xFF0C0F15),
-    surface: Color(0xFF171C26),
-    chip: Color(0xFF212733),
-    ink: Color(0xFFF4F6FA),
-    sub: Color(0xFF9AA3B2),
-    mute: Color(0xFF5C6575),
-    onInk: Color(0xFF171C26),
+    bg: AppColors.backgroundDark,
+    bgEdge: AppColors.backgroundDark,
+    surface: AppColors.surfaceDark,
+    chip: AppColors.surfaceElevatedDark,
+    ink: AppColors.textDark,
+    sub: AppColors.subtextDark,
+    mute: AppColors.mutedDark,
+    onInk: AppColors.surfaceDark,
   );
 
   static _Pal of(BuildContext context) =>
@@ -549,12 +549,12 @@ class Mp3MiniPlayer extends ConsumerWidget {
 
 // ── Now Playing view ─────────────────────────────────────────────────────────
 
-/// Immersive "Now Playing" palette: always dark, tinted blue like the artwork.
+/// Immersive "Now Playing" palette: always dark, the app's green at night.
 class _Np {
-  static const top = Color(0xFF15356A);
-  static const mid = Color(0xFF0F2A55);
-  static const bottom = Color(0xFF3A5568);
-  static const accent = Color(0xFFA9C2F0); // artist line
+  static const top = AppColors.primary;
+  static const mid = AppColors.prayerSilhouette;
+  static const bottom = AppColors.primaryDark;
+  static const accent = AppColors.toastAction; // artist line, gold
   static const white = Colors.white;
   static Color dim(double a) => Colors.white.withValues(alpha: a);
 }
@@ -1448,12 +1448,12 @@ class _Artwork extends StatelessWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0E1218), Color(0xFF232B3A)],
+          colors: [AppColors.prayerSilhouette, AppColors.primaryDark],
         ),
         boxShadow: shadow
             ? [
                 BoxShadow(
-                  color: const Color(0xFF171C26).withValues(alpha: 0.28),
+                  color: AppColors.shadow.withValues(alpha: 0.28),
                   blurRadius: 40,
                   offset: const Offset(0, 20),
                 ),
@@ -1489,13 +1489,13 @@ class _RingsPainter extends CustomPainter {
 
     canvas.drawPath(
       _blob(c, r, 0),
-      Paint()..color = const Color(0xFFE8EBF1),
+      Paint()..color = AppColors.backgroundLight,
     );
 
     final line = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = max(0.6, size.shortestSide / 150)
-      ..color = const Color(0xFF171C26).withValues(alpha: 0.22);
+      ..color = AppColors.inkDark.withValues(alpha: 0.22);
     for (var i = 1; i <= 7; i++) {
       canvas.drawPath(_blob(c, r * i / 8, i), line);
     }
@@ -1504,7 +1504,7 @@ class _RingsPainter extends CustomPainter {
     final crack = Paint()
       ..strokeWidth = line.strokeWidth * 1.2
       ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF171C26).withValues(alpha: 0.35);
+      ..color = AppColors.inkDark.withValues(alpha: 0.35);
     canvas.drawLine(c, c + Offset(cos(0.5), sin(0.5)) * r * 0.95, crack);
     canvas.drawLine(c, c + Offset(cos(2.4), sin(2.4)) * r * 0.8, crack);
   }

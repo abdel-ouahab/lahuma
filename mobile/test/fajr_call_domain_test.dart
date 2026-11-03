@@ -168,8 +168,8 @@ void main() {
     test('markAwake is idempotent and can be undone', () {
       final at = DateTime(2026, 11, 15, 6);
       var s = session.markAwake(mother, at).markAwake(mother, at);
-      expect(
-          s.attempts.where((a) => a.status == CallStatus.markedAwake).length, 1);
+      expect(s.attempts.where((a) => a.status == CallStatus.markedAwake).length,
+          1);
       s = s.markAwake(mother, at, awake: false);
       expect(s.awakeContactIds, {'c2'});
     });

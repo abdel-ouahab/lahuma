@@ -341,7 +341,8 @@ class _DialPainter extends CustomPainter {
         ..color = colors.shadow
         ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.07),
     );
-    canvas.drawCircle(o, r, Paint()..shader = colors.face.createShader(dialRect));
+    canvas.drawCircle(
+        o, r, Paint()..shader = colors.face.createShader(dialRect));
     canvas.drawCircle(o, r * _innerRadius, Paint()..color = colors.inner);
 
     // ── Alignment glow ──
@@ -398,7 +399,8 @@ class _DialPainter extends CustomPainter {
 
     // ── Cardinals and degree numerals, kept upright ──
     for (var i = 0; i < 4; i++) {
-      _drawUpright(canvas, text.cardinals[i], g.at(i * 90 - heading, r * _labelRing));
+      _drawUpright(
+          canvas, text.cardinals[i], g.at(i * 90 - heading, r * _labelRing));
     }
     text.numerals.forEach((d, p) {
       _drawUpright(canvas, p, g.at(d - heading, r * (_labelRing + 0.02)));
@@ -489,7 +491,8 @@ void paintKaaba(Canvas canvas, Offset center, double size, {Color? edge}) {
   final bandTop = top + h * 0.2, bandHeight = h * 0.11;
   canvas.drawRect(Rect.fromLTWH(left, bandTop, w, bandHeight), gold);
   canvas.drawPath(
-    quad(Offset(front.right, bandTop), Offset(front.right, bandTop + bandHeight)),
+    quad(Offset(front.right, bandTop),
+        Offset(front.right, bandTop + bandHeight)),
     gold,
   );
   // The door, above the ground near the corner.

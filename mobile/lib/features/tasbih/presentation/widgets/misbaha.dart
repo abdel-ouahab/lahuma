@@ -107,8 +107,8 @@ class _MisbahaState extends State<Misbaha> with TickerProviderStateMixin {
       return Semantics(
         button: true,
         excludeSemantics: true,
-        label: context.tr('سبّح: ${widget.dhikr.text}',
-            'Count: ${widget.dhikr.text}'),
+        label: context.tr(
+            'سبّح: ${widget.dhikr.text}', 'Count: ${widget.dhikr.text}'),
         value: target == null
             ? formatCount(widget.count)
             : context.tr(

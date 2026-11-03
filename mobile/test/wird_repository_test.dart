@@ -27,7 +27,8 @@ void main() {
     expect((await repo.load()).ayahsToday, 8);
   });
 
-  test('starts a streak the first time the goal is met, once per day', () async {
+  test('starts a streak the first time the goal is met, once per day',
+      () async {
     var state = await repo.setGoal(await repo.load(), 10);
     state = await repo.addRead(state, 10);
     expect(state.goalReached, isTrue);

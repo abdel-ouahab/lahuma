@@ -146,3 +146,44 @@ NextPrayer nextPrayerOf(
     tomorrow: true,
   );
 }
+
+/// The time just before [next], where the Home ring starts counting from.
+/// Before dawn that is last night's Isha, taken as today's Isha − 1 day.
+({PrayerKind kind, DateTime at}) previousPrayerOf(
+    DayPrayerTimes today, NextPrayer next) {
+  const isha = PrayerKind.isha;
+  if (next.tomorrow) return (kind: isha, at: today[isha]);
+  if (next.kind == PrayerKind.fajr) {
+    return (kind: isha, at: today[isha].subtract(const Duration(days: 1)));
+  }
+  final kind = PrayerKind.values[next.kind.index - 1];
+  return (kind: kind, at: today[kind]);
+}
+
+/// How far [now] has come from [from] to [to], 0…1.
+double elapsedBetween(DateTime from, DateTime to, DateTime now) {
+  final span = to.difference(from).inSeconds;
+  if (span <= 0) return 1;
+  return (now.difference(from).inSeconds / span).clamp(0.0, 1.0);
+}
+
+/// The last of [today]'s times at or before [now]; null before Fajr.
+/// Without timings, the clock's hour stands in.
+PrayerKind? currentPrayerOf(DayPrayerTimes? today, DateTime now) {
+  if (today == null) {
+    final h = now.hour;
+    if (h < 5) return null;
+    if (h < 7) return PrayerKind.fajr;
+    if (h < 12) return PrayerKind.sunrise;
+    if (h < 15) return PrayerKind.dhuhr;
+    if (h < 18) return PrayerKind.asr;
+    if (h < 20) return PrayerKind.maghrib;
+    return PrayerKind.isha;
+  }
+  PrayerKind? current;
+  for (final k in PrayerKind.values) {
+    if (today[k].isAfter(now)) break;
+    current = k;
+  }
+  return current;
+}

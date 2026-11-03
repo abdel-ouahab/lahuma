@@ -35,8 +35,7 @@ const Set<int> _separatorAfter = {10, 21};
 class MisbahaGeometry {
   factory MisbahaGeometry(Size size, {required bool mirror}) {
     // Height ≈ 3.05 rx with the tassel; width ≈ 2.25 rx with the beads.
-    final rx =
-        math.min(210.0, math.min(size.width / 2.25, size.height / 3.05));
+    final rx = math.min(210.0, math.min(size.width / 2.25, size.height / 3.05));
     // Spare height goes into a taller oval, the way beads hang, up to 1.3×.
     final ry = ((size.height - rx * 0.19 * (0.5 + _tasselUnits)) / 2)
         .clamp(rx * 1.12, rx * 1.3);
@@ -111,8 +110,7 @@ class MisbahaGeometry {
   /// Radius of the clear circle inside the beads (counter and ring).
   double get innerRadius => math.min(radiusX, radiusY) - bead * 1.3;
 
-  ui.Tangent at(double offset) =>
-      metric.getTangentForOffset(offset % length)!;
+  ui.Tangent at(double offset) => metric.getTangentForOffset(offset % length)!;
 }
 
 /// Paints one bead lit from the top left: body, light through it, grain,
@@ -395,10 +393,10 @@ class BeadsPainter extends CustomPainter {
       // Bell-shaped: gathered at the knot, falling nearly straight.
       final path = Path()
         ..moveTo(f * d * 0.36, y0)
-        ..quadraticBezierTo(
-            f * d * 1.0 + lag * 0.3, y0 + (y1 - y0) * 0.35, f * d * 1.15 + lag, y1);
-      final lit = Color.lerp(
-          _imam.glow, _imam.shade, (f.abs() * 2).clamp(0.0, 1.0))!;
+        ..quadraticBezierTo(f * d * 1.0 + lag * 0.3, y0 + (y1 - y0) * 0.35,
+            f * d * 1.15 + lag, y1);
+      final lit =
+          Color.lerp(_imam.glow, _imam.shade, (f.abs() * 2).clamp(0.0, 1.0))!;
       strand.color = (i.isEven ? Color.lerp(lit, _imam.highlight, 0.2)! : lit)
           .withValues(alpha: 0.95);
       canvas.drawPath(path, strand);
@@ -408,7 +406,9 @@ class BeadsPainter extends CustomPainter {
     canvas.drawRRect(
       RRect.fromRectAndRadius(
         Rect.fromCenter(
-            center: Offset(0, y0 + d * 0.06), width: d * 0.42, height: d * 0.22),
+            center: Offset(0, y0 + d * 0.06),
+            width: d * 0.42,
+            height: d * 0.22),
         Radius.circular(d * 0.1),
       ),
       Paint()

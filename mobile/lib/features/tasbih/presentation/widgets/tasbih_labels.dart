@@ -24,8 +24,8 @@ String tasbihatToday(BuildContext context, int n) {
 /// "الهدف 33" / "بلا حدّ".
 String targetLabel(BuildContext context, int? target) => target == null
     ? context.tr('بلا حدّ', 'No limit')
-    : context.tr('الهدف ${ltr(formatCount(target))}',
-        'Target ${formatCount(target)}');
+    : context.tr(
+        'الهدف ${ltr(formatCount(target))}', 'Target ${formatCount(target)}');
 
 extension BeadMaterialLabel on BeadMaterial {
   String label(BuildContext context) => switch (this) {

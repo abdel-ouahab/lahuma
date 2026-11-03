@@ -120,6 +120,32 @@ void main() {
     expect(after.at, DateTime(2026, 10, 29, 5, 13));
   });
 
+  test('the ring counts from the previous time; before dawn, last Isha', () {
+    final today = PrayerTimesApiService.parse(payload('05:12'), day);
+    final morning = nextPrayerOf(today, null, DateTime(2026, 10, 28, 10));
+    final prev = previousPrayerOf(today, morning);
+    expect(prev.kind, PrayerKind.sunrise);
+    expect(prev.at, DateTime(2026, 10, 28, 6, 30));
+    // 06:30 → 12:45 is 375 min; 10:00 is 210 min in.
+    expect(elapsedBetween(prev.at, morning.at, DateTime(2026, 10, 28, 10)),
+        closeTo(210 / 375, 1e-9));
+
+    final night = nextPrayerOf(today, null, DateTime(2026, 10, 28, 3));
+    expect(previousPrayerOf(today, night).at, DateTime(2026, 10, 27, 19, 40));
+    final late = nextPrayerOf(today, null, DateTime(2026, 10, 28, 22));
+    expect(previousPrayerOf(today, late).at, DateTime(2026, 10, 28, 19, 40));
+  });
+
+  test('the current prayer is the last one passed', () {
+    final today = PrayerTimesApiService.parse(payload('05:12'), day);
+    expect(currentPrayerOf(today, DateTime(2026, 10, 28, 4)), isNull);
+    expect(currentPrayerOf(today, DateTime(2026, 10, 28, 12, 45)),
+        PrayerKind.dhuhr);
+    expect(currentPrayerOf(today, DateTime(2026, 10, 28, 23)), PrayerKind.isha);
+    expect(
+        currentPrayerOf(null, DateTime(2026, 10, 28, 19)), PrayerKind.maghrib);
+  });
+
   test('first load fetches today and tomorrow, then caches', () async {
     final n = make();
     await n.load();

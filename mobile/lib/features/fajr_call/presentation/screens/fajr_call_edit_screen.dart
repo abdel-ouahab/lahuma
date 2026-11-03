@@ -595,7 +595,8 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
 
   List<Widget> _advancedRows(List<PhoneAccountOption> accounts) => [
         AppListTile(
-          title: context.tr('إنهاء المكالمة تلقائيًا', 'End the call automatically'),
+          title: context.tr(
+              'إنهاء المكالمة تلقائيًا', 'End the call automatically'),
           subtitle: _draft.autoHangUp
               ? context.tr('من لحظة الاتصال، رُدّ عليها أم لا',
                   'Counted from dialling, answered or not')

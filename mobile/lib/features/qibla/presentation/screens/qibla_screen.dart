@@ -167,7 +167,9 @@ class _QiblaScreenState extends ConsumerState<QiblaScreen>
                           noSensor: compass.noSensor, bearing: info.bearing)
                     else
                       _Status(
-                          status: compass.status, aligned: _aligned, turn: turn),
+                          status: compass.status,
+                          aligned: _aligned,
+                          turn: turn),
                   ],
                 ),
                 Column(
@@ -257,7 +259,8 @@ class _Readout extends StatelessWidget {
           key: const ValueKey('north'),
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(degrees(bearing), textDirection: TextDirection.ltr, style: big),
+            Text(degrees(bearing),
+                textDirection: TextDirection.ltr, style: big),
             Text(context.tr('من الشمال', 'from north'), style: small),
           ],
         );
@@ -356,8 +359,8 @@ class _Status extends StatelessWidget {
             style: AppTypography.headline.copyWith(color: c.label),
           ),
           Text(
-            context.tr('حتى يلتقي السهم بالكعبة',
-                'until the arrow meets the Kaaba'),
+            context.tr(
+                'حتى يلتقي السهم بالكعبة', 'until the arrow meets the Kaaba'),
             textAlign: TextAlign.center,
             style: AppTypography.footnote.copyWith(color: c.secondaryLabel),
           ),
@@ -416,8 +419,8 @@ class _NoCompassCard extends StatelessWidget {
                       : context.tr(
                           'قد لا يحتوي هاتفك على حساس مغناطيسي، أو يحتاج التطبيق إلى إذن الموقع. القبلة من موقعك على ${ltr(angle)} من الشمال باتجاه عقارب الساعة.',
                           'Your phone may have no magnetic sensor, or the app may need location access. From where you are, the Qibla is $angle clockwise from north.'),
-                  style:
-                      AppTypography.subheadline.copyWith(color: c.secondaryLabel),
+                  style: AppTypography.subheadline
+                      .copyWith(color: c.secondaryLabel),
                 ),
               ],
             ),

@@ -111,8 +111,7 @@ void main() {
 
   void seed({bool lists = true, bool sessions = false, bool location = true}) {
     SharedPreferences.setMockInitialValues({
-      if (lists)
-        StorageKeys.fajrCallLists: jsonEncode([parentsList.toJson()]),
+      if (lists) StorageKeys.fajrCallLists: jsonEncode([parentsList.toJson()]),
       if (sessions)
         StorageKeys.fajrCallSessions: jsonEncode([session.toJson()]),
       if (location)
@@ -148,9 +147,8 @@ void main() {
     ]);
     addTearDown(container.dispose);
     // The notifier reads the app language for notification texts.
-    await container
-        .read(localeOptionProvider.notifier)
-        .update(locale == 'ar' ? AppLocaleOption.arabic : AppLocaleOption.english);
+    await container.read(localeOptionProvider.notifier).update(
+        locale == 'ar' ? AppLocaleOption.arabic : AppLocaleOption.english);
     await tester.pumpWidget(UncontrolledProviderScope(
       container: container,
       child: MaterialApp.router(
@@ -204,8 +202,8 @@ void main() {
 
         router.push('/home/fajr-call/l1/log');
         await settle(tester);
-        expect(find.text(locale == 'ar' ? 'استيقظوا' : 'Woke up'),
-            findsOneWidget);
+        expect(
+            find.text(locale == 'ar' ? 'استيقظوا' : 'Woke up'), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }

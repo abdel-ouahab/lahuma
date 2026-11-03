@@ -63,8 +63,8 @@ class CompassSource {
   Future<double> declination(double latitude, double longitude) async {
     if (!_android) return 0;
     try {
-      final d = await _channel.invokeMethod<double>('declination',
-          {'latitude': latitude, 'longitude': longitude});
+      final d = await _channel.invokeMethod<double>(
+          'declination', {'latitude': latitude, 'longitude': longitude});
       return d ?? 0;
     } catch (e) {
       debugPrint('Qibla: declination failed: $e');

@@ -134,14 +134,14 @@ class AyahWidget extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE08A33).withValues(alpha: 0.10),
+                  color: AppColors.tileOrange.color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.edit_note_rounded,
-                        size: 18, color: Color(0xFFE08A33)),
+                    Icon(Icons.edit_note_rounded,
+                        size: 18, color: AppColors.tileOrange.color),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(

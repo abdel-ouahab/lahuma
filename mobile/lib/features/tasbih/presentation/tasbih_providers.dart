@@ -74,9 +74,8 @@ class TasbihNotifier extends StateNotifier<TasbihState> {
     final following = list[(i + 1) % list.length];
     _set(state.copyWith(
       currentId: following.id,
-      counts: state.reached(state.current)
-          ? _withCount(state.currentId, 0)
-          : null,
+      counts:
+          state.reached(state.current) ? _withCount(state.currentId, 0) : null,
     ));
   }
 

@@ -8,7 +8,8 @@ void main() {
     addTearDown(container.dispose);
     final router = container.read(routerProvider);
     final m = router.configuration.findMatch(Uri.parse('/quran/mp3quran'));
-    expect(m.matches.map((e) => e.route).whereType<dynamic>().length, greaterThan(0));
+    expect(m.matches.map((e) => e.route).whereType<dynamic>().length,
+        greaterThan(0));
     expect(m.fullPath, '/quran/mp3quran');
     expect(router.configuration.findMatch(Uri.parse('/quran/5')).fullPath,
         r'/quran/:number(\d+)');

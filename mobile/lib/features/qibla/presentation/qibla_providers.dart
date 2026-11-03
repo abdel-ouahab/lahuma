@@ -109,8 +109,8 @@ class CompassNotifier extends StateNotifier<CompassState> {
     final has = await _source.hasCompass();
     if (!mounted) return;
     if (has == false) {
-      state = const CompassState(
-          status: CompassStatus.unavailable, noSensor: true);
+      state =
+          const CompassState(status: CompassStatus.unavailable, noSensor: true);
       return;
     }
     _silenceTimer = Timer(silence, () {

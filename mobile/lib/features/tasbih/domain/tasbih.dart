@@ -76,8 +76,7 @@ const List<TasbihDhikr> tasbihPresets = [
   TasbihDhikr(id: 'tahlil', text: 'لا إله إلا الله', target: 100),
   TasbihDhikr(id: 'istighfar', text: 'أستغفر الله', target: 100),
   TasbihDhikr(id: 'hawqala', text: 'لا حول ولا قوة إلا بالله', target: 100),
-  TasbihDhikr(
-      id: 'salah', text: 'اللهم صلِّ وسلم على نبينا محمد', target: 100),
+  TasbihDhikr(id: 'salah', text: 'اللهم صلِّ وسلم على نبينا محمد', target: 100),
 ];
 
 /// Targets offered when changing a dhikr's count.
@@ -198,8 +197,7 @@ class TasbihState {
   int countOf(String id) => counts[id] ?? 0;
   int get count => countOf(current.id);
 
-  bool reached(TasbihDhikr d) =>
-      d.target != null && countOf(d.id) >= d.target!;
+  bool reached(TasbihDhikr d) => d.target != null && countOf(d.id) >= d.target!;
 
   TasbihState copyWith({
     List<TasbihDhikr>? adhkar,

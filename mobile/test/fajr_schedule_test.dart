@@ -41,10 +41,10 @@ void main() {
 
   group('PrayerTimesService', () {
     test('Algiers Fajr matches the reference within 1 minute', () {
-      final nov = service.fajrOn(algiers, DateTime(2026, 11, 15),
-          location: algiersTz)!;
-      final jun = service.fajrOn(algiers, DateTime(2026, 6, 21),
-          location: algiersTz)!;
+      final nov =
+          service.fajrOn(algiers, DateTime(2026, 11, 15), location: algiersTz)!;
+      final jun =
+          service.fajrOn(algiers, DateTime(2026, 6, 21), location: algiersTz)!;
       expect(minutesApart(nov, '05:56'), lessThanOrEqualTo(1), reason: hm(nov));
       expect(minutesApart(jun, '03:37'), lessThanOrEqualTo(1), reason: hm(jun));
       expect(nov.day, 15);
@@ -64,15 +64,14 @@ void main() {
     });
 
     test('returns null without a location', () {
-      expect(service.fajrOn(const PrayerSettings(), DateTime(2026, 1, 1)),
-          isNull);
+      expect(
+          service.fajrOn(const PrayerSettings(), DateTime(2026, 1, 1)), isNull);
     });
 
     test('the method changes the result', () {
-      final dz = service.fajrOn(algiers, DateTime(2026, 11, 15),
-          location: algiersTz)!;
-      final eg = service.fajrOn(
-          algiers.copyWith(method: PrayerMethod.egyptian),
+      final dz =
+          service.fajrOn(algiers, DateTime(2026, 11, 15), location: algiersTz)!;
+      final eg = service.fajrOn(algiers.copyWith(method: PrayerMethod.egyptian),
           DateTime(2026, 11, 15),
           location: algiersTz)!;
       expect(eg.isBefore(dz), isTrue, reason: '19.5° is earlier than 18°');
@@ -138,10 +137,11 @@ void main() {
     });
 
     test('weekdays filter (15 Nov 2026 is a Sunday)', () {
-      final list = fajrList.copyWith(
-          weekdays: {DateTime.friday, DateTime.monday});
+      final list =
+          fajrList.copyWith(weekdays: {DateTime.friday, DateTime.monday});
       final times = schedule.nextFireTimes(list, algiers,
-          from: tz.TZDateTime(algiersTz, 2026, 11, 15), count: 4,
+          from: tz.TZDateTime(algiersTz, 2026, 11, 15),
+          count: 4,
           location: algiersTz);
       expect(times.map((t) => t.day), [16, 20, 23, 27]);
       expect(times.every((t) => list.runsOn(t.weekday)), isTrue);
@@ -153,7 +153,8 @@ void main() {
       expect(times, hasLength(FajrSchedule.precomputeCount));
       for (var i = 1; i < times.length; i++) {
         expect(times[i].isAfter(times[i - 1]), isTrue);
-        expect(times[i].difference(times[i - 1]).inHours, inInclusiveRange(23, 25));
+        expect(times[i].difference(times[i - 1]).inHours,
+            inInclusiveRange(23, 25));
       }
     });
 
@@ -168,7 +169,8 @@ void main() {
       final list = fajrList.copyWith(
           startMode: FajrStartMode.fixed, fixedTime: const TimeOfDayHm(5, 0));
       final times = schedule.nextFireTimes(list, paris,
-          from: tz.TZDateTime(parisTz, 2026, 3, 27, 12), count: 3,
+          from: tz.TZDateTime(parisTz, 2026, 3, 27, 12),
+          count: 3,
           location: parisTz);
       // 28, 29 and 30 March at 05:00.
       expect(times.map((t) => t.day), [28, 29, 30]);

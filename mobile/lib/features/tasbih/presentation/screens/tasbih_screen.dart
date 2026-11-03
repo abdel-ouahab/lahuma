@@ -276,7 +276,8 @@ class _Controls extends StatelessWidget {
           ),
           AppButton.tinted(
             label: targetLabel(context, target),
-            icon: target == null ? CupertinoIcons.infinite : CupertinoIcons.scope,
+            icon:
+                target == null ? CupertinoIcons.infinite : CupertinoIcons.scope,
             small: true,
             onPressed: onTarget,
           ),

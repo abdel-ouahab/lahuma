@@ -45,8 +45,8 @@ class TasbihRepository {
       counts: counts,
       settings: TasbihSettings.fromJson(
           _decode(prefs.getString(StorageKeys.tasbihSettings))),
-      stats:
-          TasbihStats.fromJson(_decode(prefs.getString(StorageKeys.tasbihStats))),
+      stats: TasbihStats.fromJson(
+          _decode(prefs.getString(StorageKeys.tasbihStats))),
       loaded: true,
     );
   }

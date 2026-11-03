@@ -92,31 +92,31 @@ class AyahActionSheet extends StatelessWidget {
             ? context.tr('إزالة العلامة', 'Remove bookmark')
             : context.tr('حفظ العلامة', 'Bookmark'),
         color:
-            isBookmarked ? AppColors.bookmarkActive : const Color(0xFF2E7DC0),
+            isBookmarked ? AppColors.bookmarkActive : AppColors.tileBlue.color,
         onTap: onBookmark,
       ),
       _ActionItem(
         icon: Icons.share_outlined,
         label: context.tr('مشاركة', 'Share'),
-        color: const Color(0xFF7B5EA7),
+        color: AppColors.tilePurple.color,
         onTap: onShare,
       ),
       _ActionItem(
         icon: Icons.copy_outlined,
         label: context.tr('نسخ', 'Copy'),
-        color: const Color(0xFFC2507A),
+        color: AppColors.tilePink.color,
         onTap: onCopy,
       ),
       _ActionItem(
         icon: Icons.book_outlined,
         label: context.tr('التفسير', 'Tafsir'),
-        color: const Color(0xFF2BAFA5),
+        color: AppColors.tileTeal.color,
         onTap: onTafseer,
       ),
       _ActionItem(
         icon: Icons.translate_outlined,
         label: context.tr('الترجمة', 'Translation'),
-        color: const Color(0xFF4CAF7D),
+        color: AppColors.tileGreen.color,
         onTap: onTranslation,
       ),
       _ActionItem(
@@ -124,7 +124,7 @@ class AyahActionSheet extends StatelessWidget {
         label: hasNote
             ? context.tr('تعديل الملاحظة', 'Edit note')
             : context.tr('إضافة ملاحظة', 'Add note'),
-        color: const Color(0xFFE08A33),
+        color: AppColors.tileOrange.color,
         onTap: onNote,
       ),
     ];

@@ -60,7 +60,8 @@ void main() {
     testWidgets(
         'renders and counts · $locale · ${mode.name} · ${size.width.round()}',
         (tester) async {
-      final container = await pump(tester, locale: locale, mode: mode, size: size);
+      final container =
+          await pump(tester, locale: locale, mode: mode, size: size);
       expect(find.byType(Misbaha), findsOneWidget);
 
       await tester.tap(find.byType(Misbaha));
@@ -111,8 +112,8 @@ void main() {
         greaterThan(tester.getTopLeft(find.text('أذكار المساء')).dy));
 
     // Clear of the floating tab bar; slowly, so it doesn't fling.
-    await tester.timedDrag(find.byType(Scrollable).first,
-        const Offset(0, -250), const Duration(seconds: 1));
+    await tester.timedDrag(find.byType(Scrollable).first, const Offset(0, -250),
+        const Duration(seconds: 1));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(tile);
     for (var i = 0; i < 10; i++) {

@@ -118,8 +118,7 @@ class _Cell extends StatelessWidget {
               Text(
                 unit!,
                 textAlign: TextAlign.center,
-                style:
-                    AppTypography.caption1.copyWith(color: c.secondaryLabel),
+                style: AppTypography.caption1.copyWith(color: c.secondaryLabel),
               ),
           ],
         ),

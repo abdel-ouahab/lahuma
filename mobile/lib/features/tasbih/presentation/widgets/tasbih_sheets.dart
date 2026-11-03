@@ -134,8 +134,8 @@ class _AddDhikrFormState extends State<_AddDhikrForm> {
     final label = AppTypography.footnote.copyWith(color: c.secondaryLabel);
 
     return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(AppSpacing.md,
-          AppSpacing.sm, AppSpacing.md, AppSpacing.md),
+      padding: const EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.md, AppSpacing.sm, AppSpacing.md, AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -516,7 +516,7 @@ class _AlbumArtState extends State<_AlbumArt> with TickerProviderStateMixin {
                 colors: [
                   AppColors.primary,
                   AppColors.primaryDark,
-                  Color(0xFF0D6B64),
+                  AppColors.prayerSilhouette,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
