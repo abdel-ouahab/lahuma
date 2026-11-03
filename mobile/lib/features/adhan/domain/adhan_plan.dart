@@ -31,7 +31,8 @@ class AdhanPlanner {
 
   /// iOS keeps 64 pending notifications per app. The adhan takes 45: a week
   /// of five adhans (35) plus reminders for the next [iosReminderDays] days
-  /// (10). Fajr Call has the other 19 (`FajrNotifications.maxPending`).
+  /// (10). The khatma takes 4 (`KhatmaReminderPlan.iosBudget`) and Fajr Call
+  /// the other 15 (`FajrNotifications.maxPending`).
   static const int iosBudget = 45;
   static const int iosReminderDays = 2;
 

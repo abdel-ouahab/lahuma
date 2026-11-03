@@ -52,8 +52,8 @@ class KhatmaReminderPlan {
   /// Android has no pending cap: a week of mornings and evenings.
   static const int androidDays = 7;
 
-  /// iOS shares 64 pending notifications with the adhan and Fajr Call:
-  /// the next 3 mornings and this evening.
+  /// iOS shares 64 pending notifications with the adhan (45) and Fajr Call
+  /// (15): the khatma gets the next 3 mornings and this evening.
   static const int iosMornings = 3;
   static const int iosBudget = iosMornings + 1;
 

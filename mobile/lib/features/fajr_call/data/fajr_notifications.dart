@@ -19,10 +19,11 @@ class FajrNotifications {
 
   static const String routePrefix = '/fajr-call/wake/';
 
-  /// iOS keeps at most 64 pending notifications per app, and the adhan
-  /// takes 45 of them (`AdhanPlanner.iosBudget`); Android has no such cap.
+  /// iOS keeps at most 64 pending notifications per app: the adhan takes 45
+  /// (`AdhanPlanner.iosBudget`) and the khatma 4 (`KhatmaReminderPlan.iosBudget`),
+  /// leaving 15 here. Android has no such cap.
   static int get maxPending =>
-      defaultTargetPlatform == TargetPlatform.iOS ? 19 : 60;
+      defaultTargetPlatform == TargetPlatform.iOS ? 15 : 60;
   static const int maxPerList = 14;
 
   static String wakeRoute(String listId, DateTime at) =>

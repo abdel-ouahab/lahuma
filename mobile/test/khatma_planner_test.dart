@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lahuma/core/notifications/local_notifications.dart';
+import 'package:lahuma/features/adhan/domain/adhan_plan.dart';
+import 'package:lahuma/features/fajr_call/data/fajr_notifications.dart';
 import 'package:lahuma/features/khatma/data/khatma_notifications.dart';
 import 'package:lahuma/features/khatma/domain/khatma.dart';
 import 'package:lahuma/features/khatma/domain/khatma_planner.dart';
@@ -246,6 +249,16 @@ void main() {
       planFromPage: 0,
       eveningEnabled: true,
     );
+
+    test('iOS budgets of adhan, Fajr Call and khatma fill 64 exactly', () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      addTearDown(() => debugDefaultTargetPlatformOverride = null);
+      expect(
+          AdhanPlanner.iosBudget +
+              FajrNotifications.maxPending +
+              KhatmaReminderPlan.iosBudget,
+          64);
+    });
 
     test('iOS: the next 3 mornings and this evening', () {
       final r = KhatmaReminderPlan.plan(k, nov(1, 8), ios: true);
