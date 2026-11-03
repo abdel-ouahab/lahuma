@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lahuma/core/notifications/local_notifications.dart';
 import 'package:lahuma/features/adhan/data/adhan_audio_store.dart';
@@ -7,6 +8,7 @@ import 'package:lahuma/features/adhan/data/muezzin_repository.dart';
 import 'package:lahuma/features/adhan/domain/adhan_plan.dart';
 import 'package:lahuma/features/adhan/domain/adhan_settings.dart';
 import 'package:lahuma/features/adhan/domain/muezzin.dart';
+import 'package:lahuma/features/adhan/presentation/adhan_foreground.dart';
 import 'package:lahuma/features/adhan/presentation/adhan_providers.dart';
 import 'package:lahuma/features/prayer_times/domain/prayer_times.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -90,14 +92,12 @@ class FakeStore extends AdhanAudioStore {
 
 class FakeScheduler extends AdhanScheduler {
   FakeScheduler() : super(LocalNotifications());
-  final syncs = <({List<AdhanSlot> slots, AdhanDownload? download})>[];
+  final syncs = <({List<AdhanSlot> slots, String? muezzinName})>[];
 
   @override
   Future<void> sync(List<AdhanSlot> slots,
-      {required AdhanDownload? download,
-      required String? muezzinName,
-      required bool arabic}) async {
-    syncs.add((slots: slots, download: download));
+      {required String? muezzinName, required bool arabic}) async {
+    syncs.add((slots: slots, muezzinName: muezzinName));
   }
 }
 
@@ -199,38 +199,15 @@ void main() {
     });
   });
 
-  group('AdhanScheduler.channelFor', () {
-    test('without a download: bundled raw sound and .caf, shared channel', () {
-      final c = AdhanScheduler.channelFor(
-          fajr: true, download: null, muezzinName: null);
-      expect(c.id, 'adhan_default_fajr_v2');
-      expect(c.sound!.androidRaw, 'adhan_default_regular');
-      expect(c.sound!.androidUri, isNull);
-      expect(c.sound!.iosName, 'adhan_default_regular.caf');
-      expect(c.alarm, isTrue);
+  group('AdhanScheduler', () {
+    test('adhan notifications are silent; the app plays the adhan', () {
+      const c = AdhanScheduler.adhanChannel;
+      expect(c.silent, isTrue);
+      expect(c.sound, isNull);
+      expect(c.alarm, isFalse);
       expect(c.timeSensitive, isTrue);
-    });
-
-    test('a download gets its own channel per sound and version', () {
-      const d = AdhanDownload(
-        muezzinId: 'm1',
-        version: 3,
-        androidUris: {AdhanSoundKind.regular: 'content://media/1'},
-        iosSounds: {
-          AdhanSoundKind.regularShort: 'adhan_m1_regularShort_v3.caf'
-        },
-      );
-      final c = AdhanScheduler.channelFor(
-          fajr: false, download: d, muezzinName: 'مؤذن');
-      expect(c.id, 'adhan_m1_regular_v3');
-      expect(c.sound!.androidUri, 'content://media/1');
-      expect(c.sound!.androidRaw, isNull);
-      expect(c.sound!.iosName, 'adhan_m1_regularShort_v3.caf');
-
-      // Fajr has no published file here: falls back to the bundled one.
-      final fajr = AdhanScheduler.channelFor(
-          fajr: true, download: d, muezzinName: 'مؤذن');
-      expect(fajr.id, 'adhan_default_fajr_v2');
+      expect(c.id.startsWith(AdhanScheduler.channelPrefix), isTrue);
+      expect(AdhanScheduler.reminderChannel.silent, isFalse);
     });
 
     test('reminder text agrees in number', () {
@@ -297,7 +274,6 @@ void main() {
       expect(n.state.settings.muezzinId, 'm1');
       expect(n.state.download!.version, 1);
       expect(store.kept!.muezzinId, 'm1');
-      expect(scheduler.syncs.last.download!.muezzinId, 'm1');
       expect(scheduler.syncs.last.slots, isNotEmpty);
 
       final reloaded = make();
@@ -351,5 +327,197 @@ void main() {
       expect(last.any((s) => s.prayer == PrayerKind.asr), isFalse);
       expect(last.any((s) => s.reminder), isTrue);
     });
+
+    test('no prayer times yet keeps the pending adhans', () async {
+      var days = <DayPrayerTimes>[];
+      final n = AdhanNotifier(
+        muezzins: muezzins,
+        repository: AdhanSettingsRepository(),
+        store: store,
+        scheduler: scheduler,
+        days: () => days,
+        arabic: () => true,
+        now: () => now,
+        ios: false,
+        autoLoad: false,
+      );
+      await n.load();
+      final before = scheduler.syncs.length;
+      await n.setEnabled(true);
+      expect(scheduler.syncs.length, before);
+
+      days = week(now);
+      await n.reschedule();
+      expect(scheduler.syncs.length, before + 1);
+      expect(scheduler.syncs.last.slots, isNotEmpty);
+
+      // Turning it off still cancels everything, times or not.
+      days = [];
+      await n.setEnabled(false);
+      expect(scheduler.syncs.last.slots, isEmpty);
+    });
+  });
+
+  group('AdhanForeground', () {
+    // A clock the test moves, and the timers it would have armed.
+    late DateTime clock;
+    late List<({Duration after, void Function() fire})> timers;
+    late List<AdhanSlot> played;
+    late int? saved;
+    late AdhanSettings settings;
+
+    setUp(() {
+      clock = now;
+      timers = [];
+      played = [];
+      saved = null;
+      settings = const AdhanSettings(enabled: true);
+    });
+
+    AdhanForeground make({int? lastPlayed}) => AdhanForeground(
+          adhans: (from) => [
+            for (final s in AdhanPlanner.plan(
+                days: week(now), settings: settings, now: from, ios: false))
+              if (!s.reminder) s,
+          ],
+          now: () => clock,
+          onAdhan: played.add,
+          loadLastPlayed: () async => lastPlayed,
+          saveLastPlayed: (id) async => saved = id,
+          timer: (after, fire) {
+            timers.add((after: after, fire: fire));
+            return Timer(const Duration(days: 365), () {});
+          },
+        );
+
+    /// Moves the clock to the last armed timer and fires it.
+    Future<void> fireNext() async {
+      final t = timers.last;
+      clock = clock.add(t.after);
+      t.fire();
+      await pumpEventQueue();
+    }
+
+    test('plays each of the five prayers at its time, once', () async {
+      final fg = make();
+      fg.setActive(true);
+      await pumpEventQueue();
+      // 10:00 → Dhuhr 12:45, then Asr, Maghrib, Isha, tomorrow's Fajr.
+      expect(timers.last.after, const Duration(hours: 2, minutes: 45));
+      for (var i = 0; i < 5; i++) {
+        await fireNext();
+      }
+      expect(played.map((s) => s.prayer), [
+        PrayerKind.dhuhr,
+        PrayerKind.asr,
+        PrayerKind.maghrib,
+        PrayerKind.isha,
+        PrayerKind.fajr,
+      ]);
+      expect(played.last.at, DateTime(2026, 10, 30, 5, 30));
+      expect(saved, played.last.id);
+
+      // Coming back, or a refresh, doesn't play it again.
+      fg.setActive(false);
+      fg.setActive(true);
+      await fg.refresh();
+      expect(played, hasLength(5));
+    });
+
+    test('nothing plays in the background', () async {
+      final fg = make();
+      fg.setActive(true);
+      await pumpEventQueue();
+      fg.setActive(false);
+      clock = DateTime(2026, 10, 29, 12, 50); // Dhuhr was 5 minutes ago
+      fg.setActive(true);
+      await pumpEventQueue();
+      expect(played, isEmpty);
+      // The timer now points at Asr.
+      expect(timers.last.after, const Duration(hours: 3));
+    });
+
+    test('back within the grace minute still plays it', () async {
+      final fg = make();
+      clock = DateTime(2026, 10, 29, 12, 45, 30);
+      fg.setActive(true);
+      await pumpEventQueue();
+      expect(played.single.prayer, PrayerKind.dhuhr);
+    });
+
+    test('an adhan already played (another launch) is skipped', () async {
+      final dhuhr = AdhanPlanner.idFor(now, PrayerKind.dhuhr);
+      final fg = make(lastPlayed: dhuhr);
+      clock = DateTime(2026, 10, 29, 12, 45, 10);
+      fg.setActive(true);
+      await pumpEventQueue();
+      expect(played, isEmpty);
+    });
+
+    test('respects the enabled prayers and the master switch', () async {
+      settings = AdhanSettings(
+          enabled: true, prayers: {...adhanPrayers}..remove(PrayerKind.dhuhr));
+      final fg = make();
+      fg.setActive(true);
+      await pumpEventQueue();
+      await fireNext();
+      expect(played.single.prayer, PrayerKind.asr);
+
+      settings = const AdhanSettings();
+      timers.clear();
+      await fg.refresh();
+      expect(timers, isEmpty);
+    });
+
+    test('the test adhan plays in 10 seconds, only while open', () async {
+      final fg = make();
+      fg.setActive(true);
+      await pumpEventQueue();
+      fg.test(PrayerKind.maghrib);
+      await pumpEventQueue();
+      expect(timers.last.after, AdhanForeground.testDelay);
+      await fireNext();
+      expect(played.single.prayer, PrayerKind.maghrib);
+      expect(played.single.id, AdhanForeground.testIdFor(PrayerKind.maghrib));
+      // A test doesn't count as the real Maghrib.
+      expect(saved ?? 0, lessThan(AdhanPlanner.minId));
+
+      fg.test(PrayerKind.isha);
+      fg.setActive(false);
+      clock = clock.add(const Duration(seconds: 10));
+      fg.setActive(true);
+      await pumpEventQueue();
+      expect(played, hasLength(1));
+    });
+
+    test('test ids stay out of the planner range', () {
+      for (final p in adhanPrayers) {
+        expect(AdhanPlanner.isAdhanId(AdhanForeground.testIdFor(p)), isFalse);
+      }
+    });
+  });
+
+  test('adhansFrom: the allowed adhans only, no reminders', () async {
+    SharedPreferences.setMockInitialValues({});
+    final n = AdhanNotifier(
+      muezzins: FakeMuezzins(),
+      repository: AdhanSettingsRepository(),
+      store: FakeStore(),
+      scheduler: FakeScheduler(),
+      days: () => week(now),
+      arabic: () => true,
+      now: () => now,
+      ios: true,
+      autoLoad: false,
+    );
+    expect(n.adhansFrom(now), isEmpty); // not loaded
+    await n.load();
+    expect(n.adhansFrom(now), isEmpty); // off
+    await n.setEnabled(true);
+    await n.setReminder(10);
+    final slots = n.adhansFrom(now);
+    expect(slots.any((s) => s.reminder), isFalse);
+    // Not capped by the iOS notification budget.
+    expect(slots.length, 34);
   });
 }

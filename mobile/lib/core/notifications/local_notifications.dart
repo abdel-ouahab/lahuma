@@ -38,6 +38,7 @@ class NotificationChannelSpec {
     required this.description,
     this.timeSensitive = false,
     this.alarm = false,
+    this.silent = false,
     this.sound,
   });
 
@@ -49,6 +50,9 @@ class NotificationChannelSpec {
   /// Android: plays on the alarm stream (alarm volume, heard in silent
   /// mode) at max importance.
   final bool alarm;
+
+  /// No sound: the app plays whatever is heard.
+  final bool silent;
   final NotificationSound? sound;
 
   Importance get _importance => alarm
@@ -198,7 +202,12 @@ class LocalNotifications {
   }
 
   /// Schedules a one-off notification at [at]. Uses an exact alarm when
-  /// allowed; otherwise Android may deliver it a few minutes late.
+  /// allowed; otherwise Android may deliver it up to an hour late.
+  ///
+  /// [alarmClock] (Android) schedules through `setAlarmClock`, which shows
+  /// the alarm icon but is the only exact path every OEM honours: ColorOS,
+  /// for one, stretches `setExactAndAllowWhileIdle` alarms to a one-hour
+  /// window.
   Future<void> scheduleAt({
     required int id,
     required tz.TZDateTime at,
@@ -206,6 +215,7 @@ class LocalNotifications {
     required String body,
     required NotificationChannelSpec channel,
     String? route,
+    bool alarmClock = false,
   }) async {
     await init();
     if (!_supported) return;
@@ -216,9 +226,11 @@ class LocalNotifications {
       title: title,
       body: body,
       payload: route,
-      androidScheduleMode: exact
-          ? AndroidScheduleMode.exactAllowWhileIdle
-          : AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: !exact
+          ? AndroidScheduleMode.inexactAllowWhileIdle
+          : alarmClock
+              ? AndroidScheduleMode.alarmClock
+              : AndroidScheduleMode.exactAllowWhileIdle,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           channel.id,
@@ -233,12 +245,13 @@ class LocalNotifications {
               : channel.timeSensitive
                   ? AndroidNotificationCategory.reminder
                   : null,
-          sound: channel.sound?._android,
+          playSound: !channel.silent,
+          sound: channel.silent ? null : channel.sound?._android,
           audioAttributesUsage: channel._usage,
         ),
         iOS: DarwinNotificationDetails(
-          presentSound: true,
-          sound: channel.sound?.iosName,
+          presentSound: !channel.silent,
+          sound: channel.silent ? null : channel.sound?.iosName,
           interruptionLevel: channel.timeSensitive
               ? InterruptionLevel.timeSensitive
               : InterruptionLevel.active,
@@ -257,7 +270,8 @@ class LocalNotifications {
       channel.name,
       description: channel.description,
       importance: channel._importance,
-      sound: channel.sound?._android,
+      playSound: !channel.silent,
+      sound: channel.silent ? null : channel.sound?._android,
       audioAttributesUsage: channel._usage,
     ));
   }

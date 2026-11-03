@@ -1,11 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/design/design.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/notifications/notification_providers.dart';
+import '../../../fajr_call/presentation/fajr_call_providers.dart';
 import '../../../fajr_call/presentation/widgets/prayer_settings_sheet.dart';
+import '../../../prayer_times/domain/prayer_times.dart';
 import '../../../prayer_times/presentation/prayer_times_providers.dart';
 import '../../domain/adhan_settings.dart';
 import '../../domain/muezzin.dart';
+import '../adhan_foreground.dart';
 import '../adhan_playback.dart';
 import '../adhan_providers.dart';
 
@@ -26,6 +30,8 @@ class AdhanSettingsScreen extends ConsumerWidget {
     final playback = ref.watch(adhanPlaybackProvider);
     final player = ref.read(adhanPlaybackProvider.notifier);
     final hasTimes = ref.watch(upcomingPrayerDaysProvider).isNotEmpty;
+    final perms = ref.watch(adhanPermissionsProvider).valueOrNull ??
+        const AdhanPermissions();
     final settings = state.settings;
     final arabic = context.isArabic;
 
@@ -73,6 +79,34 @@ class AdhanSettingsScreen extends ConsumerWidget {
       if (minutes != null) await notifier.setReminder(minutes);
     }
 
+    Future<void> pickTest() async {
+      final prayer = await showAppActionSheet<PrayerKind>(
+        context,
+        title: context.tr('تجربة الأذان', 'Test the adhan'),
+        message: context.tr('اختر الصلاة', 'Pick a prayer'),
+        cancelLabel: context.tr('إلغاء', 'Cancel'),
+        actions: [
+          for (final p in adhanPrayers)
+            AppSheetAction(label: arabic ? p.ar : p.en, value: p),
+        ],
+      );
+      if (prayer == null || !context.mounted) return;
+      ref.read(adhanForegroundProvider).test(prayer);
+      // The notification too, as at a real prayer time (if allowed).
+      final n = ref.read(localNotificationsProvider);
+      if (await n.areEnabled() || await n.requestPermission()) {
+        await notifier.notifyTest(AdhanForeground.testIdFor(prayer), prayer,
+            AdhanForeground.testDelay);
+      }
+      if (!context.mounted) return;
+      AppToast.show(
+        context,
+        context.tr('سيُرفع أذان ${prayer.ar} بعد 10 ثوانٍ',
+            '${prayer.en} adhan in 10 seconds'),
+        icon: CupertinoIcons.timer,
+      );
+    }
+
     return AppScaffold.largeTitle(
       title: context.tr('الأذان', 'Adhan'),
       onRefresh: notifier.refreshList,
@@ -84,8 +118,8 @@ class AdhanSettingsScreen extends ConsumerWidget {
             child: AppListSection(
               hasLeading: true,
               footer: context.tr(
-                'يُرفع الأذان في وقت كل صلاة حسب موقعك، حتى والتطبيق مغلق.',
-                'The adhan plays at each prayer time for your location, even with the app closed.',
+                'يُرفع الأذان داخل التطبيق في وقت كل صلاة حسب موقعك، إذا كان التطبيق مفتوحاً. وإلا يصلك إشعار صامت، اضغطه للاستماع.',
+                'The adhan plays in the app at each prayer time for your location, while the app is open. Otherwise you get a silent notification; tap it to listen.',
               ),
               children: [
                 AppListTile(
@@ -105,6 +139,32 @@ class AdhanSettingsScreen extends ConsumerWidget {
                     subtitle: context.tr('لا نعرف أوقات الصلاة بعد.',
                         "Prayer times aren't known yet."),
                     onTap: () => PrayerSettingsSheet.show(context),
+                  ),
+                if (settings.enabled && !perms.notifications)
+                  AppListTile(
+                    leading: const AppIconTile(
+                        icon: CupertinoIcons.bell_slash_fill,
+                        color: AppColors.tileRed),
+                    title:
+                        context.tr('الإشعارات متوقفة', 'Notifications are off'),
+                    subtitle: context.tr(
+                        'لن يصلك تنبيه بوقت الصلاة والتطبيق مغلق. اضغط لتفعيلها.',
+                        "You won't be told it's prayer time while the app is closed. Tap to turn them on."),
+                    onTap: () => _fixNotifications(context, ref),
+                  ),
+                if (settings.enabled && !perms.exact)
+                  AppListTile(
+                    leading: const AppIconTile(
+                        icon: CupertinoIcons.alarm_fill,
+                        color: AppColors.tileOrange),
+                    title: context.tr(
+                        'قد يتأخر الإشعار', 'The notification may be late'),
+                    subtitle: context.tr(
+                        'اسمح بالمنبّهات والتذكيرات ليصل في وقته.',
+                        'Allow alarms & reminders so it arrives on time.'),
+                    onTap: () => ref
+                        .read(localNotificationsProvider)
+                        .requestExactAlarms(),
                   ),
               ],
             ),
@@ -194,6 +254,24 @@ class AdhanSettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          SliverToBoxAdapter(
+            child: AppListSection(
+              hasLeading: true,
+              footer: context.tr(
+                'يُرفع الأذان داخل التطبيق بعد 10 ثوانٍ. أبقِ التطبيق مفتوحاً.',
+                'The adhan plays in the app in 10 seconds. Keep the app open.',
+              ),
+              children: [
+                AppListTile(
+                  leading: const AppIconTile(
+                      icon: CupertinoIcons.play_fill,
+                      color: AppColors.tileBlue),
+                  title: context.tr('تجربة الأذان', 'Test the adhan'),
+                  onTap: pickTest,
+                ),
+              ],
+            ),
+          ),
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
         ],
       ],
@@ -238,14 +316,8 @@ class AdhanSettingsScreen extends ConsumerWidget {
       BuildContext context, WidgetRef ref) async {
     final n = ref.read(localNotificationsProvider);
     if (!await n.areEnabled() && !await n.requestPermission()) {
-      if (context.mounted) {
-        AppToast.show(
-          context,
-          context.tr('فعّل الإشعارات من إعدادات الهاتف ليُرفع الأذان.',
-              'Turn on notifications in Settings so the adhan can play.'),
-          icon: CupertinoIcons.bell_slash,
-        );
-      }
+      if (context.mounted) _notificationsOffToast(context);
+      ref.invalidate(adhanPermissionsProvider);
       return;
     }
     if (!await n.canScheduleExact() && context.mounted) {
@@ -266,8 +338,32 @@ class AdhanSettingsScreen extends ConsumerWidget {
       );
       if (go == true) await n.requestExactAlarms();
     }
+    ref.invalidate(adhanPermissionsProvider);
     await ref.read(adhanProvider.notifier).reschedule();
   }
+
+  /// The warning row: the prompt while the system still shows it, else the
+  /// app's settings page (Android) or a hint (iOS).
+  static Future<void> _fixNotifications(
+      BuildContext context, WidgetRef ref) async {
+    final granted =
+        await ref.read(localNotificationsProvider).requestPermission();
+    ref.invalidate(adhanPermissionsProvider);
+    if (granted) {
+      await ref.read(adhanProvider.notifier).reschedule();
+    } else if (defaultTargetPlatform == TargetPlatform.android) {
+      await ref.read(fajrCallPlatformProvider).openAppSettings();
+    } else if (context.mounted) {
+      _notificationsOffToast(context);
+    }
+  }
+
+  static void _notificationsOffToast(BuildContext context) => AppToast.show(
+        context,
+        context.tr('فعّل الإشعارات من إعدادات الهاتف ليُرفع الأذان.',
+            'Turn on notifications in Settings so the adhan can play.'),
+        icon: CupertinoIcons.bell_slash,
+      );
 }
 
 class _MuezzinRow extends StatelessWidget {

@@ -7,8 +7,11 @@ import '../data/adhan_scheduler.dart';
 
 /// Bundled full-length fallback adhan (Flutter asset). There is no Fajr
 /// recording yet, so Fajr plays the same one.
+///
+/// just_audio copies an asset to its cache the first time and keeps that
+/// copy, so a new recording needs a new file name (bump the `_v` suffix).
 String adhanDefaultAsset({required bool fajr}) =>
-    'assets/audio/adhan/default_regular.mp3';
+    'assets/audio/adhan/default_regular_v2.mp3';
 
 /// What the adhan player is doing. [key] names what is loaded (a muezzin
 /// id for a preview, or [AdhanScheduler.playRoute] for the full adhan).
@@ -38,6 +41,8 @@ class AdhanPlayback extends StateNotifier<AdhanPlaybackState> {
         super(const AdhanPlaybackState()) {
     _sub = _player.playerStateStream.listen((s) {
       if (!mounted) return;
+      debugPrint('Adhan: player ${s.processingState.name}'
+          '${s.playing ? ' playing' : ''} (${state.key})');
       if (s.processingState == ProcessingState.completed) {
         state = AdhanPlaybackState(key: state.key);
         return;
@@ -49,11 +54,17 @@ class AdhanPlayback extends StateNotifier<AdhanPlaybackState> {
         playing: s.playing,
       );
     });
+    // A failure while playing (not while loading) only arrives here.
+    _errors = _player.playbackEventStream.listen((_) {}, onError: (Object e) {
+      debugPrint('Adhan: playback error: $e');
+      if (mounted) state = AdhanPlaybackState(key: state.key, failed: true);
+    });
   }
 
   final Future<void> Function() _beforePlay;
   final AudioPlayer _player;
   StreamSubscription<PlayerState>? _sub;
+  StreamSubscription<PlaybackEvent>? _errors;
 
   /// Plays a local [file], else streams [url], else the bundled [asset].
   /// Tapping the same [key] again while it plays stops it.
@@ -95,6 +106,7 @@ class AdhanPlayback extends StateNotifier<AdhanPlaybackState> {
   @override
   void dispose() {
     _sub?.cancel();
+    _errors?.cancel();
     _player.dispose();
     super.dispose();
   }

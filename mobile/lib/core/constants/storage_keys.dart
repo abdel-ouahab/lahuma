@@ -47,6 +47,9 @@ class StorageKeys {
   static const String adhanMuezzins = 'adhan.muezzins';
   static const String adhanDownload = 'adhan.download';
 
+  /// Id of the last adhan the app played itself, so it plays once.
+  static const String adhanLastPlayed = 'adhan.lastPlayed';
+
   static const String mushafLastPage = 'mushaf.lastPage';
   static const String mushafBookmarks = 'mushaf.bookmarks';
   static const String mushafTheme = 'mushaf.theme';

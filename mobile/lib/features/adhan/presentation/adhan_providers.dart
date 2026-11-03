@@ -245,14 +245,18 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
     await reschedule();
   }
 
-  /// Rebuilds the pending notifications for the next week.
+  /// Rebuilds the pending (silent) notifications for the next week.
   Future<void> reschedule() {
     if (!state.loaded) return Future.value();
     return _sync = _sync.then((_) async {
       if (!mounted) return;
       final s = state;
+      final days = _days();
+      // No times yet (they load after the settings at launch): keep what is
+      // pending instead of cancelling it; the times listener reschedules.
+      if (s.settings.enabled && days.isEmpty) return;
       final slots = AdhanPlanner.plan(
-        days: _days(),
+        days: days,
         settings: s.settings,
         now: _now(),
         ios: _ios,
@@ -260,7 +264,6 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
       try {
         await _scheduler.sync(
           slots,
-          download: s.download,
           muezzinName: s.selected?.name(_arabic()),
           arabic: _arabic(),
         );
@@ -269,7 +272,56 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
       }
     });
   }
+
+  /// "Test the adhan": [prayer]'s notification with id [id] after [delay].
+  Future<void> notifyTest(int id, PrayerKind prayer, Duration delay) =>
+      _scheduler.scheduleTest(
+        id,
+        prayer,
+        _now().add(delay),
+        muezzinName: state.selected?.name(_arabic()),
+        arabic: _arabic(),
+      );
+
+  /// The adhans (no reminders) from [from] on that the settings allow;
+  /// what the app plays itself while it is open.
+  List<AdhanSlot> adhansFrom(DateTime from) {
+    if (!state.loaded) return const [];
+    return [
+      for (final s in AdhanPlanner.plan(
+        days: _days(),
+        settings: state.settings,
+        now: from,
+        ios: false,
+      ))
+        if (!s.reminder) s,
+    ];
+  }
 }
+
+/// What can stop the prayer-time notification from arriving on time.
+class AdhanPermissions {
+  const AdhanPermissions({this.notifications = true, this.exact = true});
+
+  final bool notifications;
+
+  /// Android 12+: exact alarms. Without them the notification can be an
+  /// hour late.
+  final bool exact;
+
+  bool get ok => notifications && exact;
+}
+
+/// Checked on the settings screen; re-read when the app resumes (back from
+/// a settings page).
+final adhanPermissionsProvider =
+    FutureProvider.autoDispose<AdhanPermissions>((ref) async {
+  final n = ref.watch(localNotificationsProvider);
+  return AdhanPermissions(
+    notifications: await n.areEnabled(),
+    exact: await n.canScheduleExact(),
+  );
+});
 
 final adhanProvider = StateNotifierProvider<AdhanNotifier, AdhanState>((ref) {
   final notifier = AdhanNotifier(
