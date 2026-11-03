@@ -4,7 +4,8 @@ import '../../../core/constants/storage_keys.dart';
 import '../domain/adhan_settings.dart';
 import '../domain/muezzin.dart';
 
-/// Adhan settings and the record of the downloaded muezzin, in prefs.
+/// Adhan settings, the record of the downloaded muezzin and the last
+/// adhan played, in prefs.
 class AdhanSettingsRepository {
   Future<AdhanSettings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -44,5 +45,16 @@ class AdhanSettingsRepository {
       await prefs.setString(
           StorageKeys.adhanDownload, jsonEncode(download.toJson()));
     }
+  }
+
+  /// The id of the last adhan played in the app (ids grow with time).
+  Future<int?> loadLastPlayed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(StorageKeys.adhanLastPlayed);
+  }
+
+  Future<void> saveLastPlayed(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(StorageKeys.adhanLastPlayed, id);
   }
 }

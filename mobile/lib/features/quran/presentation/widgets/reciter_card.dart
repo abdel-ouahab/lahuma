@@ -175,7 +175,7 @@ class _ReciterIconBadgeState extends State<_ReciterIconBadge>
           gradient: LinearGradient(
             colors: widget.isActive
                 ? [AppColors.primary, AppColors.primaryDark]
-                : [const Color(0xFFDDF5F3), const Color(0xFFB8EBE8)],
+                : [AppColors.cardMint, AppColors.cardTeal],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

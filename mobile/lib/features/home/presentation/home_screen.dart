@@ -16,11 +16,16 @@ import '../../dedication/presentation/dedication_sheet.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
 import '../../prayer_times/presentation/widgets/prayer_times_section.dart';
+import '../../qibla/presentation/widgets/qibla_home_card.dart';
 import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
 import '../../settings/presentation/theme_mode_switcher.dart';
+import '../../tasbih/presentation/screens/tasbih_screen.dart';
+import '../../tasbih/presentation/tasbih_providers.dart';
+import '../../tasbih/presentation/widgets/tasbih_labels.dart';
 import '../../wird/presentation/goal_sheet.dart';
 import '../../wird/presentation/wird_providers.dart';
+import 'home_sidebar.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -31,6 +36,7 @@ class HomeScreen extends ConsumerWidget {
     final wird = ref.watch(wirdProvider);
     final dedication = ref.watch(dedicationProvider);
     final adhkarDone = ref.watch(adhkarCompletionsProvider);
+    final tasbihToday = ref.watch(tasbihTodayProvider);
     final c = context.palette;
     final isDark = c.isDark;
 
@@ -54,8 +60,8 @@ class HomeScreen extends ConsumerWidget {
           ),
         );
 
+    // No large title: the prayer-times hero is the top of Home.
     return AppScaffold.largeTitle(
-      title: context.tr('السلام عليكم', 'Assalamu alaikum'),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -70,10 +76,11 @@ class HomeScreen extends ConsumerWidget {
                   switchTo(isDark ? AppThemeMode.light : AppThemeMode.dark),
             ),
           ),
+          // Settings stay one tap away under the "More" tab.
           AppIconButton(
-            icon: CupertinoIcons.slider_horizontal_3,
-            label: context.tr('الإعدادات', 'Settings'),
-            onPressed: () => context.go('/settings'),
+            icon: CupertinoIcons.line_horizontal_3,
+            label: context.tr('القائمة', 'Menu'),
+            onPressed: () => HomeSidebar.show(context),
           ),
           if (Features.accounts)
             AppIconButton(
@@ -85,18 +92,11 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       slivers: [
-        // ── Greeting subtitle ───────────────────────────────────────────────
-        box(
-          Text(
-            context.tr('ابدأ يومك بتلاوة آيات من كلام الله',
-                'Begin your day with the words of Allah'),
-            style: AppTypography.subheadline.copyWith(color: c.secondaryLabel),
-          ),
-          top: 0,
-        ),
+        // ── Prayer times (carries the greeting) ─────────────────────────────
+        box(const PrayerTimesSection(), top: AppSpacing.xs),
 
-        // ── Prayer times ────────────────────────────────────────────────────
-        box(const PrayerTimesSection(), top: AppSpacing.md),
+        // ── Qibla ───────────────────────────────────────────────────────────
+        box(const QiblaHomeCard(), top: AppSpacing.ms),
 
         // ── Continue reading ────────────────────────────────────────────────
         box(
@@ -214,6 +214,19 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
           top: 0,
+        ),
+        box(
+          FeatureCard(
+            title: context.tr('التسبيح', 'Tasbih'),
+            icon: CupertinoIcons.circle_grid_hex_fill,
+            iconColor: AppColors.tileTeal,
+            subtitle: tasbihToday > 0
+                ? tasbihatToday(context, tasbihToday)
+                : context.tr(
+                    'مسبحة لعدّ أذكارك', 'Prayer beads for your dhikr'),
+            onTap: () => context.push(TasbihScreen.path),
+          ),
+          top: AppSpacing.ms,
         ),
 
         // ── Today's wird ────────────────────────────────────────────────────

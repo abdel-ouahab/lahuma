@@ -17,6 +17,7 @@ import '../../features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/auth/presentation/account_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_player_screen.dart';
+import '../../features/adhan/presentation/screens/adhan_reliability_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_settings_screen.dart';
 import '../../features/adhkar/domain/dhikr.dart';
 import '../../features/prayer_times/domain/prayer_times.dart';
@@ -27,6 +28,11 @@ import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dar
 import '../../features/fajr_call/presentation/screens/fajr_call_log_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_permissions_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart';
+import '../../features/khatma/presentation/screens/khatma_complete_screen.dart';
+import '../../features/khatma/presentation/screens/khatma_screen.dart';
+import '../../features/khatma/presentation/screens/khatma_setup_screen.dart';
+import '../../features/qibla/presentation/screens/qibla_screen.dart';
+import '../../features/tasbih/presentation/screens/tasbih_screen.dart';
 
 /// Every screen is an iOS page: slide transition with the interactive
 /// edge-swipe back gesture (from the right edge in RTL).
@@ -90,6 +96,41 @@ final routerProvider = Provider<GoRouter>((ref) {
                 int.tryParse(state.uri.queryParameters['index'] ?? '') ?? 0,
           ),
         ),
+      ),
+
+      // ── Tasbih (outside shell — the beads need the full screen) ─────────
+      GoRoute(
+        path: TasbihScreen.path,
+        pageBuilder: (context, state) => _page(state, const TasbihScreen()),
+      ),
+
+      // ── Khatma planner (outside shell — opened from its reminders) ──────
+      GoRoute(
+        path: KhatmaScreen.path,
+        pageBuilder: (context, state) => _page(state, const KhatmaScreen()),
+        routes: [
+          GoRoute(
+            path: 'setup',
+            pageBuilder: (context, state) =>
+                _page(state, const KhatmaSetupScreen()),
+          ),
+          GoRoute(
+            path: 'edit',
+            pageBuilder: (context, state) =>
+                _page(state, const KhatmaSetupScreen(edit: true)),
+          ),
+          GoRoute(
+            path: 'done/:id',
+            pageBuilder: (context, state) => _page(state,
+                KhatmaCompleteScreen(id: state.pathParameters['id'] ?? '')),
+          ),
+        ],
+      ),
+
+      // ── Qibla (outside shell — the compass needs the full screen) ───────
+      GoRoute(
+        path: QiblaScreen.path,
+        pageBuilder: (context, state) => _page(state, const QiblaScreen()),
       ),
 
       // ── Fajr wake list (outside shell — opened from the Fajr notification)
@@ -273,6 +314,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                     path: 'adhan',
                     pageBuilder: (context, state) =>
                         _page(state, const AdhanSettingsScreen()),
+                    routes: [
+                      GoRoute(
+                        path: 'reliability',
+                        pageBuilder: (context, state) =>
+                            _page(state, const AdhanReliabilityScreen()),
+                      ),
+                    ],
                   ),
                 ],
               ),

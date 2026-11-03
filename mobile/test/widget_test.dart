@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lahuma/core/design/design.dart' show AppTabBar;
+import 'package:lahuma/features/home/presentation/home_screen.dart';
 import 'package:lahuma/features/settings/presentation/screens/settings_screen.dart';
 import 'package:lahuma/features/quran/mushaf/presentation/screens/mushaf_screen.dart';
 import 'package:lahuma/main.dart';
@@ -30,7 +31,7 @@ void main() {
     // Let the splash delay elapse and the route change settle.
     await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('السلام عليكم'), findsOneWidget);
+    expect(find.byType(HomeScreen), findsOneWidget);
   });
 
   testWidgets('the Mushaf tab opens the Mushaf; later tabs keep their branch',

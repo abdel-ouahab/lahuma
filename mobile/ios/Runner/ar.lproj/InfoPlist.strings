@@ -2,5 +2,5 @@
 "CFBundleDisplayName" = "لهما";
 "CFBundleName" = "لهما";
 
-/* Fajr Call: one-time location for prayer times. */
-"NSLocationWhenInUseUsageDescription" = "يستخدم لهما موقعك التقريبي مرة واحدة لحساب وقت الفجر على جهازك، ولا يُرسله إلى أي مكان.";
+/* Location: prayer times, city name, Qibla and Fajr Call. */
+"NSLocationWhenInUseUsageDescription" = "يستخدم لهما موقعك التقريبي لعرض مواقيت الصلاة واسم مدينتك، ولتحديد اتجاه القبلة، ولضبط وقت الفجر في نداء الفجر. يُحسب اتجاه القبلة على هاتفك، ويُرسَل موقعك التقريبي إلى خدمة المواقيت Aladhan لجلب أوقات الصلاة.";

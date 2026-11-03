@@ -24,7 +24,8 @@ void main() {
     _surah(112, 'سُورَةُ الإِخۡلَاصِ', 'Al-Ikhlaas', 'Sincerity'),
   ];
 
-  List<int> search(String q) => filterSurahs(surahs, q).map((s) => s.number).toList();
+  List<int> search(String q) =>
+      filterSurahs(surahs, q).map((s) => s.number).toList();
 
   test('plain Arabic matches the vowelled Uthmani names', () {
     expect(search('السجدة'), [32]);

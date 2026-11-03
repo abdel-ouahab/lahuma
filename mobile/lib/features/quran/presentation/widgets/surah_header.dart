@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/design/widgets/app_ornaments.dart';
 import '../../../../core/widgets/app_card.dart';
 
 /// Beautiful surah header card displayed at the top of the reading screen.
@@ -42,6 +43,13 @@ class SurahHeader extends StatelessWidget {
       ],
       child: Stack(
         children: [
+          // Gold crescents in the top corners, as on the Home hero cards.
+          Positioned.fill(
+            child: CustomPaint(
+              painter: CrescentCornersPainter(
+                  AppColors.prayerGold.color.withValues(alpha: 0.3)),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(AppSpacing.xl),
             child: Column(
@@ -55,8 +63,8 @@ class SurahHeader extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      width: 1,
+                      color: AppColors.prayerGold.color,
+                      width: 1.2,
                     ),
                   ),
                   child: Center(

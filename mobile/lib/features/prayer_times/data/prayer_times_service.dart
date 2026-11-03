@@ -36,6 +36,16 @@ class PrayerTimesApiService {
   Future<List<DayPrayerTimes>> fetchRange(
       List<DateTime> days, double lat, double lng) async {
     final wanted = {for (final d in days) DayPrayerTimes.dayKey(d)};
+    return [
+      for (final d in await fetchMonths(days, lat, lng))
+        if (wanted.contains(d.key)) d,
+    ];
+  }
+
+  /// Every day of each calendar month [days] touch. The background
+  /// reschedule keeps them all, so it can still plan a week ahead offline.
+  Future<List<DayPrayerTimes>> fetchMonths(
+      List<DateTime> days, double lat, double lng) async {
     final months = {for (final d in days) (d.year, d.month)};
     final result = <DayPrayerTimes>[];
     for (final (year, month) in months) {
@@ -48,8 +58,7 @@ class PrayerTimesApiService {
             'method': PrayerTimesConfig.method,
           },
         );
-        result.addAll(
-            parseCalendar(res.data).where((d) => wanted.contains(d.key)));
+        result.addAll(parseCalendar(res.data));
       } on FormatException {
         rethrow;
       } catch (e) {

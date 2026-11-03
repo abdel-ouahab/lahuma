@@ -52,6 +52,8 @@ dependencies:
   animated_theme_switcher: ^2.0.10
   shimmer: ^4.0.0
   flutter_animate: ^4.5.2
+  flutter_compass: ^0.8.1
+  sensors_plus: ^7.1.1
 
 dev_dependencies:
   flutter_test:

@@ -33,8 +33,7 @@ void main() {
     final context =
         await pumpApp(tester, mode: ThemeMode.dark, platform: Brightness.light);
     expect(context.palette.isDark, isTrue);
-    expect(
-        context.palette.label, isSameColorAs(AppColors.label.darkColor));
+    expect(context.palette.label, isSameColorAs(AppColors.label.darkColor));
     expect(context.palette.accent, isSameColorAs(AppColors.accent.darkColor));
     expect(context.palette.groupedBackground,
         isSameColorAs(AppColors.groupedBackground.darkColor));
@@ -51,8 +50,7 @@ void main() {
   testWidgets('system mode follows the platform brightness', (tester) async {
     final context = await pumpApp(tester,
         mode: ThemeMode.system, platform: Brightness.dark);
-    expect(
-        context.palette.label, isSameColorAs(AppColors.label.darkColor));
+    expect(context.palette.label, isSameColorAs(AppColors.label.darkColor));
     expect(CupertinoTheme.of(context).primaryColor,
         isSameColorAs(AppColors.accent.darkColor));
   });

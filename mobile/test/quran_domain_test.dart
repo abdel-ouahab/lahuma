@@ -24,7 +24,8 @@ void main() {
         expect(cur.juz, prev.juz + 1);
         final later = cur.surah > prev.surah ||
             (cur.surah == prev.surah && cur.ayah > prev.ayah);
-        expect(later, isTrue, reason: 'juz ${cur.juz} must start after ${prev.juz}');
+        expect(later, isTrue,
+            reason: 'juz ${cur.juz} must start after ${prev.juz}');
       }
     });
 
@@ -49,14 +50,16 @@ void main() {
     });
 
     test('leaves ayah 1 alone when it does not start with the basmala', () {
-      final detail = SurahDetail.fromJson(_surahJson(2, 'one two three four five'));
+      final detail =
+          SurahDetail.fromJson(_surahJson(2, 'one two three four five'));
       expect(detail.ayahs.first.text, 'one two three four five');
     });
   });
 
   group('ReadingProgress.percent', () {
     test('is the share of the surah reached', () {
-      const p = ReadingProgress(surahId: 2, surahName: 'x', ayahNumber: 50, totalAyahs: 200);
+      const p = ReadingProgress(
+          surahId: 2, surahName: 'x', ayahNumber: 50, totalAyahs: 200);
       expect(p.percent, 25);
     });
 
@@ -66,7 +69,8 @@ void main() {
     });
 
     test('never exceeds 100', () {
-      const p = ReadingProgress(surahId: 1, surahName: 'x', ayahNumber: 9, totalAyahs: 7);
+      const p = ReadingProgress(
+          surahId: 1, surahName: 'x', ayahNumber: 9, totalAyahs: 7);
       expect(p.percent, 100);
     });
   });

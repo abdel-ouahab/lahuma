@@ -29,8 +29,10 @@
 	<string>????</string>
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Lahuma reads how you tilt your phone so the lanterns on the prayer-times card swing. The motion data stays on your phone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lahuma uses your approximate location to show prayer times and the city name for your area, and to set the Fajr time for Fajr Call. Only rounded coordinates are sent to the prayer-times service; they are not linked to you.</string>
+	<string>Lahuma uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tel</string>

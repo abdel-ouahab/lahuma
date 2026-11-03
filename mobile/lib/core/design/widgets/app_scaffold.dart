@@ -14,7 +14,9 @@ import 'app_states.dart';
 ///   with the system back chevron (mirrored and on the right in RTL).
 /// * [AppScaffold.largeTitle] — tab roots: a large title that collapses into
 ///   the bar on scroll, optional search / segmented control under it and
-///   pull-to-refresh.
+///   pull-to-refresh. Without a title, only a slim bar with [leading] /
+///   [trailing] sits on top and scrolls away with the page (Home, whose
+///   hero carries its own title).
 ///
 /// Bars are translucent: content scrolls under them, and their height reaches
 /// the page as `MediaQuery` padding. A `ListView` / `GridView` child picks that
@@ -39,7 +41,7 @@ class AppScaffold extends StatelessWidget {
 
   const AppScaffold.largeTitle({
     super.key,
-    required String this.title,
+    this.title,
     required List<Widget> this.slivers,
     this.leading,
     this.trailing,
@@ -99,13 +101,27 @@ class AppScaffold extends StatelessWidget {
             parent: BouncingScrollPhysics()),
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
-          CupertinoSliverNavigationBar(
-            largeTitle: Text(title!),
-            leading: leading,
-            trailing: trailing,
-            bottom: bottom,
-            bottomMode: bottom == null ? null : NavigationBarBottomMode.always,
-          ),
+          if (title == null)
+            SliverToBoxAdapter(
+              child: CupertinoNavigationBar(
+                leading: leading,
+                trailing: trailing,
+                automaticallyImplyLeading: false,
+                automaticallyImplyMiddle: false,
+                transitionBetweenRoutes: false,
+                backgroundColor: backgroundColor ?? AppColors.groupedBackground,
+                border: null,
+              ),
+            )
+          else
+            CupertinoSliverNavigationBar(
+              largeTitle: Text(title!),
+              leading: leading,
+              trailing: trailing,
+              bottom: bottom,
+              bottomMode:
+                  bottom == null ? null : NavigationBarBottomMode.always,
+            ),
           if (onRefresh != null) AppRefreshSliver(onRefresh: onRefresh!),
           ...slivers!,
           // Room for the home indicator and, inside the tab shell, the tab
@@ -299,9 +315,11 @@ class AppTabBar extends StatelessWidget {
                   child: GestureDetector(
                     onTap: () => _select(currentIndex),
                     child: DecoratedBox(
+                      // The gold ring echoes the prayer-times frame.
                       decoration: BoxDecoration(
                         color: c.tabBarBackground,
                         shape: BoxShape.circle,
+                        border: Border.all(color: c.gold, width: 1.5),
                       ),
                       child: AnimatedSwitcher(
                         duration: duration,

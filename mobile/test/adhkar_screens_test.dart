@@ -115,9 +115,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 50));
     }
     expect(container.read(adhkarProgressProvider).countOf('morning-2'), 3);
-    expect(container
-        .read(adhkarCompletionsProvider)
-        .countOf(AdhkarPeriod.morning), 1);
+    expect(
+        container.read(adhkarCompletionsProvider).countOf(AdhkarPeriod.morning),
+        1);
 
     // Extra taps on a completed dhikr don't count.
     await tester.tap(counter, warnIfMissed: false);

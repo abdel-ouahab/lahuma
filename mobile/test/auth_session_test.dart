@@ -122,7 +122,8 @@ void main() {
       ..status = 401
       ..body = {'error': 'Invalid or expired session.'};
 
-    await expectLater(client.dio.get('/anything'), throwsA(isA<DioException>()));
+    await expectLater(
+        client.dio.get('/anything'), throwsA(isA<DioException>()));
     expect(expired, 1);
   });
 

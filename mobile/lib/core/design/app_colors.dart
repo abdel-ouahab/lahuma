@@ -2,11 +2,13 @@ import 'package:flutter/cupertino.dart';
 
 /// Lahuma design tokens — colour.
 ///
-/// Dark mode is navy surfaces with a blue accent and blue gradients, after the
-/// "Online Bike Shopping App" Figma kit; light mode keeps the iOS system
-/// surfaces with the same accent. The theme follows the user's setting (see
-/// `main.dart`). This is the only file
-/// in the app that may contain hex values: screens use the semantic tokens
+/// Mosque green and gold on warm ivory, after the Home prayer-times hero
+/// (the Djamaa El Djazair mock): green is the one interactive colour, gold
+/// is gilding only — frames, rings, ornaments, bookmarks — and never
+/// carries text on a light surface. Dark mode is the same scene at night:
+/// green-black surfaces, a lighter green accent, the same gold. The theme
+/// follows the user's setting (see `main.dart`). This is the only file in
+/// the app that may contain hex values: screens use the semantic tokens
 /// below, resolved through `context.palette` (see [AppPalette]).
 class AppColors {
   AppColors._();
@@ -15,142 +17,151 @@ class AppColors {
   /// The one interactive colour: buttons, links, selection, active tab.
   static const CupertinoDynamicColor accent =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFF3D9CEA),
-    darkColor: Color(0xFF3D9CEA),
+    color: Color(0xFF0F5A4A),
+    darkColor: Color(0xFF3DAE8A),
   );
 
   /// Accent wash behind tinted buttons, selected rows and icon tiles.
   static const CupertinoDynamicColor accentTint =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x263D9CEA),
-    darkColor: Color(0x383D9CEA),
+    color: Color(0x1F0F5A4A),
+    darkColor: Color(0x333DAE8A),
   );
 
   /// Text / icons drawn on top of [accent].
   static const Color onAccent = Color(0xFFFFFFFF);
 
+  /// Gilding: frames, the selected tab's ring, ornaments, bookmarks.
+  /// Decorative only; too light on ivory to carry text.
+  static const CupertinoDynamicColor gold =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFC49A3C),
+    darkColor: Color(0xFFD9B565),
+  );
+
   // ─── Backgrounds ─────────────────────────────────────────────────────────
   static const CupertinoDynamicColor background =
       CupertinoDynamicColor.withBrightness(
     color: Color(0xFFFFFFFF),
-    darkColor: Color(0xFF242C3B),
+    darkColor: Color(0xFF0E1714),
   );
   static const CupertinoDynamicColor secondaryBackground =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFFF2F2F7),
-    darkColor: Color(0xFF28303F),
+    color: Color(0xFFF6F3EA),
+    darkColor: Color(0xFF131E1A),
   );
   static const CupertinoDynamicColor tertiaryBackground =
       CupertinoDynamicColor.withBrightness(
     color: Color(0xFFFFFFFF),
-    darkColor: Color(0xFF323B4F),
+    darkColor: Color(0xFF1C2A25),
   );
 
-  /// Page behind inset-grouped lists and cards.
+  /// Page behind inset-grouped lists and cards: warm ivory.
   static const CupertinoDynamicColor groupedBackground =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFFF2F2F7),
-    darkColor: Color(0xFF242C3B),
+    color: Color(0xFFF6F3EA),
+    darkColor: Color(0xFF0E1714),
   );
 
   /// Cells and cards sitting on [groupedBackground].
   static const CupertinoDynamicColor secondaryGroupedBackground =
       CupertinoDynamicColor.withBrightness(
     color: Color(0xFFFFFFFF),
-    darkColor: Color(0xFF2E3647),
+    darkColor: Color(0xFF16221E),
   );
 
   /// Controls inside a grouped cell (e.g. a field inside a card).
   static const CupertinoDynamicColor tertiaryGroupedBackground =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFFF2F2F7),
-    darkColor: Color(0xFF353F54),
+    color: Color(0xFFF3EFE4),
+    darkColor: Color(0xFF1F2E28),
   );
 
   /// Translucent nav / tab bar material (blurred by the bars themselves).
   static const CupertinoDynamicColor barBackground =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xF0F9F9F9),
-    darkColor: Color(0xF0262E3D),
+    color: Color(0xF0F8F5EE),
+    darkColor: Color(0xF0111B18),
   );
 
-  // ─── Floating tab bar ("Modern Floating Navbar" Figma kit) ──────────────
-  /// Bar body and the raised circle behind the selected tab: the accent blue
-  /// in light mode, a raised navy surface in dark mode.
+  // ─── Floating tab bar ────────────────────────────────────────────────────
+  /// Bar body and the raised circle behind the selected tab: mosque green
+  /// in light mode, a raised green-black surface in dark mode.
   static const CupertinoDynamicColor tabBarBackground =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFF3D9CEA),
-    darkColor: Color(0xFF323B4F),
+    color: Color(0xFF0F5A4A),
+    darkColor: Color(0xFF1C2A25),
   );
 
   /// Selected tab's icon and label.
   static const CupertinoDynamicColor tabBarActive =
       CupertinoDynamicColor.withBrightness(
     color: Color(0xFFFFFFFF),
-    darkColor: Color(0xFF3D9CEA),
+    darkColor: Color(0xFFD9B565),
   );
 
   /// Unselected tabs' icons and labels.
   static const CupertinoDynamicColor tabBarInactive =
       CupertinoDynamicColor.withBrightness(
     color: Color(0xB3FFFFFF),
-    darkColor: Color(0xFF8A93A6),
+    darkColor: Color(0xFF7F9089),
   );
 
   // ─── Labels ──────────────────────────────────────────────────────────────
+  // A green near-black rather than pure black, in the hero's ink.
   static const CupertinoDynamicColor label =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFF000000),
-    darkColor: Color(0xFFFFFFFF),
+    color: Color(0xFF15302A),
+    darkColor: Color(0xFFF3F1EA),
   );
   static const CupertinoDynamicColor secondaryLabel =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x993C3C43),
-    darkColor: Color(0x99FFFFFF),
+    color: Color(0x9E2A3F38),
+    darkColor: Color(0x99F3F1EA),
   );
   static const CupertinoDynamicColor tertiaryLabel =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x4C3C3C43),
-    darkColor: Color(0x61FFFFFF),
+    color: Color(0x5C2A3F38),
+    darkColor: Color(0x61F3F1EA),
   );
   static const CupertinoDynamicColor quaternaryLabel =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x2D3C3C43),
-    darkColor: Color(0x33FFFFFF),
+    color: Color(0x332A3F38),
+    darkColor: Color(0x33F3F1EA),
   );
   static const CupertinoDynamicColor placeholder =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x4C3C3C43),
-    darkColor: Color(0x61FFFFFF),
+    color: Color(0x5C2A3F38),
+    darkColor: Color(0x61F3F1EA),
   );
 
   // ─── Lines and fills ─────────────────────────────────────────────────────
   static const CupertinoDynamicColor separator =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x4A3C3C43),
-    darkColor: Color(0x1FFFFFFF),
+    color: Color(0x40564A2E),
+    darkColor: Color(0x1FF3F1EA),
   );
   static const CupertinoDynamicColor opaqueSeparator =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xFFC6C6C8),
-    darkColor: Color(0xFF353F54),
+    color: Color(0xFFE2DCCB),
+    darkColor: Color(0xFF26362F),
   );
   static const CupertinoDynamicColor fill =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x33787880),
-    darkColor: Color(0xFF353F54),
+    color: Color(0x2E6E6450),
+    darkColor: Color(0xFF26362F),
   );
   static const CupertinoDynamicColor secondaryFill =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x29787880),
-    darkColor: Color(0xFF323B4F),
+    color: Color(0x246E6450),
+    darkColor: Color(0xFF22322B),
   );
 
   /// Inset wells: text fields, search, segmented-control track.
   static const CupertinoDynamicColor tertiaryFill =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x1F767680),
-    darkColor: Color(0xFF1E2532),
+    color: Color(0x1C6E6450),
+    darkColor: Color(0xFF0B1311),
   );
 
   // ─── Status ──────────────────────────────────────────────────────────────
@@ -161,115 +172,280 @@ class AppColors {
   // ─── Toast / HUD (inverted capsule over content) ─────────────────────────
   static const CupertinoDynamicColor toastBackground =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0xF02C2C2E),
-    darkColor: Color(0xF0353F54),
+    color: Color(0xF0173A31),
+    darkColor: Color(0xF0263A32),
   );
   static const Color toastLabel = Color(0xFFFFFFFF);
 
   /// Accent readable on [toastBackground] (the toast's action button).
-  static const Color toastAction = Color(0xFF34C8E8);
+  static const Color toastAction = Color(0xFFE6C77E);
 
   // ─── Icon tiles (Settings-style coloured squares, white glyph) ───────────
-  static const CupertinoDynamicColor tileBlue = CupertinoColors.systemBlue;
-  static const CupertinoDynamicColor tilePurple = CupertinoColors.systemPurple;
-  static const CupertinoDynamicColor tilePink = CupertinoColors.systemPink;
-  static const CupertinoDynamicColor tileOrange = CupertinoColors.systemOrange;
-  static const CupertinoDynamicColor tileYellow = CupertinoColors.systemYellow;
-  static const CupertinoDynamicColor tileRed = CupertinoColors.systemRed;
-  static const CupertinoDynamicColor tileGreen = CupertinoColors.systemGreen;
-  static const CupertinoDynamicColor tileIndigo = CupertinoColors.systemIndigo;
+  // Zellige jewel tones instead of the iOS rainbow, so a row of tiles reads
+  // as one glazed wall next to the green and gold.
+  static const CupertinoDynamicColor tileBlue =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF2F6E8E),
+    darkColor: Color(0xFF4A8FB0),
+  );
+  static const CupertinoDynamicColor tilePurple =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF6E4C7E),
+    darkColor: Color(0xFF9070A0),
+  );
+  static const CupertinoDynamicColor tilePink =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFA9506A),
+    darkColor: Color(0xFFC86F88),
+  );
+  static const CupertinoDynamicColor tileOrange =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFBF7A2A),
+    darkColor: Color(0xFFD9954A),
+  );
+  static const CupertinoDynamicColor tileYellow =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFB48A2F),
+    darkColor: Color(0xFFD9B565),
+  );
+  static const CupertinoDynamicColor tileRed =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFAE4A3C),
+    darkColor: Color(0xFFCC6A5B),
+  );
+  static const CupertinoDynamicColor tileGreen =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF1F7A5F),
+    darkColor: Color(0xFF3DAE8A),
+  );
+  static const CupertinoDynamicColor tileIndigo =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF3B4A80),
+    darkColor: Color(0xFF6474AA),
+  );
+  static const CupertinoDynamicColor tileTeal =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF237E78),
+    darkColor: Color(0xFF3FA39C),
+  );
+
+  // ─── Tasbih beads ────────────────────────────────────────────────────────
+  // Lit from the top left: highlight → body → shade, plus the light the
+  // material lets through (amber glows from inside, wood barely does) and
+  // the cord they are strung on. Same in both themes: they are objects.
+  static const BeadColors beadAmber = BeadColors(
+    highlight: Color(0xFFFFE3A3),
+    body: Color(0xFFE39B2D),
+    shade: Color(0xFF8A4B0F),
+    glow: Color(0xFFFFC15A),
+    glowStrength: 0.55,
+    specular: 0.9,
+    cord: Color(0xFF5B3A1E),
+  );
+  static const BeadColors beadWood = BeadColors(
+    highlight: Color(0xFFD9A577),
+    body: Color(0xFF9C6238),
+    shade: Color(0xFF4A2914),
+    glow: Color(0xFFC88A5A),
+    glowStrength: 0.2,
+    specular: 0.35,
+    cord: Color(0xFF3B2A20),
+    grain: Color(0xFF6E3F1F),
+  );
+  static const BeadColors beadPearl = BeadColors(
+    highlight: Color(0xFFFFFFFF),
+    body: Color(0xFFECE6DA),
+    shade: Color(0xFFA9A196),
+    glow: Color(0xFFF6D9E3),
+    glowStrength: 0.5,
+    specular: 1,
+    cord: Color(0xFF9AA0A6),
+  );
+
+  /// The imam bead, separators and tassel: the brand's green as malachite.
+  static const BeadColors beadImam = BeadColors(
+    highlight: Color(0xFFA3E6C8),
+    body: Color(0xFF1F8A6A),
+    shade: Color(0xFF0B3A32),
+    glow: Color(0xFF4CC29C),
+    glowStrength: 0.45,
+    specular: 0.95,
+    cord: Color(0xFF0B3A32),
+  );
+
+  // ─── Qibla compass ───────────────────────────────────────────────────────
+  // The Kaaba on the dial: the black kiswa lit from the top left, and its
+  // gold band. Same in both themes: it is an object.
+  static const Color kaabaFront = Color(0xFF1C1C1F);
+  static const Color kaabaSide = Color(0xFF0B0B0D);
+  static const Color kaabaTop = Color(0xFF45454B);
+  static const Color kaabaGold = Color(0xFFD9B45A);
+
+  // ─── Prayer times hero (Home) ────────────────────────────────────────────
+  // Where the palette comes from: the ring, the next-prayer tile and the
+  // dates in green; the frame, the ring's knob and the ornaments gilded.
+
+  /// Strokes and text in the prayer-times hero: ring, prayer name, dates.
+  static const CupertinoDynamicColor prayerGreen =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF0F5A4A),
+    darkColor: Color(0xFF4CC29C),
+  );
+
+  /// Fill behind white text: the next-prayer tile and the time pill.
+  static const CupertinoDynamicColor prayerGreenFill =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF0F5A4A),
+    darkColor: Color(0xFF17705A),
+  );
+
+  /// Figures in the prayer-times hero (countdown, the six times).
+  static const CupertinoDynamicColor prayerInk = label;
+
+  /// The countdown ring's track.
+  static const CupertinoDynamicColor prayerTrack =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFE6ECE8),
+    darkColor: Color(0xFF26362F),
+  );
+
+  /// Gilding in the hero; the same as [gold].
+  static const CupertinoDynamicColor prayerGold = gold;
+
+  /// Inside the gold frame, below the sky.
+  static const CupertinoDynamicColor prayerFrame =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFFFAF6EC),
+    darkColor: Color(0xFF131E1A),
+  );
+
+  /// The mosque, minaret and rooftops against the hero sky. Same in both
+  /// themes: it is a picture.
+  static const Color prayerSilhouette = Color(0xFF0B3A32);
+
+  /// Hero skies by time of day, zenith → horizon.
+  static const List<Color> skyDawn = [
+    Color(0xFF1E2A4A),
+    Color(0xFF5E5486),
+    Color(0xFFE29F7C),
+  ];
+  static const List<Color> skyDay = [
+    Color(0xFF1A5560),
+    Color(0xFF4F8F8A),
+    Color(0xFFE6D3A0),
+  ];
+  static const List<Color> skyDusk = [
+    Color(0xFF26294F),
+    Color(0xFF8E4A63),
+    Color(0xFFEE9F58),
+  ];
+  static const List<Color> skyNight = [
+    Color(0xFF06121B),
+    Color(0xFF0F2C36),
+    Color(0xFF2C5A57),
+  ];
+
+  /// Stars and the crescent in the night sky.
+  static const Color skyStar = Color(0xFFF3E7C4);
+
+  /// Candlelight in the Ramadan lanterns on the prayer card: the warm core
+  /// and the amber of the coloured glass. Same in both themes: it is light.
+  static const Color lanternFlame = Color(0xFFFFE6A8);
+  static const Color lanternGlass = Color(0xFFE79B32);
 
   // ─── Brand gradients ─────────────────────────────────────────────────────
-  /// Primary buttons and selected controls: cyan → indigo, top-left to
-  /// bottom-right.
+  /// Primary buttons and selected controls: mosque green, lit from the top
+  /// left.
   static const LinearGradient accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF34C8E8), Color(0xFF4E4AF2)],
+    colors: [Color(0xFF16735E), Color(0xFF0B4A3D)],
   );
 
-  /// Raised cards and sheets in dark mode: lighter navy at the top-left
-  /// falling off. Light mode uses [cardGradientLight]; pick via
+  /// Raised cards and sheets in dark mode: a lighter green-black at the
+  /// top-left falling off. Light mode uses [cardGradientLight]; pick via
   /// [AppPalette.cardGradient].
   static const LinearGradient cardGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFF353F54), Color(0xFF222834)],
+    colors: [Color(0xFF1C2A25), Color(0xFF131E1A)],
     stops: [0, 0.6],
   );
 
-  /// Raised cards in light mode: white, barely falling off.
+  /// Raised cards in light mode: white, warming slightly to ivory.
   static const LinearGradient cardGradientLight = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [Color(0xFFFFFFFF), Color(0xFFF9F9FB)],
+    colors: [Color(0xFFFFFFFF), Color(0xFFFDFBF6)],
   );
 
   /// Faint "glass" edge on raised surfaces: lit along the top, fading out.
   static const LinearGradient edgeHighlight = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Color(0x33FFFFFF), Color(0x00FFFFFF)],
+    colors: [Color(0x26FFFFFF), Color(0x00FFFFFF)],
     stops: [0, 0.45],
   );
 
   /// Drop shadow under raised surfaces (dark mode; scale its alpha down in
   /// light mode via [AppPalette.shadow]).
-  static const Color shadow = Color(0xFF10141C);
+  static const Color shadow = Color(0xFF07120F);
 
-  /// Hero "Continue reading" card.
+  /// Hero surfaces (Continue reading, the surah header, the mini player):
+  /// the hero's green, deepening downwards. Paired with gold crescents.
   static const List<Color> heroGradient = [
-    Color(0xFF34C8E8),
-    Color(0xFF4E4AF2),
+    Color(0xFF14695A),
+    Color(0xFF0B3F34),
   ];
 
-  /// Splash screen — the logo's teal gradient.
+  /// Splash screen: the same green, deeper.
   static const List<Color> splashGradient = [
-    Color(0xFF5AB6B8),
-    Color(0xFF0F5264),
+    Color(0xFF14695A),
+    Color(0xFF082E26),
   ];
 
   // ─── LEGACY (pre-redesign constants) ─────────────────────────────────────
   // Kept only so screens that are not converted yet keep compiling. New code
-  // must not use these; each converted screen drops them, and Phase 6 removes
-  // whatever is left.
-  static const Color primary = Color(0xFF3D9CEA);
-  static const Color primaryDark = Color(0xFF2F7FD0);
-  static const Color primaryLight = Color(0xFF6DB8F0);
-  static const Color primaryContainer = Color(0xFFE3F0FC);
+  // must not use these. Their values follow the green-and-gold palette so the
+  // unconverted screens match. [primary] is not theme-aware, so it is a mid
+  // malachite that reads on both ivory and the dark green-black.
+  static const Color primary = Color(0xFF1F8A6A);
+  static const Color primaryDark = Color(0xFF0B3F34);
+  static const Color primaryLight = Color(0xFF3DAE8A);
+  static const Color primaryContainer = Color(0xFFE3EEE8);
 
-  static const Color inkDark = Color(0xFF0F2F30);
-  static const Color inkMedium = Color(0xFF4A6B6D);
-  static const Color inkLight = Color(0xFF8FA6A8);
+  static const Color inkDark = Color(0xFF15302A);
+  static const Color inkMedium = Color(0xFF4A645C);
+  static const Color inkLight = Color(0xFF8FA39C);
 
-  static const Color cardTeal = Color(0xFFE3F4F2);
-  static const Color cardBlue = Color(0xFFE6F0FA);
-  static const Color cardPurple = Color(0xFFEEEAF8);
-  static const Color cardPink = Color(0xFFF9E9F0);
-  static const Color cardMint = Color(0xFFEAF6F2);
+  static const Color cardTeal = Color(0xFFE4F0EA);
+  static const Color cardBlue = Color(0xFFE5EEF2);
+  static const Color cardPurple = Color(0xFFEFE9F1);
+  static const Color cardPink = Color(0xFFF6E9EC);
+  static const Color cardMint = Color(0xFFE9F3EC);
 
-  static const Color backgroundLight = Color(0xFFF2F4F5);
+  static const Color backgroundLight = Color(0xFFF6F3EA);
   static const Color surfaceLight = Color(0xFFFFFFFF);
-  static const Color surfaceElevatedLight = Color(0xFFEBEEEF);
-  static const Color textLight = Color(0xFF0F2F30);
-  static const Color subtextLight = Color(0xFF5B7274);
-  static const Color mutedLight = Color(0xFF93A5A7);
-  static const Color dividerLight = Color(0xFFE1E6E7);
+  static const Color surfaceElevatedLight = Color(0xFFF1ECDF);
+  static const Color textLight = Color(0xFF15302A);
+  static const Color subtextLight = Color(0xFF566B64);
+  static const Color mutedLight = Color(0xFF94A39D);
+  static const Color dividerLight = Color(0xFFE6E0D0);
 
-  static const Color backgroundDark = Color(0xFF242C3B);
-  static const Color surfaceDark = Color(0xFF2E3647);
-  static const Color surfaceElevatedDark = Color(0xFF353F54);
-  static const Color textDark = Color(0xFFFFFFFF);
-  static const Color subtextDark = Color(0xFFA7AAB1);
-  static const Color mutedDark = Color(0xFF6E7585);
-  static const Color dividerDark = Color(0xFF353F54);
+  static const Color backgroundDark = Color(0xFF0E1714);
+  static const Color surfaceDark = Color(0xFF16221E);
+  static const Color surfaceElevatedDark = Color(0xFF1F2E28);
+  static const Color textDark = Color(0xFFF3F1EA);
+  static const Color subtextDark = Color(0xFFA6B2AD);
+  static const Color mutedDark = Color(0xFF6F807A);
+  static const Color dividerDark = Color(0xFF26362F);
 
-  static const Color ayahNumberBg = Color(0xFF3D9CEA);
+  static const Color ayahNumberBg = Color(0xFF0F5A4A);
   static const Color ayahNumberText = Color(0xFFFFFFFF);
-  static const Color translationText = Color(0xFF8A93A6);
+  static const Color translationText = Color(0xFF7F8C86);
 
-  static const Color bookmarkActive = Color(0xFF3D9CEA);
-  static const Color bookmarkInactive = Color(0xFF6E7585);
+  static const Color bookmarkActive = Color(0xFFC49A3C);
+  static const Color bookmarkInactive = Color(0xFF6F807A);
   static const Color error = Color(0xFFE5484D);
 }
 
@@ -294,6 +470,7 @@ class AppPalette {
 
   Color get accent => _r(AppColors.accent);
   Color get accentTint => _r(AppColors.accentTint);
+  Color get gold => _r(AppColors.gold);
   Color get onAccent => AppColors.onAccent;
 
   Color get background => _r(AppColors.background);
@@ -344,4 +521,33 @@ class AppPalette {
 extension AppPaletteContext on BuildContext {
   /// Semantic colours resolved for this context. See [AppPalette].
   AppPalette get palette => AppPalette._(this);
+}
+
+/// One tasbih bead material. See [AppColors.beadAmber].
+class BeadColors {
+  const BeadColors({
+    required this.highlight,
+    required this.body,
+    required this.shade,
+    required this.glow,
+    required this.glowStrength,
+    required this.specular,
+    required this.cord,
+    this.grain,
+  });
+
+  final Color highlight;
+  final Color body;
+  final Color shade;
+
+  /// Light passing through the bead, gathered at its lower far side.
+  final Color glow;
+  final double glowStrength;
+
+  /// Opacity of the white glint (gloss).
+  final double specular;
+  final Color cord;
+
+  /// Wood grain lines; null for materials without grain.
+  final Color? grain;
 }

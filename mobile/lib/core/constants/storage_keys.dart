@@ -30,6 +30,10 @@ class StorageKeys {
   static const String adhkarFavorites = 'adhkar.favorites';
   static const String adhkarCompletions = 'adhkar.completions';
 
+  static const String tasbihState = 'tasbih.state';
+  static const String tasbihSettings = 'tasbih.settings';
+  static const String tasbihStats = 'tasbih.stats';
+
   static const String reciterFavorites = 'mp3quran.favoriteReciters';
 
   static const String fajrCallLists = 'fajrCall.lists';
@@ -42,6 +46,13 @@ class StorageKeys {
   static const String adhanSettings = 'adhan.settings';
   static const String adhanMuezzins = 'adhan.muezzins';
   static const String adhanDownload = 'adhan.download';
+
+  /// Id of the last adhan the app played itself, so it plays once.
+  static const String adhanLastPlayed = 'adhan.lastPlayed';
+
+  static const String khatmaActive = 'khatma.active';
+  static const String khatmaHistory = 'khatma.history';
+  static const String khatmaLogs = 'khatma.logs';
 
   static const String mushafLastPage = 'mushaf.lastPage';
   static const String mushafBookmarks = 'mushaf.bookmarks';

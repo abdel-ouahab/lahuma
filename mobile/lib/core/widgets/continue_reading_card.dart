@@ -28,6 +28,7 @@ class ContinueReadingCard extends StatelessWidget {
     const onHero = AppColors.onAccent;
     final onHeroDim = onHero.withValues(alpha: 0.75);
     final actionColor = AppColors.heroGradient.last;
+    final gold = context.palette.gold;
     final caption = AppTypography.footnote
         .weight(FontWeight.w600)
         .copyWith(color: onHeroDim);
@@ -43,6 +44,18 @@ class ContinueReadingCard extends StatelessWidget {
         colors: AppColors.heroGradient,
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
+      ),
+      // Gilded like the prayer-times frame, one large crescent on the end
+      // side, away from the text.
+      borderColor: gold.withValues(alpha: 0.7),
+      ornament: CrescentCornersPainter(
+        gold.withValues(alpha: 0.3),
+        corners: [
+          Directionality.of(context) == TextDirection.rtl
+              ? Alignment.topLeft
+              : Alignment.topRight,
+        ],
+        scale: 1.5,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

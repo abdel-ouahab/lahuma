@@ -7,7 +7,7 @@
          Android 14+ (not USE_EXACT_ALARM, which Play reserves for alarm /
          calendar apps). -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <!-- Fajr Call and the adhan: reschedule after a reboot. -->
+    <!-- Fajr Call and the adhan: reschedule after a reboot (headless). -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <!-- Fajr Call: one city-level fix for prayer times. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -19,6 +19,8 @@
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <!-- Adhan: the player service started by the prayer-time alarm. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
     <!-- READ_CALL_LOG only in builds made with -PfajrCallLog=true (see
@@ -27,6 +29,8 @@
     <uses-permission android:name="${fajrCallLogPermission}"/>
     <!-- CALL_PHONE would otherwise hide the app from tablets on Play. -->
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
+    <!-- Qibla compass; phones without one get the angle from north instead. -->
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="false"/>
     <application
         android:usesCleartextTraffic="true"
         android:label="@string/app_name"
@@ -71,6 +75,26 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
                 <action android:name="android.intent.action.TIME_SET"/>
                 <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- Adhan engine: exact alarms play the full adhan with the app
+             killed (see docs/adhan.md). The service is started from the
+             alarm's receiver, an allowed foreground-service start on
+             Android 12+. -->
+        <service
+            android:name=".adhan.AdhanPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback"/>
+        <receiver android:name=".adhan.AdhanAlarmReceiver" android:exported="false"/>
+        <receiver android:name=".adhan.AdhanBootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.TIME_SET"/>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
             </intent-filter>
         </receiver>
 

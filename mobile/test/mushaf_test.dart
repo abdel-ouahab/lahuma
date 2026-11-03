@@ -83,11 +83,10 @@ void main() {
 
       container = await loaded();
       expect(container.read(mushafProvider).isBookmarked(10), isTrue);
-      expect(
-          await container.read(mushafProvider.notifier).toggleBookmark(10),
+      expect(await container.read(mushafProvider.notifier).toggleBookmark(10),
           isFalse);
-      expect((await MushafRepository().getBookmarks()).map((b) => b.page),
-          [20]);
+      expect(
+          (await MushafRepository().getBookmarks()).map((b) => b.page), [20]);
     });
   });
 }

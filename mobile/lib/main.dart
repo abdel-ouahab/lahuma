@@ -9,10 +9,20 @@ import 'core/notifications/local_notifications.dart';
 import 'core/notifications/notification_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/design/app_theme.dart';
+import 'features/adhan/background/adhan_background.dart';
+import 'features/adhan/data/adhan_scheduler.dart';
+import 'features/adhan/presentation/adhan_foreground.dart';
 import 'features/adhan/presentation/adhan_providers.dart';
 import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
+import 'features/khatma/presentation/khatma_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
+
+/// Android's background engine (`AdhanWorker.kt`) starts here, with no UI:
+/// it reschedules the adhan after a reboot, an update, a clock change, and
+/// once a day.
+@pragma('vm:entry-point')
+Future<void> adhanBackgroundMain() => runAdhanBackground();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +63,10 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     ref.read(fajrCallProvider);
     // Loads the adhan settings and tops up the rolling week of adhans.
     ref.read(adhanProvider);
+    // Loads the khatma, fixes today's portion and replans its reminders.
+    ref.read(khatmaProvider);
+    // The adhan plays in the app at prayer time, only while it is open.
+    ref.read(adhanForegroundProvider).setActive(true);
     ref.read(fajrCallPlatformProvider).setHandlers(
           onRoute: (route) => ref.read(routerProvider).push(route),
           onSessionsChanged: () =>
@@ -73,7 +87,15 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
       ref.read(fajrCallProvider.notifier).refresh();
       // Back from the exact-alarm settings, or a day later: reschedule.
       ref.read(adhanProvider.notifier).reschedule();
+      // A new day, or progress changed elsewhere: today's portion and the
+      // reminder texts follow.
+      ref.read(khatmaProvider.notifier).refresh();
+      ref.invalidate(adhanPermissionsProvider);
     }
+    // Visible (even behind the notification shade): the adhan may play.
+    ref.read(adhanForegroundProvider).setActive(
+        state == AppLifecycleState.resumed ||
+            state == AppLifecycleState.inactive);
   }
 
   @override
@@ -113,7 +135,16 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
             data: Theme.of(context),
             child: NotificationTapListener(
               notifications: ref.read(localNotificationsProvider),
-              onRoute: router.push,
+              onRoute: (route) {
+                // The adhan's notification while its player is already
+                // open: leave it playing.
+                final here = router.routerDelegate.currentConfiguration.uri;
+                if (route.startsWith(AdhanScheduler.playRoute) &&
+                    here.path == AdhanScheduler.playRoute) {
+                  return;
+                }
+                router.push(route);
+              },
               child: Builder(
                 builder: (context) => AppTheme.builder(context, child),
               ),

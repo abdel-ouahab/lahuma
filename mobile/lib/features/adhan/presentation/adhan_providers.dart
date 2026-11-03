@@ -5,6 +5,7 @@ import '../../../core/notifications/notification_providers.dart';
 import '../../prayer_times/domain/prayer_times.dart';
 import '../../prayer_times/presentation/prayer_times_providers.dart';
 import '../../settings/presentation/settings_providers.dart';
+import '../data/adhan_alarm_platform.dart';
 import '../data/adhan_audio_store.dart';
 import '../data/adhan_scheduler.dart';
 import '../data/adhan_settings_repository.dart';
@@ -17,8 +18,12 @@ final muezzinRepositoryProvider = Provider((ref) => MuezzinRepository());
 final adhanSettingsRepositoryProvider =
     Provider((ref) => AdhanSettingsRepository());
 final adhanAudioStoreProvider = Provider((ref) => AdhanAudioStore());
-final adhanSchedulerProvider =
-    Provider((ref) => AdhanScheduler(ref.watch(localNotificationsProvider)));
+final adhanAlarmPlatformProvider =
+    Provider<AdhanAlarmPlatform>((ref) => const AdhanAlarmPlatform());
+final adhanSchedulerProvider = Provider((ref) => AdhanScheduler(
+      ref.watch(localNotificationsProvider),
+      native: ref.watch(adhanAlarmPlatformProvider),
+    ));
 
 /// Injectable clock (tests pin it).
 final adhanClockProvider = Provider<DateTime Function()>((ref) => DateTime.now);
@@ -128,6 +133,11 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
   /// Serialises reschedules so two syncs never interleave.
   Future<void> _sync = Future.value();
 
+  /// The last sync gave the audible adhans to the Android alarm engine,
+  /// which plays them itself, app open or not.
+  bool _native = false;
+  bool get nativeAlarms => _native;
+
   Future<void> load() async {
     final settings = await _repository.loadSettings();
     var download = await _repository.loadDownload();
@@ -215,6 +225,7 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
     final settings = AdhanSettings(
       enabled: s.enabled,
       prayers: s.prayers,
+      silent: s.silent,
       reminderMinutes: s.reminderMinutes,
     );
     await _repository.saveSettings(settings);
@@ -229,11 +240,11 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
   Future<void> setEnabled(bool on) =>
       _update(state.settings.copyWith(enabled: on));
 
-  Future<void> setPrayer(PrayerKind prayer, bool on) {
-    final prayers = {...state.settings.prayers};
-    on ? prayers.add(prayer) : prayers.remove(prayer);
-    return _update(state.settings.copyWith(prayers: prayers));
-  }
+  Future<void> setPrayer(PrayerKind prayer, bool on) =>
+      setMode(prayer, on ? AdhanMode.adhan : AdhanMode.off);
+
+  Future<void> setMode(PrayerKind prayer, AdhanMode mode) =>
+      _update(state.settings.withMode(prayer, mode));
 
   Future<void> setReminder(int minutes) =>
       _update(state.settings.copyWith(reminderMinutes: minutes));
@@ -245,31 +256,103 @@ class AdhanNotifier extends StateNotifier<AdhanState> {
     await reschedule();
   }
 
-  /// Rebuilds the pending notifications for the next week.
+  /// Rebuilds the week of alarms and notifications.
   Future<void> reschedule() {
     if (!state.loaded) return Future.value();
     return _sync = _sync.then((_) async {
       if (!mounted) return;
       final s = state;
+      final days = _days();
+      // No times yet (they load after the settings at launch): keep what is
+      // pending instead of cancelling it; the times listener reschedules.
+      if (s.settings.enabled && days.isEmpty) return;
       final slots = AdhanPlanner.plan(
-        days: _days(),
+        days: days,
         settings: s.settings,
         now: _now(),
         ios: _ios,
       );
       try {
-        await _scheduler.sync(
+        _native = await _scheduler.sync(
           slots,
-          download: s.download,
           muezzinName: s.selected?.name(_arabic()),
           arabic: _arabic(),
+          download: s.download,
         );
       } catch (e) {
         debugPrint('Adhan: scheduling failed: $e');
       }
     });
   }
+
+  /// "Test the adhan": [prayer]'s adhan with id [id] after [delay].
+  /// True when the Android alarm engine plays it (even with the app
+  /// closed); otherwise only the notification is scheduled.
+  Future<bool> notifyTest(int id, PrayerKind prayer, Duration delay) =>
+      _scheduler.scheduleTest(
+        id,
+        prayer,
+        _now().add(delay),
+        muezzinName: state.selected?.name(_arabic()),
+        arabic: _arabic(),
+        download: state.download,
+      );
+
+  /// The audible adhans from [from] on that the settings allow; what the
+  /// app plays itself while it is open. None when the Android alarm engine
+  /// has them (it plays them, app open or not).
+  List<AdhanSlot> adhansFrom(DateTime from) {
+    if (!state.loaded || _native) return const [];
+    return [
+      for (final s in AdhanPlanner.plan(
+        days: _days(),
+        settings: state.settings,
+        now: from,
+        ios: false,
+      ))
+        if (s.audible) s,
+    ];
+  }
 }
+
+/// What can stop the adhan from arriving on time.
+class AdhanPermissions {
+  const AdhanPermissions({
+    this.notifications = true,
+    this.exact = true,
+    this.battery = true,
+    this.reliability = const AdhanReliability(),
+  });
+
+  final bool notifications;
+
+  /// Android 12+: exact alarms. Without them the adhan can be an hour late
+  /// and Android won't let the alarm start the player.
+  final bool exact;
+
+  /// Android: exempt from battery optimisation.
+  final bool battery;
+
+  /// Android: the phone maker and the details above, from the engine.
+  final AdhanReliability reliability;
+
+  bool get ok => notifications && exact;
+}
+
+/// Checked on the settings screen; re-read when the app resumes (back from
+/// a settings page).
+final adhanPermissionsProvider =
+    FutureProvider.autoDispose<AdhanPermissions>((ref) async {
+  final n = ref.watch(localNotificationsProvider);
+  final native = ref.watch(adhanAlarmPlatformProvider);
+  final reliability = await native.reliability();
+  return AdhanPermissions(
+    notifications: await n.areEnabled(),
+    exact: await n.canScheduleExact(),
+    battery: reliability.ignoringBatteryOptimizations || !native.supported,
+    reliability: reliability,
+  );
+});
 
 final adhanProvider = StateNotifierProvider<AdhanNotifier, AdhanState>((ref) {
   final notifier = AdhanNotifier(

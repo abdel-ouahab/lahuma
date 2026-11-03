@@ -20,6 +20,7 @@ class AppCard extends StatefulWidget {
     this.gradient,
     this.radius = AppRadius.large,
     this.borderColor,
+    this.ornament,
     this.semanticLabel,
   });
 
@@ -35,6 +36,10 @@ class AppCard extends StatefulWidget {
 
   /// Optional hairline outline (e.g. the "selected" state).
   final Color? borderColor;
+
+  /// Painted behind the content, inside the card's corners (e.g. a
+  /// [CrescentCornersPainter] on a hero card).
+  final CustomPainter? ornament;
 
   /// Read by VoiceOver when the card is tappable.
   final String? semanticLabel;
@@ -94,7 +99,10 @@ class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
       ),
       child: ClipRSuperellipse(
         borderRadius: borderRadius,
-        child: Padding(padding: widget.padding, child: widget.child),
+        child: CustomPaint(
+          painter: widget.ornament,
+          child: Padding(padding: widget.padding, child: widget.child),
+        ),
       ),
     );
     // The lit edge only reads on dark surfaces.

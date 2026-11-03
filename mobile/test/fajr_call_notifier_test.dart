@@ -68,8 +68,7 @@ void main() {
   test('auto lists go to the engine when supported and permitted', () async {
     platform
       ..supported = true
-      ..perms =
-          const FajrNativePermissions(callPhone: true, phoneState: true);
+      ..perms = const FajrNativePermissions(callPhone: true, phoneState: true);
     await repo.savePrayerSettings(algiers);
     await repo.saveLists([parentsList]);
     await make();
@@ -152,8 +151,8 @@ void main() {
     await n.markAwake(session, father, awake: true);
     expect(n.wakeSession(parentsList, at).awake, 1);
     expect(n.state.sessions, hasLength(1));
-    expect(n.state.sessions.single.id,
-        FajrCallNotifier.manualSessionId('l1', at));
+    expect(
+        n.state.sessions.single.id, FajrCallNotifier.manualSessionId('l1', at));
   });
 
   test('clearLog only clears the given list', () async {

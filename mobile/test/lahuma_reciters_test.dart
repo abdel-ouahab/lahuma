@@ -9,7 +9,8 @@ import 'package:lahuma/features/quran/domain/reciter.dart';
 import 'package:lahuma/features/quran/presentation/providers/reciter_providers.dart';
 import 'package:lahuma/features/quran/presentation/widgets/lahuma_reciters_section.dart';
 
-Reciter _reciter(String id, String name, String nameAr, Map<int, String> urls) =>
+Reciter _reciter(
+        String id, String name, String nameAr, Map<int, String> urls) =>
     Reciter(
       id: id,
       name: name,

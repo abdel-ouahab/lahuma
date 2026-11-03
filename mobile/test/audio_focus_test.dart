@@ -48,7 +48,9 @@ void main() {
 
     test('claiming stops every other player, never the claimant', () async {
       for (final owner in [ayah, reciter, mp3]) {
-        final before = {for (final p in [ayah, reciter, mp3]) p: p.stops};
+        final before = {
+          for (final p in [ayah, reciter, mp3]) p: p.stops
+        };
         await focus.claim(owner);
         for (final p in [ayah, reciter, mp3]) {
           expect(p.stops - before[p]!, identical(p, owner) ? 0 : 1);
@@ -86,7 +88,8 @@ void main() {
 
   test('the ayah player registers itself and stops with the others', () async {
     final container = ProviderContainer(overrides: [
-      ayahAudioProvider.overrideWith((ref) => _PlayingAyahAudio(ref, _playback)),
+      ayahAudioProvider
+          .overrideWith((ref) => _PlayingAyahAudio(ref, _playback)),
     ]);
     addTearDown(container.dispose);
 
@@ -120,9 +123,9 @@ void main() {
         ),
         GoRoute(
           path: '/quran/:number',
-          builder: (_, state) => Text(
-              'reader ${state.pathParameters['number']} '
-              '${state.uri.queryParameters['ayah']}'),
+          builder: (_, state) =>
+              Text('reader ${state.pathParameters['number']} '
+                  '${state.uri.queryParameters['ayah']}'),
         ),
       ]);
       await tester.pumpWidget(UncontrolledProviderScope(
