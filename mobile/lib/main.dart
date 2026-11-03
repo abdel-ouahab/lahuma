@@ -14,6 +14,7 @@ import 'features/adhan/presentation/adhan_foreground.dart';
 import 'features/adhan/presentation/adhan_providers.dart';
 import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
+import 'features/khatma/presentation/khatma_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
 
 Future<void> main() async {
@@ -55,6 +56,8 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     ref.read(fajrCallProvider);
     // Loads the adhan settings and tops up the rolling week of adhans.
     ref.read(adhanProvider);
+    // Loads the khatma, fixes today's portion and replans its reminders.
+    ref.read(khatmaProvider);
     // The adhan plays in the app at prayer time, only while it is open.
     ref.read(adhanForegroundProvider).setActive(true);
     ref.read(fajrCallPlatformProvider).setHandlers(
@@ -77,6 +80,9 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
       ref.read(fajrCallProvider.notifier).refresh();
       // Back from the exact-alarm settings, or a day later: reschedule.
       ref.read(adhanProvider.notifier).reschedule();
+      // A new day, or progress changed elsewhere: today's portion and the
+      // reminder texts follow.
+      ref.read(khatmaProvider.notifier).refresh();
       ref.invalidate(adhanPermissionsProvider);
     }
     // Visible (even behind the notification shade): the adhan may play.

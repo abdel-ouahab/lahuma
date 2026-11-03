@@ -27,6 +27,9 @@ import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dar
 import '../../features/fajr_call/presentation/screens/fajr_call_log_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_permissions_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart';
+import '../../features/khatma/presentation/screens/khatma_complete_screen.dart';
+import '../../features/khatma/presentation/screens/khatma_screen.dart';
+import '../../features/khatma/presentation/screens/khatma_setup_screen.dart';
 import '../../features/qibla/presentation/screens/qibla_screen.dart';
 import '../../features/tasbih/presentation/screens/tasbih_screen.dart';
 
@@ -98,6 +101,29 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: TasbihScreen.path,
         pageBuilder: (context, state) => _page(state, const TasbihScreen()),
+      ),
+
+      // ── Khatma planner (outside shell — opened from its reminders) ──────
+      GoRoute(
+        path: KhatmaScreen.path,
+        pageBuilder: (context, state) => _page(state, const KhatmaScreen()),
+        routes: [
+          GoRoute(
+            path: 'setup',
+            pageBuilder: (context, state) =>
+                _page(state, const KhatmaSetupScreen()),
+          ),
+          GoRoute(
+            path: 'edit',
+            pageBuilder: (context, state) =>
+                _page(state, const KhatmaSetupScreen(edit: true)),
+          ),
+          GoRoute(
+            path: 'done/:id',
+            pageBuilder: (context, state) => _page(state,
+                KhatmaCompleteScreen(id: state.pathParameters['id'] ?? '')),
+          ),
+        ],
       ),
 
       // ── Qibla (outside shell — the compass needs the full screen) ───────
