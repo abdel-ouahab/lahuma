@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/design/design.dart';
 import '../../../core/localization/tr.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
+import '../../khatma/presentation/screens/khatma_screen.dart';
 import '../../qibla/presentation/screens/qibla_screen.dart';
 import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../tasbih/presentation/screens/tasbih_screen.dart';
@@ -70,6 +71,12 @@ List<List<_Place>> _groups(BuildContext context) => [
           Icons.menu_book_rounded,
           AppColors.tileGreen,
           (r) => r.push(MushafScreen.path),
+        ),
+        _Place(
+          context.tr('ختمة القرآن', 'Quran khatma'),
+          Icons.auto_stories_rounded,
+          AppColors.tileYellow,
+          (r) => r.push(KhatmaScreen.path),
         ),
       ],
       [
