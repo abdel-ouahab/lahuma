@@ -7,10 +7,13 @@ import 'package:lahuma/core/design/app_theme.dart';
 import 'package:lahuma/core/notifications/local_notifications.dart';
 import 'package:lahuma/features/khatma/data/khatma_notifications.dart';
 import 'package:lahuma/features/khatma/domain/khatma.dart';
+import 'package:lahuma/features/khatma/domain/quran_pages.dart';
 import 'package:lahuma/features/khatma/presentation/khatma_providers.dart';
 import 'package:lahuma/features/khatma/presentation/screens/khatma_complete_screen.dart';
 import 'package:lahuma/features/khatma/presentation/screens/khatma_screen.dart';
 import 'package:lahuma/features/khatma/presentation/screens/khatma_setup_screen.dart';
+import 'package:lahuma/features/khatma/presentation/widgets/juz_wheel.dart';
+import 'package:lahuma/features/khatma/presentation/widgets/khatma_home_card.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -85,6 +88,18 @@ void main() {
   testWidgets('without a khatma it invites to start one', (tester) async {
     await pump(tester, const KhatmaScreen());
     expect(find.text('ابدأ ختمة جديدة'), findsOneWidget);
+    expect(find.byType(JuzWheel), findsOneWidget);
+    for (final row in ['7 أيام', '30 يومًا', '60 يومًا']) {
+      expect(find.text(row), findsOneWidget);
+    }
+    expect(find.text('جزء واحد يوميًا (21 صفحة)'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('setup opens on a duration chosen from the empty state',
+      (tester) async {
+    await pump(tester, const KhatmaSetupScreen(initialDays: 7));
+    expect(find.textContaining('ستقرأ نحو 87 صفحة'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -100,11 +115,18 @@ void main() {
           locale: locale, mode: mode, size: size, setup: start);
       expect(find.text(locale == 'ar' ? 'ورد اليوم' : "Today's portion"),
           findsOneWidget);
+      expect(
+          find.text(locale == 'ar'
+              ? 'افتح المصحف على صفحة 1'
+              : 'Open Mushaf at page 1'),
+          findsOneWidget);
+      expect(find.textContaining(QuranPages.openingWords(1)), findsOneWidget);
 
       final plusPage = find.text(locale == 'ar' ? '+ صفحة' : '+1 page');
       await tester.scrollUntilVisible(plusPage, 120,
           scrollable: find.byType(Scrollable).first);
-      await tester.ensureVisible(plusPage);
+      // Centred, so the translucent nav bar doesn't cover it.
+      Scrollable.ensureVisible(tester.element(plusPage), alignment: 0.5);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.tap(plusPage);
       await tester.pump(const Duration(milliseconds: 300));
@@ -113,6 +135,20 @@ void main() {
       await tester.pump(const Duration(seconds: 5));
     });
   }
+
+  testWidgets('home card invites to start, then shows what today asks',
+      (tester) async {
+    await pump(tester, const Center(child: KhatmaHomeCard()));
+    expect(find.text('ابدأ ختمة'), findsOneWidget);
+
+    await pump(tester, const Center(child: KhatmaHomeCard()), setup: (n) async {
+      await start(n);
+      await n.reachPage(8);
+    });
+    expect(find.text('13 صفحة'), findsOneWidget);
+    expect(find.text('من صفحة 9، البقرة'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('paused and overdue states render', (tester) async {
     await pump(tester, const KhatmaScreen(), setup: (n) async {

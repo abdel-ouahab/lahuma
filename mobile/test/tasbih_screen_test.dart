@@ -4,6 +4,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lahuma/features/adhkar/presentation/adhkar_providers.dart';
+import 'package:lahuma/features/adhkar/domain/dhikr.dart';
 import 'package:lahuma/core/design/app_theme.dart';
 import 'package:lahuma/features/tasbih/presentation/screens/tasbih_screen.dart';
 import 'package:lahuma/features/tasbih/presentation/tasbih_providers.dart';
@@ -101,7 +103,10 @@ void main() {
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(const ProviderScope(child: LahumaApp()));
+    // Home reads today's adhkar progress; none are loaded in tests.
+    await tester.pumpWidget(ProviderScope(overrides: [
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+    ], child: const LahumaApp()));
     await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 500));
 

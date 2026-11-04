@@ -62,6 +62,20 @@ final adhkarProgressProvider =
   return AdhkarProgressNotifier(ref.watch(adhkarProgressRepositoryProvider));
 });
 
+/// Today's progress through [period]'s adhkar: how many are finished out of
+/// how many, or null while the adhkar are still loading.
+final adhkarTodayProvider =
+    Provider.family<({int done, int total})?, AdhkarPeriod>((ref, period) {
+  final adhkar = ref.watch(adhkarProvider).valueOrNull?.of(period);
+  if (adhkar == null || adhkar.isEmpty) return null;
+  final progress = ref.watch(adhkarProgressProvider);
+  final today = ref.watch(adhkarProgressRepositoryProvider).today;
+  final done = progress.date != today
+      ? 0
+      : adhkar.where((d) => progress.countOf(d.id) >= d.count).length;
+  return (done: done, total: adhkar.length);
+});
+
 class AdhkarFavoritesNotifier extends StateNotifier<Set<String>> {
   AdhkarFavoritesNotifier(this._repository) : super(const {}) {
     _load();

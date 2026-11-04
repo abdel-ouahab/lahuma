@@ -16,6 +16,8 @@ import '../../../core/design/widgets/app_mini_player.dart';
 import '../../quran/presentation/providers/quran_providers.dart';
 import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
+import 'player_backdrop_layer.dart';
+import 'player_backdrop_sheet.dart';
 
 /// Lists the Surahs the chosen Moshaf really has and plays them.
 ///
@@ -557,6 +559,22 @@ class _Np {
   static const accent = AppColors.toastAction; // artist line, gold
   static const white = Colors.white;
   static Color dim(double a) => Colors.white.withValues(alpha: a);
+
+  /// Laid over a background video: a little shade under the grabber, the
+  /// middle left open for the scene, then deepening behind the title and
+  /// controls so white and gold text stay readable on every scene.
+  static const scrim = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0x7303130F),
+      Color(0x1203130F),
+      Color(0x1203130F),
+      Color(0x9E03130F),
+      Color(0xDB03130F),
+    ],
+    stops: [0, 0.2, 0.46, 0.68, 1],
+  );
 }
 
 class _NowPlayingScreen extends ConsumerStatefulWidget {
@@ -604,6 +622,39 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
     _snap.forward(from: 0);
   }
 
+  /// [art] follows the finger while swiping and slides in from the side the
+  /// listener moved towards when the surah changes.
+  Widget _swipeable(int? surah, Widget art) {
+    return ValueListenableBuilder<double>(
+      valueListenable: _dx,
+      builder: (_, dx, child) => Opacity(
+        opacity: (1 - dx.abs() / (_maxDrag * 3)).clamp(0.0, 1.0),
+        child: Transform.translate(
+          offset: Offset(dx * 0.5, 0),
+          child: child,
+        ),
+      ),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 380),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, anim) {
+          final incoming = child.key == ValueKey(surah);
+          final from = Offset((incoming ? 1 : -1) * _direction * 0.4, 0);
+          return FadeTransition(
+            opacity: anim,
+            child: SlideTransition(
+              position:
+                  Tween<Offset>(begin: from, end: Offset.zero).animate(anim),
+              child: child,
+            ),
+          );
+        },
+        child: KeyedSubtree(key: ValueKey(surah), child: art),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final reciter = widget.reciter;
@@ -620,6 +671,10 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
         ? moshaf.name
         : (names[surah] ?? context.tr('سورة $surah', 'Surah $surah'));
     final screen = MediaQuery.of(context).size;
+    final backdrop = ref.watch(playerBackdropProvider);
+    final hasVideo = backdrop.hasVideo;
+    // Over a video the artwork becomes a card so the scene shows around it.
+    final cardSize = min(screen.width * 0.62, screen.height * 0.3);
 
     return Scaffold(
       backgroundColor: _Np.mid,
@@ -627,7 +682,7 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
         textDirection: TextDirection.ltr,
         child: Stack(
           children: [
-            // Background wash.
+            // Background wash; also what shows while a video loads.
             const Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
@@ -640,59 +695,69 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                 ),
               ),
             ),
-            // Full-bleed artwork that fades into the gradient.
+            Positioned.fill(child: PlayerBackdropLayer(backdrop: backdrop)),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: AnimatedOpacity(
+                  opacity: hasVideo ? 1 : 0,
+                  duration: const Duration(milliseconds: 400),
+                  child: const DecoratedBox(
+                    decoration: BoxDecoration(gradient: _Np.scrim),
+                  ),
+                ),
+              ),
+            ),
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               height: screen.height * 0.68,
-              child: ShaderMask(
-                blendMode: BlendMode.dstIn,
-                shaderCallback: (r) => const LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.black, Colors.black, Colors.transparent],
-                  stops: [0, 0.6, 1],
-                ).createShader(r),
-                child: ValueListenableBuilder<double>(
-                  valueListenable: _dx,
-                  builder: (_, dx, child) => Opacity(
-                    opacity: (1 - dx.abs() / (_maxDrag * 3)).clamp(0.0, 1.0),
-                    child: Transform.translate(
-                      offset: Offset(dx * 0.5, 0),
-                      child: child,
-                    ),
-                  ),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 380),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, anim) {
-                      final incoming = child.key == ValueKey(surah);
-                      final from =
-                          Offset((incoming ? 1 : -1) * _direction * 0.4, 0);
-                      return FadeTransition(
-                        opacity: anim,
-                        child: SlideTransition(
-                          position: Tween<Offset>(begin: from, end: Offset.zero)
-                              .animate(anim),
-                          child: child,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 400),
+                child: hasVideo
+                    // Floating card, lifted off the video by its shadow.
+                    ? Padding(
+                        key: const ValueKey('card'),
+                        padding: const EdgeInsets.only(top: 52),
+                        child: Align(
+                          alignment: Alignment.topCenter,
+                          child: _swipeable(
+                            surah,
+                            _Artwork(
+                                size: cardSize, radius: 26, shadow: true),
+                          ),
                         ),
-                      );
-                    },
-                    child: SizedBox.expand(
-                      key: ValueKey(surah),
-                      child: Opacity(
-                        opacity: 0.85,
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          child: _Artwork(
-                              size: screen.width, radius: 0, shadow: false),
+                      )
+                    // Full-bleed artwork that fades into the gradient.
+                    : ShaderMask(
+                        key: const ValueKey('bleed'),
+                        blendMode: BlendMode.dstIn,
+                        shaderCallback: (r) => const LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black,
+                            Colors.black,
+                            Colors.transparent
+                          ],
+                          stops: [0, 0.6, 1],
+                        ).createShader(r),
+                        child: _swipeable(
+                          surah,
+                          SizedBox.expand(
+                            child: Opacity(
+                              opacity: 0.85,
+                              child: FittedBox(
+                                fit: BoxFit.cover,
+                                child: _Artwork(
+                                    size: screen.width,
+                                    radius: 0,
+                                    shadow: false),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                ),
               ),
             ),
             SafeArea(
@@ -815,6 +880,8 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                       const SizedBox(height: AppSpacing.md),
                       _BottomRow(
                         controller: controller,
+                        backdropOn: hasVideo,
+                        onBackdrop: () => PlayerBackdropSheet.show(context),
                         onQueue: () =>
                             _SurahSheet.show(context, reciter, moshaf),
                       ),
@@ -890,11 +957,20 @@ class _NowPlayingControls extends StatelessWidget {
   }
 }
 
-/// Shuffle · repeat · surah list; inactive toggles are dimmed.
+/// Shuffle · repeat · background · surah list; inactive toggles are dimmed.
 class _BottomRow extends StatelessWidget {
-  const _BottomRow({required this.controller, required this.onQueue});
+  const _BottomRow({
+    required this.controller,
+    required this.backdropOn,
+    required this.onBackdrop,
+    required this.onQueue,
+  });
 
   final Mp3PlaybackController controller;
+
+  /// A background video is playing; dimmed like an off toggle otherwise.
+  final bool backdropOn;
+  final VoidCallback onBackdrop;
   final VoidCallback onQueue;
 
   Widget _toggle(ValueNotifier<bool> flag, IconData icon, String label) {
@@ -917,6 +993,12 @@ class _BottomRow extends StatelessWidget {
             context.tr('عشوائي', 'Shuffle')),
         _toggle(controller.repeat, Icons.repeat_one_rounded,
             context.tr('تكرار', 'Repeat')),
+        IconButton(
+          tooltip: context.tr('خلفية المشغّل', 'Player background'),
+          onPressed: onBackdrop,
+          icon: Icon(Icons.landscape_rounded,
+              size: 26, color: backdropOn ? _Np.white : _Np.dim(0.5)),
+        ),
         IconButton(
           tooltip: context.tr('قائمة السور', 'Surah list'),
           onPressed: onQueue,
@@ -1452,10 +1534,12 @@ class _Artwork extends StatelessWidget {
         ),
         boxShadow: shadow
             ? [
+                // Cast onto a background video: dark enough to read on a
+                // dark scene, soft enough not to look like a cut-out.
                 BoxShadow(
-                  color: AppColors.shadow.withValues(alpha: 0.28),
-                  blurRadius: 40,
-                  offset: const Offset(0, 20),
+                  color: Colors.black.withValues(alpha: 0.45),
+                  blurRadius: 36,
+                  offset: const Offset(0, 18),
                 ),
               ]
             : null,

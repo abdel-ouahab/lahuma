@@ -35,6 +35,7 @@ class StorageKeys {
   static const String tasbihStats = 'tasbih.stats';
 
   static const String reciterFavorites = 'mp3quran.favoriteReciters';
+  static const String playerBackdrop = 'mp3quran.playerBackdrop';
 
   static const String fajrCallLists = 'fajrCall.lists';
   static const String fajrCallSessions = 'fajrCall.sessions';

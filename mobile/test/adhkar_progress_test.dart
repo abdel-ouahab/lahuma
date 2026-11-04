@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lahuma/features/adhkar/data/adhkar_progress_repository.dart';
 import 'package:lahuma/features/adhkar/domain/dhikr.dart';
@@ -122,5 +123,37 @@ void main() {
     final c = await repo.loadCompletions();
     expect(c.countOf(AdhkarPeriod.morning), 0);
     expect(c.countedToday, isEmpty);
+  });
+
+  test('today shows finished adhkar of a period out of all of them', () async {
+    const single =
+        Dhikr(period: AdhkarPeriod.morning, index: 0, text: 'نص', count: 1);
+    final container = ProviderContainer(overrides: [
+      adhkarProgressRepositoryProvider.overrideWithValue(repo),
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({
+            AdhkarPeriod.morning: [single, thrice],
+            AdhkarPeriod.evening: [once],
+          })),
+    ]);
+    addTearDown(container.dispose);
+    container.listen(adhkarTodayProvider(AdhkarPeriod.morning), (_, __) {});
+    await container.read(adhkarProvider.future);
+    await Future<void>.delayed(Duration.zero);
+    expect(container.read(adhkarTodayProvider(AdhkarPeriod.morning)),
+        (done: 0, total: 2));
+
+    final n = container.read(adhkarProgressProvider.notifier);
+    n.increment(single);
+    n.increment(thrice);
+    expect(container.read(adhkarTodayProvider(AdhkarPeriod.morning)),
+        (done: 1, total: 2),
+        reason: 'thrice is said once of three');
+
+    // The app invalidates it on resume, so a new day starts from nothing.
+    clock = DateTime(2026, 10, 20, 7);
+    container.invalidate(adhkarTodayProvider);
+    expect(container.read(adhkarTodayProvider(AdhkarPeriod.morning)),
+        (done: 0, total: 2),
+        reason: 'yesterday does not count');
   });
 }

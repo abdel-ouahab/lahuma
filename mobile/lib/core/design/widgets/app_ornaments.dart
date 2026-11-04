@@ -85,6 +85,117 @@ class CrescentCornersPainter extends CustomPainter {
       old.color != color || old.corners != corners || old.scale != scale;
 }
 
+/// A Maghrebi horseshoe arch filling [size], [inset] in from its edges: a
+/// crown as wide as the arch whose arc runs [horseshoe] radians past its
+/// half-circle before dropping into straight jambs, so the opening is
+/// narrower than the arch.
+Path horseshoeArch(Size size, double inset,
+    {double horseshoe = 30 * math.pi / 180}) {
+  final r = size.width / 2 - inset;
+  final center = Offset(size.width / 2, size.width / 2);
+  final springX = r * math.cos(horseshoe);
+  final bottom = size.height - inset;
+  return Path()
+    ..moveTo(center.dx - springX, bottom)
+    ..lineTo(center.dx - springX, center.dy + r * math.sin(horseshoe))
+    ..arcTo(Rect.fromCircle(center: center, radius: r), math.pi - horseshoe,
+        math.pi + 2 * horseshoe, false)
+    ..lineTo(center.dx + springX, bottom)
+    ..close();
+}
+
+/// The corners of a Mushaf page's frame: a double rule turning each
+/// corner, a small lozenge in the angle and a dot at each end of the outer
+/// rule. For surfaces about reading the Quran.
+class FrameCornersPainter extends CustomPainter {
+  const FrameCornersPainter(
+    this.color, {
+    this.corners = const [
+      Alignment.topLeft,
+      Alignment.topRight,
+      Alignment.bottomLeft,
+      Alignment.bottomRight,
+    ],
+  });
+
+  final Color color;
+
+  /// Which corners get a frame corner.
+  final List<Alignment> corners;
+
+  static const double _inset = 12;
+  static const double _arm = 46;
+  static const double _gap = 4;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outer = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final inner = Paint()
+      ..color = color.withValues(alpha: color.a * 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.6;
+    final fill = Paint()..color = color;
+    for (final corner in corners) {
+      // Unit steps from the corner towards the surface's middle.
+      final dx = corner.x < 0 ? 1.0 : -1.0;
+      final dy = corner.y < 0 ? 1.0 : -1.0;
+      Path rule(Offset at, double arm) => Path()
+        ..moveTo(at.dx + arm * dx, at.dy)
+        ..lineTo(at.dx, at.dy)
+        ..lineTo(at.dx, at.dy + arm * dy);
+      final p = Offset(
+        corner.x < 0 ? _inset : size.width - _inset,
+        corner.y < 0 ? _inset : size.height - _inset,
+      );
+      final q = p + Offset(_gap * dx, _gap * dy);
+      final lozenge = q + Offset(6 * dx, 6 * dy);
+      canvas
+        ..drawPath(rule(p, _arm), outer)
+        ..drawPath(rule(q, _arm - 14), inner)
+        ..drawPath(
+          Path()
+            ..addPolygon([
+              lozenge + const Offset(0, -3.2),
+              lozenge + const Offset(3.2, 0),
+              lozenge + const Offset(0, 3.2),
+              lozenge + const Offset(-3.2, 0),
+            ], true),
+          fill,
+        )
+        ..drawCircle(p + Offset((_arm + 3) * dx, 0), 1.5, fill)
+        ..drawCircle(p + Offset(0, (_arm + 3) * dy), 1.5, fill);
+    }
+  }
+
+  @override
+  bool shouldRepaint(FrameCornersPainter old) =>
+      old.color != color || old.corners != corners;
+}
+
+/// A verse-end marker (the rosette around an ayah number in the Mushaf):
+/// a circle of [radius] around [center] edged with sixteen small lobes.
+Path ayahMarker(Offset center, double radius) {
+  const lobes = 16;
+  final ring = radius * 0.89;
+  var path = Path()..addOval(Rect.fromCircle(center: center, radius: ring));
+  for (var i = 0; i < lobes; i++) {
+    final a = -math.pi / 2 + i * 2 * math.pi / lobes;
+    path = Path.combine(
+      PathOperation.union,
+      path,
+      Path()
+        ..addOval(Rect.fromCircle(
+          center: center + Offset(math.cos(a), math.sin(a)) * ring,
+          radius: radius * 0.11,
+        )),
+    );
+  }
+  return path;
+}
+
 /// A five-pointed star of [radius] around [center], one point straight up.
 Path fivePointStar(Offset center, double radius) {
   final inner = radius * 0.4;

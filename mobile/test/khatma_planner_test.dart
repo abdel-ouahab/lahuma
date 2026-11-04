@@ -203,6 +203,16 @@ void main() {
   });
 
   group('hizb data', () {
+    test('a page opens with the first words of its first ayah', () {
+      // The Basmala is four words: shown whole.
+      expect(QuranPages.openingWords(1), MushafMeta.ayahText(1, 1).trim());
+      // Page 2 opens on Al-Baqarah 1–5: "الٓمٓ" alone is the whole ayah.
+      expect(QuranPages.openingWords(2), isNot(contains('…')));
+      final long = QuranPages.openingWords(129, words: 3);
+      expect(long.split(' ').length, 4); // three words and the ellipsis
+      expect(long, endsWith('…'));
+    });
+
     test('hizb start pages match the Madinah Mushaf', () {
       // Checked against the printed 604-page Madinah Mushaf.
       const known = {

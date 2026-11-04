@@ -23,36 +23,23 @@ class LahumaRecitersSection extends ConsumerWidget {
     final playing = activeId != null &&
         (ref.watch(audioPlayerStateProvider).valueOrNull?.playing ?? false);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return AppListSection(
+      header: context.tr('قرّاء لهما', 'Lahuma reciters'),
+      hasLeading: true,
+      margin: EdgeInsetsDirectional.zero,
       children: [
-        AppListSection(
-          header: context.tr('قرّاء لهما', 'Lahuma reciters'),
-          hasLeading: true,
-          margin: EdgeInsetsDirectional.zero,
-          children: [
-            for (final r in reciters)
-              AppListTile(
-                leading: const AppIconTile(
-                    icon: CupertinoIcons.mic_fill, color: AppColors.accent),
-                title: r.displayName,
-                subtitle: context.tr('${r.audioUrls.length} سورة',
-                    '${r.audioUrls.length} surahs'),
-                trailing: r.id == activeId && playing
-                    ? Icon(CupertinoIcons.waveform, size: 18, color: c.accent)
-                    : null,
-                onTap: () => context.push('/quran/reciters/${r.id}'),
-              ),
-          ],
-        ),
-        Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(
-              AppSpacing.xs, AppSpacing.lg, 0, 0),
-          child: Text(
-            context.tr('قرّاء MP3Quran', 'MP3Quran reciters'),
-            style: AppTypography.footnote.copyWith(color: c.secondaryLabel),
+        for (final r in reciters)
+          AppListTile(
+            leading: const AppIconTile(
+                icon: CupertinoIcons.mic_fill, color: AppColors.accent),
+            title: r.displayName,
+            subtitle: context.tr(
+                '${r.audioUrls.length} سورة', '${r.audioUrls.length} surahs'),
+            trailing: r.id == activeId && playing
+                ? Icon(CupertinoIcons.waveform, size: 18, color: c.accent)
+                : null,
+            onTap: () => context.push('/quran/reciters/${r.id}'),
           ),
-        ),
       ],
     );
   }

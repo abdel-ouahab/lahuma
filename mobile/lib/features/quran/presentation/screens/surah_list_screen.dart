@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/design/widgets/app_entrance.dart';
+import '../../../../core/design/widgets/app_inputs.dart' show AppSearchField;
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -149,23 +150,10 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(
                     AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
-                child: TextField(
+                child: AppSearchField(
                   focusNode: _searchFocus,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: context.tr('ابحث بالاسم أو الرقم...',
-                        'Search by name or number...'),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      color:
-                          isDark ? AppColors.mutedDark : AppColors.mutedLight,
-                      size: 20,
-                    ),
-                    filled: true,
-                    fillColor: isDark
-                        ? AppColors.surfaceElevatedDark
-                        : AppColors.surfaceElevatedLight,
-                  ),
+                  placeholder: context.tr(
+                      'ابحث بالاسم أو الرقم', 'Search by name or number'),
                   onChanged: (value) =>
                       ref.read(surahSearchQueryProvider.notifier).state = value,
                 ),

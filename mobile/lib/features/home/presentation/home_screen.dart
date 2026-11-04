@@ -5,18 +5,21 @@ import '../../../core/constants/features.dart';
 import '../../../core/design/design.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/widgets/continue_reading_card.dart';
-import '../../../core/widgets/feature_card.dart';
 import '../../../core/widgets/progress_card.dart';
 import '../../../core/widgets/sadaqah_card.dart';
 import '../../../core/widgets/section_title.dart';
+import '../../../core/widgets/segment_bar.dart';
+import '../../../core/widgets/shortcut_tile.dart';
 import '../../adhkar/domain/dhikr.dart';
 import '../../adhkar/presentation/adhkar_providers.dart';
 import '../../dedication/presentation/dedication_providers.dart';
 import '../../dedication/presentation/dedication_sheet.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
+import '../../khatma/presentation/widgets/khatma_home_card.dart';
 import '../../prayer_times/presentation/widgets/prayer_times_section.dart';
 import '../../qibla/presentation/widgets/qibla_home_card.dart';
+import '../../quran/mushaf/presentation/mushaf_providers.dart';
 import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../reading_progress/presentation/reading_progress_providers.dart';
 import '../../settings/presentation/theme_mode_switcher.dart';
@@ -35,8 +38,8 @@ class HomeScreen extends ConsumerWidget {
     final progressAsync = ref.watch(readingProgressProvider);
     final wird = ref.watch(wirdProvider);
     final dedication = ref.watch(dedicationProvider);
-    final adhkarDone = ref.watch(adhkarCompletionsProvider);
     final tasbihToday = ref.watch(tasbihTodayProvider);
+    final mushafPage = ref.watch(mushafProvider.select((m) => m.lastPage));
     final c = context.palette;
     final isDark = c.isDark;
 
@@ -47,15 +50,54 @@ class HomeScreen extends ConsumerWidget {
           sliver: SliverToBoxAdapter(child: child),
         );
 
-    // Two tiles per row, as tall as the taller one: heights follow the text
-    // so nothing clips under large Dynamic Type.
-    Widget pair(Widget a, Widget b) => IntrinsicHeight(
+    // A morning / evening adhkar tile: today's progress as one segment
+    // per dhikr, lit as each is finished.
+    Widget adhkarTile(
+      AdhkarPeriod period, {
+      required String title,
+      required IconData icon,
+      required Color color,
+    }) {
+      final today = ref.watch(adhkarTodayProvider(period));
+      final String caption;
+      if (today == null) {
+        caption = period == AdhkarPeriod.morning
+            ? context.tr('أول النهار', 'Start of the day')
+            : context.tr('آخر النهار', 'End of the day');
+      } else if (today.done == 0) {
+        caption = context.tr('لم تبدأ اليوم', 'Not started today');
+      } else if (today.done >= today.total) {
+        caption = context.tr('أتممتها اليوم', 'Done today');
+      } else {
+        caption = context.tr('قرأت ${today.done} من ${today.total}',
+            'Read ${today.done} of ${today.total}');
+      }
+      return ShortcutTile(
+        title: title,
+        icon: icon,
+        color: color,
+        caption: caption,
+        footer: today == null
+            ? null
+            : SegmentBar(
+                filled: today.done,
+                total: today.total,
+                color: c.resolve(color),
+              ),
+        onTap: () => context.go('/home/adhkar?tab=${period.name}'),
+      );
+    }
+
+    // Tiles side by side, all as tall as the tallest: heights follow the
+    // text so nothing clips under large Dynamic Type.
+    Widget tiles(List<Widget> row) => IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: a),
-              const SizedBox(width: AppSpacing.ms),
-              Expanded(child: b),
+              for (var i = 0; i < row.length; i++) ...[
+                if (i > 0) const SizedBox(width: AppSpacing.ms),
+                Expanded(child: row[i]),
+              ],
             ],
           ),
         );
@@ -127,59 +169,82 @@ class HomeScreen extends ConsumerWidget {
         // ── Shortcuts ───────────────────────────────────────────────────────
         box(SectionTitle(title: context.tr('اختصارات', 'Shortcuts')),
             top: AppSpacing.xl),
+        // The khatma is the one live, daily item, so it takes the large
+        // tile; destinations are small, Fajr Call a row of its own.
         box(
           Column(
             children: [
-              pair(
-                FeatureCard(
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Expanded(flex: 2, child: KhatmaHomeCard()),
+                    const SizedBox(width: AppSpacing.ms),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: ShortcutTile(
+                              title: context.tr('المصحف', 'Mushaf'),
+                              icon: CupertinoIcons.book_circle_fill,
+                              color: AppColors.tileGreen,
+                              caption: mushafPage > 1
+                                  ? context.tr(
+                                      'صفحة $mushafPage', 'Page $mushafPage')
+                                  : context.tr(
+                                      'مصحف المدينة', 'Madinah Mushaf'),
+                              onTap: () => context.push(MushafScreen.path),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.ms),
+                          Expanded(
+                            child: ShortcutTile(
+                              title: context.tr('الاستماع', 'Listen'),
+                              icon: CupertinoIcons.headphones,
+                              color: AppColors.tilePurple,
+                              caption: context.tr('تلاوات القرّاء', 'Reciters'),
+                              onTap: () => context.go('/quran?tab=2'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.ms),
+              tiles([
+                ShortcutTile(
                   title: context.tr('القرآن الكريم', 'The Quran'),
                   icon: CupertinoIcons.book_fill,
-                  iconColor: AppColors.accent,
-                  subtitle: context.tr('السور والأجزاء', 'Surahs and juz\''),
+                  color: AppColors.tileTeal,
+                  caption: context.tr('السور والأجزاء', 'Surahs and juz\''),
                   onTap: () => context.go('/quran'),
                 ),
-                FeatureCard(
-                  title: context.tr('الاستماع', 'Listen'),
-                  icon: CupertinoIcons.headphones,
-                  iconColor: AppColors.tilePurple,
-                  subtitle: context.tr('تلاوات القرّاء', 'Reciters'),
-                  onTap: () => context.go('/quran?tab=2'),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.ms),
-              pair(
-                FeatureCard(
+                ShortcutTile(
                   title: context.tr('العلامات', 'Bookmarks'),
                   icon: CupertinoIcons.bookmark_fill,
-                  iconColor: AppColors.tileBlue,
-                  subtitle: context.tr('آياتك المحفوظة', 'Your saved ayahs'),
+                  color: AppColors.tileBlue,
+                  caption: context.tr('آياتك المحفوظة', 'Saved ayahs'),
                   onTap: () => context.go('/bookmarks'),
                 ),
-                FeatureCard(
+                ShortcutTile(
                   title: context.tr('الهدف اليومي', 'Daily goal'),
                   icon: CupertinoIcons.flag_fill,
-                  iconColor: AppColors.tilePink,
-                  subtitle:
-                      context.tr('${wird.goal} آية', '${wird.goal} ayahs'),
+                  color: AppColors.tilePink,
+                  caption: context.tr('${wird.goal} آية', '${wird.goal} ayahs'),
                   onTap: () => GoalSheet.show(context),
                 ),
-              ),
+              ]),
               const SizedBox(height: AppSpacing.ms),
-              FeatureCard(
-                title: context.tr('المصحف الشريف', 'The Mushaf'),
-                icon: CupertinoIcons.book_circle_fill,
-                iconColor: AppColors.tileGreen,
-                subtitle: context.tr('صفحات مصحف المدينة كما طُبعت',
-                    'The Madinah Mushaf, page by page'),
-                onTap: () => context.push(MushafScreen.path),
-              ),
-              const SizedBox(height: AppSpacing.ms),
-              FeatureCard(
+              ShortcutTile(
                 title: context.tr('نداء الفجر', 'Fajr Call'),
                 icon: CupertinoIcons.sunrise_fill,
-                iconColor: AppColors.tileOrange,
-                subtitle: context.tr('أيقظ والديك ومن تحب للصلاة',
+                color: AppColors.tileOrange,
+                caption: context.tr('أيقظ والديك ومن تحب للصلاة',
                     'Wake your parents and loved ones for prayer'),
+                wide: true,
                 onTap: () => context.go(FajrCallListsScreen.path),
               ),
             ],
@@ -191,39 +256,32 @@ class HomeScreen extends ConsumerWidget {
         box(SectionTitle(title: context.tr('الأذكار', 'Adhkar')),
             top: AppSpacing.xl),
         box(
-          pair(
-            FeatureCard(
+          tiles([
+            adhkarTile(
+              AdhkarPeriod.morning,
               title: context.tr('أذكار الصباح', 'Morning adhkar'),
               icon: CupertinoIcons.sun_max_fill,
-              iconColor: AppColors.tileOrange,
-              subtitle: context.tr('أول النهار', 'Start of the day'),
-              badge: adhkarDone.countOf(AdhkarPeriod.morning),
-              badgeLabel: _adhkarRead(
-                  context, adhkarDone.countOf(AdhkarPeriod.morning)),
-              onTap: () => context.go('/home/adhkar?tab=morning'),
+              color: AppColors.tileYellow,
             ),
-            FeatureCard(
+            adhkarTile(
+              AdhkarPeriod.evening,
               title: context.tr('أذكار المساء', 'Evening adhkar'),
               icon: CupertinoIcons.moon_fill,
-              iconColor: AppColors.tileIndigo,
-              subtitle: context.tr('آخر النهار', 'End of the day'),
-              badge: adhkarDone.countOf(AdhkarPeriod.evening),
-              badgeLabel: _adhkarRead(
-                  context, adhkarDone.countOf(AdhkarPeriod.evening)),
-              onTap: () => context.go('/home/adhkar?tab=evening'),
+              color: AppColors.tileIndigo,
             ),
-          ),
+          ]),
           top: 0,
         ),
         box(
-          FeatureCard(
+          ShortcutTile(
             title: context.tr('التسبيح', 'Tasbih'),
             icon: CupertinoIcons.circle_grid_hex_fill,
-            iconColor: AppColors.tileTeal,
-            subtitle: tasbihToday > 0
+            color: AppColors.tileRed,
+            caption: tasbihToday > 0
                 ? tasbihatToday(context, tasbihToday)
                 : context.tr(
                     'مسبحة لعدّ أذكارك', 'Prayer beads for your dhikr'),
+            wide: true,
             onTap: () => context.push(TasbihScreen.path),
           ),
           top: AppSpacing.ms,
@@ -255,6 +313,3 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
-
-String _adhkarRead(BuildContext context, int n) =>
-    context.tr('قرأت $n ذكراً', '$n adhkar read');

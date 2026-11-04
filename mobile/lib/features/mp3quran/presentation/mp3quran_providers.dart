@@ -8,8 +8,12 @@ import 'package:just_audio/just_audio.dart';
 import '../../../core/audio/audio_focus.dart';
 import '../../../core/utils/arabic_text.dart';
 import '../data/mp3quran_api.dart';
+import '../data/player_backdrop_repository.dart';
 import '../data/reciter_favorites_repository.dart';
+import '../data/reciter_photos_api.dart';
 import '../domain/mp3quran_models.dart';
+import '../domain/player_backdrop.dart';
+import '../domain/reciter_photos.dart';
 
 final mp3QuranApiProvider = Provider<Mp3QuranApi>((ref) => Mp3QuranApi());
 
@@ -22,6 +26,19 @@ final mp3RecitersProvider = FutureProvider<List<Mp3Reciter>>(
 final mp3SuwarProvider = FutureProvider<Map<int, String>>((ref) async {
   final list = await ref.watch(mp3QuranApiProvider).fetchSuwar();
   return {for (final s in list) s.id: s.name};
+});
+
+final reciterPhotosApiProvider =
+    Provider<ReciterPhotosApi>((ref) => ReciterPhotosApi());
+
+/// Portraits for the reciters list. Optional: on failure every reciter
+/// shows a monogram.
+final reciterPhotosProvider = FutureProvider<ReciterPhotos>((ref) async {
+  try {
+    return await ref.watch(reciterPhotosApiProvider).fetch();
+  } catch (_) {
+    return ReciterPhotos.empty;
+  }
 });
 
 final mp3RecitersSearchProvider = StateProvider.autoDispose<String>((_) => '');
@@ -76,6 +93,38 @@ final reciterFavoritesProvider =
     StateNotifierProvider<ReciterFavoritesNotifier, Set<int>>((ref) {
   return ReciterFavoritesNotifier(
       ref.watch(reciterFavoritesRepositoryProvider));
+});
+
+// ── Now Playing background ──────────────────────────────────────────────────
+
+final playerBackdropRepositoryProvider =
+    Provider((ref) => PlayerBackdropRepository());
+
+class PlayerBackdropNotifier extends StateNotifier<PlayerBackdrop> {
+  PlayerBackdropNotifier(this._repository) : super(PlayerBackdrop.none) {
+    _load();
+  }
+
+  final PlayerBackdropRepository _repository;
+  bool _touched = false;
+
+  Future<void> _load() async {
+    final saved = await _repository.load();
+    // A pick made before loading finished wins over the stored one.
+    if (!_touched && mounted) state = saved;
+  }
+
+  void select(PlayerBackdrop backdrop) {
+    _touched = true;
+    if (backdrop == state) return;
+    state = backdrop;
+    _repository.save(backdrop);
+  }
+}
+
+final playerBackdropProvider =
+    StateNotifierProvider<PlayerBackdropNotifier, PlayerBackdrop>((ref) {
+  return PlayerBackdropNotifier(ref.watch(playerBackdropRepositoryProvider));
 });
 
 // ── Playback ────────────────────────────────────────────────────────────────

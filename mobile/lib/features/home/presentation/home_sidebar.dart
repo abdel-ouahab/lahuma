@@ -343,22 +343,7 @@ class _NichePainter extends CustomPainter {
 
   static const Size size = Size(112, 144);
 
-  /// How far below its centre the arc keeps curving in (radians).
-  static const double _horseshoe = 30 * math.pi / 180;
-
-  static Path _arch(Size size, double inset) {
-    final r = size.width / 2 - inset;
-    final center = Offset(size.width / 2, size.width / 2);
-    final springX = r * math.cos(_horseshoe);
-    final bottom = size.height - inset;
-    return Path()
-      ..moveTo(center.dx - springX, bottom)
-      ..lineTo(center.dx - springX, center.dy + r * math.sin(_horseshoe))
-      ..arcTo(Rect.fromCircle(center: center, radius: r), math.pi - _horseshoe,
-          math.pi + 2 * _horseshoe, false)
-      ..lineTo(center.dx + springX, bottom)
-      ..close();
-  }
+  static Path _arch(Size size, double inset) => horseshoeArch(size, inset);
 
   @override
   void paint(Canvas canvas, Size size) {

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lahuma/features/adhkar/presentation/adhkar_providers.dart';
+import 'package:lahuma/features/adhkar/domain/dhikr.dart';
 import 'package:lahuma/core/design/design.dart' show AppTabBar;
 import 'package:lahuma/features/home/presentation/home_screen.dart';
 import 'package:lahuma/features/settings/presentation/screens/settings_screen.dart';
@@ -19,7 +21,10 @@ void main() {
 
   testWidgets('App starts on the splash screen and moves on to Home',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: LahumaApp()));
+    // Home reads today's adhkar progress; none are loaded in tests.
+    await tester.pumpWidget(ProviderScope(overrides: [
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+    ], child: const LahumaApp()));
     await tester.pump(const Duration(milliseconds: 100));
 
     // MaterialApp.router builds a MaterialApp with a Router inside.
@@ -36,7 +41,10 @@ void main() {
 
   testWidgets('the Mushaf tab opens the Mushaf; later tabs keep their branch',
       (WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: LahumaApp()));
+    // Home reads today's adhkar progress; none are loaded in tests.
+    await tester.pumpWidget(ProviderScope(overrides: [
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+    ], child: const LahumaApp()));
     await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 500));
 
