@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../design/app_motion.dart';
 import '../design/design_system_preview.dart';
 import '../shell/main_shell.dart';
 import '../../features/splash/splash_screen.dart';
@@ -31,6 +32,7 @@ import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart
 import '../../features/khatma/presentation/screens/khatma_complete_screen.dart';
 import '../../features/khatma/presentation/screens/khatma_screen.dart';
 import '../../features/khatma/presentation/screens/khatma_setup_screen.dart';
+import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/qibla/presentation/screens/qibla_screen.dart';
 import '../../features/tasbih/presentation/screens/tasbih_screen.dart';
 
@@ -38,6 +40,25 @@ import '../../features/tasbih/presentation/screens/tasbih_screen.dart';
 /// edge-swipe back gesture (from the right edge in RTL).
 Page<void> _page(GoRouterState state, Widget child) =>
     CupertinoPage<void>(key: state.pageKey, child: child);
+
+/// Screens the splash hands over to (the introduction, the tab shell): they
+/// fade in over the splash rather than slide, since there is nothing to go
+/// back to. Instant with Reduce Motion.
+Page<void> _fadePage(GoRouterState state, Widget child) =>
+    CustomTransitionPage<void>(
+      key: state.pageKey,
+      child: child,
+      transitionDuration: AppMotion.standard,
+      reverseTransitionDuration: AppMotion.standard,
+      transitionsBuilder: (context, animation, _, child) =>
+          MediaQuery.disableAnimationsOf(context)
+              ? child
+              : FadeTransition(
+                  opacity: CurvedAnimation(
+                      parent: animation, curve: AppMotion.curve),
+                  child: child,
+                ),
+    );
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -47,6 +68,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         pageBuilder: (context, state) => _page(state, const SplashScreen()),
+      ),
+
+      // ── Introduction (outside shell — first launch, or from Settings) ──
+      GoRoute(
+        path: OnboardingScreen.path,
+        pageBuilder: (context, state) =>
+            _fadePage(state, const OnboardingScreen()),
       ),
 
       // ── Surah reader (outside shell — full-screen reading experience) ───
@@ -181,8 +209,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // ── Main Shell with persistent tab bar ──────────────────────────────
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) =>
-            MainShell(navigationShell: navigationShell),
+        pageBuilder: (context, state, navigationShell) =>
+            _fadePage(state, MainShell(navigationShell: navigationShell)),
         branches: [
           // Branch 0 — Home
           StatefulShellBranch(

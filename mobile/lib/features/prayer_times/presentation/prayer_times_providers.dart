@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../fajr_call/data/location_service.dart';
 import '../../fajr_call/data/places.dart' show distanceKm;
@@ -80,6 +82,13 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
   Future<void>? _ready;
   Future<void> get ready => _ready ?? Future.value();
 
+  final Completer<void> _cacheLoaded = Completer<void>();
+
+  /// Completes once the cached days are in [state] (or the cache could not
+  /// be read), before any location fix or network call. The splash waits
+  /// for this so Home opens with times instead of a skeleton.
+  Future<void> get cacheLoaded => _cacheLoaded.future;
+
   PrayerLocation? _location;
   final Map<String, DayPrayerTimes> _days = {};
   LocationFailure? _failure;
@@ -92,14 +101,18 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
   /// Shows the cache at once, then refreshes in the background. Prompts for
   /// location permission only when no location is saved yet.
   Future<void> load() async {
-    final snap = await _cache.load();
-    _location = snap.location;
-    _days
-      ..clear()
-      ..addAll(snap.days);
-    _cacheRead = true;
-    if (!mounted) return;
-    _publish();
+    try {
+      final snap = await _cache.load();
+      _location = snap.location;
+      _days
+        ..clear()
+        ..addAll(snap.days);
+      _cacheRead = true;
+      if (!mounted) return;
+      _publish();
+    } finally {
+      if (!_cacheLoaded.isCompleted) _cacheLoaded.complete();
+    }
     await refresh(request: true);
     _initial = false;
   }

@@ -100,6 +100,8 @@ void main() {
 
   testWidgets('the home tile follows the adhkar and opens the tasbih',
       (tester) async {
+    // Not the first launch: the splash goes straight to Home.
+    SharedPreferences.setMockInitialValues({'onboarding_completed_v1': true});
     tester.view.physicalSize = const Size(390 * 3, 844 * 3);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -108,6 +110,8 @@ void main() {
       adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
     ], child: const LahumaApp()));
     await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 500));
+    // The splash fades out, then hands over to Home.
     await tester.pump(const Duration(milliseconds: 500));
 
     final tile = find.text('التسبيح');

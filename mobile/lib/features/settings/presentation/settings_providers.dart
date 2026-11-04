@@ -6,10 +6,13 @@ final settingsRepositoryProvider = Provider((ref) => SettingsRepository());
 
 class ThemeModeNotifier extends StateNotifier<AppThemeMode> {
   ThemeModeNotifier(this._repository) : super(AppThemeMode.system) {
-    _load();
+    ready = _load();
   }
 
   final SettingsRepository _repository;
+
+  /// Completes once the saved mode is in [state].
+  late final Future<void> ready;
 
   Future<void> _load() async {
     state = await _repository.getThemeMode();
@@ -23,10 +26,13 @@ class ThemeModeNotifier extends StateNotifier<AppThemeMode> {
 
 class LocaleNotifier extends StateNotifier<AppLocaleOption> {
   LocaleNotifier(this._repository) : super(AppLocaleOption.arabic) {
-    _load();
+    ready = _load();
   }
 
   final SettingsRepository _repository;
+
+  /// Completes once the saved language is in [state].
+  late final Future<void> ready;
 
   Future<void> _load() async {
     state = await _repository.getLocaleOption();

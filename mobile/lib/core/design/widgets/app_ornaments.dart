@@ -22,6 +22,124 @@ Path rubElHizb(Offset center, double radius, {double rotation = 0}) {
   return path;
 }
 
+/// The eight-pointed star as one outline (the union of the rub el hizb's
+/// two squares) of [radius] around [center], one point straight up.
+Path eightPointStar(Offset center, double radius) {
+  final inner = radius * math.cos(math.pi / 4) / math.cos(math.pi / 8);
+  return Path()
+    ..addPolygon([
+      for (var i = 0; i < 16; i++)
+        center +
+            Offset(math.cos(-math.pi / 2 + i * math.pi / 8),
+                    math.sin(-math.pi / 2 + i * math.pi / 8)) *
+                (i.isEven ? radius : inner),
+    ], true);
+}
+
+/// A star-and-cross lattice: eight-pointed stars on a square grid, each
+/// touching its neighbours point to point, the crosses between them left
+/// open. Centred on the box so it sits the same way in both directions. A
+/// texture for splash and introduction backgrounds: give it a faint
+/// [color] and a RepaintBoundary, since it never changes.
+class StarLatticePainter extends CustomPainter {
+  const StarLatticePainter(this.color, {this.spacing = 56});
+
+  final Color color;
+
+  /// Distance between star centres.
+  final double spacing;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+    final center = size.center(Offset.zero);
+    final columns = (size.width / spacing / 2).ceil() + 1;
+    final rows = (size.height / spacing / 2).ceil() + 1;
+    for (var x = -columns; x <= columns; x++) {
+      for (var y = -rows; y <= rows; y++) {
+        canvas.drawPath(
+          eightPointStar(
+              center + Offset(x * spacing, y * spacing), spacing / 2),
+          line,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(StarLatticePainter old) =>
+      old.color != color || old.spacing != spacing;
+}
+
+/// The rub el hizb drawing itself: from each of its eight corners a line
+/// runs along both sides, the lines meeting mid-side when [progress]
+/// reaches 1; the corners show as dots from the start, where the pen
+/// touches down. [scale] grows or shrinks it about the box's centre.
+class DrawnStarPainter extends CustomPainter {
+  DrawnStarPainter({
+    required this.progress,
+    required this.color,
+    required this.radius,
+    Animation<double>? scale,
+    this.strokeWidth = 1.4,
+  })  : scale = scale ?? const AlwaysStoppedAnimation(1),
+        super(repaint: Listenable.merge([progress, scale]));
+
+  final Animation<double> progress;
+  final Animation<double> scale;
+  final Color color;
+  final double radius;
+  final double strokeWidth;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = progress.value.clamp(0.0, 1.0);
+    if (t == 0) return;
+    final center = size.center(Offset.zero);
+    final r = radius * scale.value;
+    final line = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+    final dot = Paint()
+      ..color = color.withValues(alpha: color.a * math.min(1, t * 4));
+    final path = Path();
+    for (final turn in const [-math.pi / 2, -math.pi / 4]) {
+      final corners = [
+        for (var i = 0; i < 4; i++)
+          center +
+              Offset(math.cos(turn + i * math.pi / 2),
+                      math.sin(turn + i * math.pi / 2)) *
+                  r,
+      ];
+      for (var i = 0; i < 4; i++) {
+        final a = corners[i];
+        final b = corners[(i + 1) % 4];
+        final mid = Offset.lerp(a, b, 0.5)!;
+        path
+          ..moveTo(a.dx, a.dy)
+          ..lineTo(Offset.lerp(a, mid, t)!.dx, Offset.lerp(a, mid, t)!.dy)
+          ..moveTo(b.dx, b.dy)
+          ..lineTo(Offset.lerp(b, mid, t)!.dx, Offset.lerp(b, mid, t)!.dy);
+        canvas.drawCircle(a, strokeWidth * 1.3, dot);
+      }
+    }
+    canvas.drawPath(path, line);
+  }
+
+  @override
+  bool shouldRepaint(DrawnStarPainter old) =>
+      old.color != color ||
+      old.radius != radius ||
+      old.strokeWidth != strokeWidth ||
+      old.progress != progress ||
+      old.scale != scale;
+}
+
 /// A crescent (hilal) of [radius] around [center], its horns pointing
 /// along [facing] (radians, 0 = right, clockwise).
 Path crescent(Offset center, double radius, double facing) {

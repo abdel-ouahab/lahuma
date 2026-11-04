@@ -56,6 +56,16 @@ class SettingsRepository {
     await prefs.setBool(StorageKeys.showTranslation, value);
   }
 
+  Future<bool> getOnboardingCompleted() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(StorageKeys.onboardingCompleted) ?? false;
+  }
+
+  Future<void> setOnboardingCompleted(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(StorageKeys.onboardingCompleted, value);
+  }
+
   static const int minAutoScrollSpeed = 1;
   static const int maxAutoScrollSpeed = 10;
   static const int defaultAutoScrollSpeed = 3;

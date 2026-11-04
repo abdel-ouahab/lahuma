@@ -1,3 +1,4 @@
+import 'package:flutter/physics.dart';
 import 'package:flutter/widgets.dart';
 
 /// Lahuma design tokens — motion.
@@ -18,9 +19,24 @@ class AppMotion {
 
   static const Curve curve = Curves.easeOutCubic;
 
+  /// [spring] as a curve over [duration], for one segment of a timeline
+  /// driven by a single controller. Critically damped: it never overshoots.
+  static Curve springCurve(Duration duration) => _SpringCurve(duration);
+
   /// [duration], or zero when the user asked to reduce motion.
   static Duration of(BuildContext context, [Duration duration = standard]) =>
       MediaQuery.maybeDisableAnimationsOf(context) ?? false
           ? Duration.zero
           : duration;
+}
+
+class _SpringCurve extends Curve {
+  const _SpringCurve(this.duration);
+
+  final Duration duration;
+
+  @override
+  double transformInternal(double t) =>
+      SpringSimulation(AppMotion.spring, 0, 1, 0)
+          .x(t * duration.inMicroseconds / Duration.microsecondsPerSecond);
 }

@@ -14,7 +14,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    // Not the first launch: the splash goes straight to Home.
+    SharedPreferences.setMockInitialValues({'onboarding_completed_v1': true});
     // Don't try to download fonts during tests.
     GoogleFonts.config.allowRuntimeFetching = false;
   });
@@ -31,10 +32,13 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(Router<Object>), findsOneWidget);
     expect(
-        find.image(const AssetImage('assets/images/logo.png')), findsOneWidget);
+        find.image(const AssetImage('assets/images/wordmark.png')),
+        findsOneWidget);
 
     // Let the splash delay elapse and the route change settle.
     await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 500));
+    // The splash fades out, then hands over to Home.
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(HomeScreen), findsOneWidget);
   });
@@ -46,6 +50,8 @@ void main() {
       adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
     ], child: const LahumaApp()));
     await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(milliseconds: 500));
+    // The splash fades out, then hands over to Home.
     await tester.pump(const Duration(milliseconds: 500));
 
     await tester.tap(find.bySemanticsLabel('المصحف'));

@@ -398,11 +398,31 @@ class AppColors {
     Color(0xFF0B3F34),
   ];
 
-  /// Splash screen: the same green, deeper.
-  static const List<Color> splashGradient = [
-    Color(0xFF14695A),
-    Color(0xFF082E26),
-  ];
+  // ─── Splash ──────────────────────────────────────────────────────────────
+  // The Mushaf's opening medallion: the gold wordmark inside a gold star on
+  // the mosque green; at night the same on green-black. The splash follows
+  // the phone's appearance, not the app's setting, because the native launch
+  // screen before it can only follow the phone. [splashBackground] is that
+  // launch screen's colour too, repeated in pubspec.yaml under
+  // flutter_native_splash (which can't read Dart): change both together.
+
+  /// The launch screen's flat colour; the Flutter splash's first frame.
+  static const CupertinoDynamicColor splashBackground =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF0D4F42),
+    darkColor: Color(0xFF07120F),
+  );
+
+  /// Light gathered behind the wordmark, fading in over [splashBackground].
+  static const CupertinoDynamicColor splashGlow =
+      CupertinoDynamicColor.withBrightness(
+    color: Color(0xFF1C7A64),
+    darkColor: Color(0xFF15392F),
+  );
+
+  /// The wordmark, its star and the lattice: the app icon's gold, which
+  /// reads on both splash greens.
+  static const Color splashGold = Color(0xFFDDB86A);
 
   // ─── LEGACY (pre-redesign constants) ─────────────────────────────────────
   // Kept only so screens that are not converted yet keep compiling. New code
