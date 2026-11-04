@@ -56,4 +56,13 @@ class QuranPages {
   }
 
   static int surahStartPage(int surah) => MushafMeta.surahStartPage(surah);
+
+  /// The first [words] words of the ayah that opens [page] (Madinah pages
+  /// always open on a whole ayah), with "…" when the ayah goes on.
+  static String openingWords(int page, {int words = 6}) {
+    final first = MushafMeta.surahsOn(page.clamp(1, total)).first;
+    final text = MushafMeta.ayahText(first.surah, first.firstAyah).trim();
+    final parts = text.split(RegExp(r'\s+'));
+    return parts.length <= words ? text : '${parts.take(words).join(' ')} …';
+  }
 }

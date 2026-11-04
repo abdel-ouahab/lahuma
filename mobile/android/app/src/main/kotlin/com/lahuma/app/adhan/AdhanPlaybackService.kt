@@ -21,10 +21,11 @@ import com.lahuma.app.R
 import java.io.File
 
 /**
- * Plays the full adhan in the foreground (type `mediaPlayback`) on the
- * alarm stream (`USAGE_ALARM`: alarm volume, heard in silent mode), with an
- * ongoing notification that carries Stop. Started by [AdhanAlarmReceiver]
- * from an exact alarm, so it works with the app killed and in Doze.
+ * Plays the full adhan in the foreground (type `mediaPlayback`) as a
+ * notification sound (`USAGE_NOTIFICATION`: notification volume, muted by
+ * silent mode and Do Not Disturb, never the alarm), with an ongoing
+ * notification that carries Stop. Started by [AdhanAlarmReceiver] at
+ * prayer time, so it works with the app killed and in Doze.
  *
  * Stops on Stop, a swipe of the notification, the end of the recording,
  * a playback error, losing audio focus (an incoming call), or after
@@ -38,7 +39,7 @@ class AdhanPlaybackService : Service() {
     private val stopAfter = Runnable { finish() }
 
     private val attributes: AudioAttributes = AudioAttributes.Builder()
-        .setUsage(AudioAttributes.USAGE_ALARM)
+        .setUsage(AudioAttributes.USAGE_NOTIFICATION)
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
         .build()
 
@@ -121,7 +122,7 @@ class AdhanPlaybackService : Service() {
             am.requestAudioFocus(request)
         } else {
             @Suppress("DEPRECATION")
-            am.requestAudioFocus(onFocus, AudioManager.STREAM_ALARM, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            am.requestAudioFocus(onFocus, AudioManager.STREAM_NOTIFICATION, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
         }
         return granted != AudioManager.AUDIOFOCUS_REQUEST_FAILED
     }

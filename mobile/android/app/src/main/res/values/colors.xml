@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Mid-tone of the logo's teal gradient. -->
-    <color name="ic_launcher_background">#33878F</color>
+    <!-- Mid-tone of the logo's green gradient (native launch screen). -->
+    <color name="ic_launcher_background">#105949</color>
 </resources>

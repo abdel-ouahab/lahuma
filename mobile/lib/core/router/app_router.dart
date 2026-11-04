@@ -111,8 +111,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(
             path: 'setup',
-            pageBuilder: (context, state) =>
-                _page(state, const KhatmaSetupScreen()),
+            pageBuilder: (context, state) => _page(
+                state,
+                KhatmaSetupScreen(
+                    initialDays:
+                        int.tryParse(state.uri.queryParameters['days'] ?? ''))),
           ),
           GoRoute(
             path: 'edit',

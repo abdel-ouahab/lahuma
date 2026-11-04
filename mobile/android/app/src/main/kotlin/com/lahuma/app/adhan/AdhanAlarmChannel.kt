@@ -29,6 +29,12 @@ class AdhanAlarmChannel(
     private val context = context.applicationContext
     private val channel = MethodChannel(messenger, NAME)
 
+    /**
+     * Read before Dart runs, so before its launch sync re-arms anything.
+     * The headless engine doesn't ask: a force-stopped app gets no work.
+     */
+    private var cleared = onDone == null && AdhanAlarms.wereCleared(this.context)
+
     init {
         channel.setMethodCallHandler(this)
     }
@@ -57,6 +63,10 @@ class AdhanAlarmChannel(
             "stop" -> {
                 AdhanPlaybackService.stop(context)
                 result.success(null)
+            }
+            "takeCleared" -> {
+                result.success(cleared)
+                cleared = false
             }
             "ensureDaily" -> {
                 AdhanWork.ensureDaily(context)

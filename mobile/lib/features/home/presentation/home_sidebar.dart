@@ -278,7 +278,7 @@ class _SidebarPanel extends StatelessWidget {
 }
 
 /// The niche with a gilded hilal and the app's name, and under it the dua
-/// it is named after (al-Isra 17:24).
+/// it is named after (al-Isra 17:23).
 class _Masthead extends StatelessWidget {
   const _Masthead();
 
@@ -306,7 +306,7 @@ class _Masthead extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'لهما',
+                      'إحسان',
                       textDirection: TextDirection.rtl,
                       style: AppTypography.title1
                           .copyWith(color: AppColors.onAccent, height: 1.2),
@@ -321,7 +321,7 @@ class _Masthead extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Text(
-            '﴿رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا﴾',
+            '﴿وَبِالْوَالِدَيْنِ إِحْسَانًا﴾',
             textAlign: TextAlign.center,
             textDirection: TextDirection.rtl,
             style: AppTypography.quran(size: 19, height: 1.7)
@@ -343,22 +343,7 @@ class _NichePainter extends CustomPainter {
 
   static const Size size = Size(112, 144);
 
-  /// How far below its centre the arc keeps curving in (radians).
-  static const double _horseshoe = 30 * math.pi / 180;
-
-  static Path _arch(Size size, double inset) {
-    final r = size.width / 2 - inset;
-    final center = Offset(size.width / 2, size.width / 2);
-    final springX = r * math.cos(_horseshoe);
-    final bottom = size.height - inset;
-    return Path()
-      ..moveTo(center.dx - springX, bottom)
-      ..lineTo(center.dx - springX, center.dy + r * math.sin(_horseshoe))
-      ..arcTo(Rect.fromCircle(center: center, radius: r), math.pi - _horseshoe,
-          math.pi + 2 * _horseshoe, false)
-      ..lineTo(center.dx + springX, bottom)
-      ..close();
-  }
+  static Path _arch(Size size, double inset) => horseshoeArch(size, inset);
 
   @override
   void paint(Canvas canvas, Size size) {

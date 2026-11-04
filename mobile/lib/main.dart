@@ -15,6 +15,7 @@ import 'features/adhan/presentation/adhan_foreground.dart';
 import 'features/adhan/presentation/adhan_providers.dart';
 import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
+import 'features/adhkar/presentation/adhkar_providers.dart';
 import 'features/khatma/presentation/khatma_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
 
@@ -90,6 +91,8 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
       // A new day, or progress changed elsewhere: today's portion and the
       // reminder texts follow.
       ref.read(khatmaProvider.notifier).refresh();
+      // A new day: Home's adhkar progress starts again from nothing.
+      ref.invalidate(adhkarTodayProvider);
       ref.invalidate(adhanPermissionsProvider);
     }
     // Visible (even behind the notification shade): the adhan may play.
@@ -109,7 +112,7 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     return ThemeProvider(
       initTheme: AppTheme.light,
       child: MaterialApp.router(
-        title: 'لهما',
+        title: 'إحسان',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

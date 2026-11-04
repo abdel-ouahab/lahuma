@@ -43,6 +43,26 @@ class Mp3Moshaf extends Equatable {
     return (set.toList()..sort());
   }
 
+  /// [name] split into the riwaya and the recitation style: "حفص عن عاصم -
+  /// مرتل" → ("حفص عن عاصم", "مرتل"). The style is null when the API
+  /// repeats the first part ("المصحف المجود - المصحف المجود") or has none.
+  ({String riwaya, String? style}) get label {
+    final parts = name
+        .split(' - ')
+        .map((p) => p.replaceAll(RegExp(r'\s+'), ' ').trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return (riwaya: name, style: null);
+    final style = parts.skip(1).join(' - ');
+    return (
+      riwaya: parts.first,
+      style: style.isEmpty || style == parts.first ? null : style,
+    );
+  }
+
+  /// Has all 114 surahs.
+  bool get isComplete => surahNumbers.length == 114;
+
   bool hasSurah(int surah) => surahNumbers.contains(surah);
 
   /// Playback URL for [surah], or null when this edition has no such surah

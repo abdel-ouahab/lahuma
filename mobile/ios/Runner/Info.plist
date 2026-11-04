@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Lahuma</string>
+	<string>Ihsan</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -20,7 +20,7 @@
 		<string>ar</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>Lahuma</string>
+	<string>Ihsan</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -30,9 +30,9 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSMotionUsageDescription</key>
-	<string>Lahuma reads how you tilt your phone so the lanterns on the prayer-times card swing. The motion data stays on your phone.</string>
+	<string>Ihsan reads how you tilt your phone so the lanterns on the prayer-times card swing. The motion data stays on your phone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Lahuma uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.</string>
+	<string>Ihsan uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tel</string>

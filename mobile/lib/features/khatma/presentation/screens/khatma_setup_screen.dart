@@ -17,15 +17,21 @@ import '../widgets/page_picker_sheet.dart';
 /// date), where to start, the unit to show it in, and the reminders, with
 /// a live preview of the daily portion.
 class KhatmaSetupScreen extends ConsumerStatefulWidget {
-  const KhatmaSetupScreen({super.key, this.edit = false});
+  const KhatmaSetupScreen({super.key, this.edit = false, this.initialDays});
 
   static const String path = '/khatma/setup';
   static const String editPath = '/khatma/edit';
+
+  /// The setup screen with [days] already chosen.
+  static String pathFor(int days) => '$path?days=$days';
 
   static const List<int> presets = [7, 10, 15, 30, 60];
   static const int maxDays = 730;
 
   final bool edit;
+
+  /// The duration to start from instead of 30 days (ignored when editing).
+  final int? initialDays;
 
   @override
   ConsumerState<KhatmaSetupScreen> createState() => _KhatmaSetupScreenState();
@@ -51,6 +57,8 @@ class _KhatmaSetupScreenState extends ConsumerState<KhatmaSetupScreen> {
   void _init(Khatma? k) {
     _initialised = true;
     final today = _today;
+    final initial = widget.initialDays;
+    if (initial != null) _days = initial.clamp(1, KhatmaSetupScreen.maxDays);
     _endDate = KhatmaPlanner.endDateFor(today, _days);
     if (!widget.edit || k == null) return;
     _days = math.max(1, KhatmaPlanner.remainingDays(k.endDate, today));

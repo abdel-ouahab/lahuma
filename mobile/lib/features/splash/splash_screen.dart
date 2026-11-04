@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/design/design.dart';
 import '../../core/notifications/notification_providers.dart';
+import '../adhan/presentation/adhan_cleared_notice.dart';
+import '../adhan/presentation/adhan_providers.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -35,11 +37,18 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
       // A tapped notification (the Fajr wake list or its results) launched
       // the app: open it on top of Home so "back" lands somewhere sensible.
-      final launch = ProviderScope.containerOf(context, listen: false)
-          .read(localNotificationsProvider)
-          .takeLaunchRoute();
+      final container = ProviderScope.containerOf(context, listen: false);
+      final launch =
+          container.read(localNotificationsProvider).takeLaunchRoute();
+      final router = GoRouter.of(context);
       context.go('/home');
-      if (launch != null) context.push(launch);
+      if (launch != null) {
+        context.push(launch);
+      } else {
+        // The phone cancelled the adhans since the last launch: say so.
+        showAdhanClearedNoticeIfNeeded(
+            router, container.read(adhanAlarmPlatformProvider));
+      }
     });
   }
 
@@ -98,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                       'assets/images/logo.png',
                       width: 200,
                       height: 200,
-                      semanticLabel: 'لهما',
+                      semanticLabel: 'إحسان',
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),

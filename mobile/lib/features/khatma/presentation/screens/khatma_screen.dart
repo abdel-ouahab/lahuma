@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/design/design.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../quran/mushaf/presentation/mushaf_providers.dart';
+import '../../../quran/mushaf/presentation/screens/mushaf_screen.dart';
 import '../../domain/khatma.dart';
 import '../../domain/khatma_planner.dart';
-import '../../domain/khatma_text.dart';
+import '../../domain/quran_pages.dart';
 import '../khatma_providers.dart';
 import '../widgets/khatma_labels.dart';
+import '../widgets/juz_wheel.dart';
 import '../widgets/khatma_ring.dart';
 import '../widgets/page_picker_sheet.dart';
 import 'khatma_complete_screen.dart';
@@ -116,6 +118,9 @@ class _Empty extends StatelessWidget {
 
   final List<Khatma> history;
 
+  /// Durations offered as a one-tap start, shortest first.
+  static const List<int> _quickDays = [7, 30, 60];
+
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
@@ -125,13 +130,14 @@ class _Empty extends StatelessWidget {
         Padding(
           padding: AppSpacing.screenInsets,
           child: AppCard(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            ornament: CrescentCornersPainter(c.gold.withValues(alpha: 0.5)),
+            // Clear of the frame corners on all four sides.
+            padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xl,
+                AppSpacing.xl, AppSpacing.xl + AppSpacing.sm),
+            ornament: FrameCornersPainter(c.gold.withValues(alpha: 0.55)),
             child: Column(
               children: [
-                AppIconTile(
-                    icon: CupertinoIcons.book_fill, color: c.accent, size: 56),
-                const SizedBox(height: AppSpacing.md),
+                const JuzWheel(),
+                const SizedBox(height: AppSpacing.lg),
                 Text(
                   context.tr('اختم القرآن في المدة التي تختارها',
                       'Finish the Quran in the time you choose'),
@@ -141,8 +147,8 @@ class _Empty extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   context.tr(
-                      'حدّد المدة، فيقسم التطبيق صفحات المصحف على الأيام، ويعيد الحساب إن تأخرت أو تقدّمت، ويذكّرك بوردك كل يوم.',
-                      'Pick a duration: the app splits the Mushaf over the days, recalculates if you fall behind or get ahead, and reminds you of your daily portion.'),
+                      'يقسم التطبيق المصحف على أيامك، ويعيد الحساب إن تأخرت أو تقدّمت، ويذكّرك بوردك.',
+                      'The app splits the Mushaf over the days, recalculates if you fall behind or get ahead, and reminds you of each day’s portion.'),
                   textAlign: TextAlign.center,
                   style: AppTypography.subheadline
                       .copyWith(color: c.secondaryLabel),
@@ -159,9 +165,32 @@ class _Empty extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
-        if (history.isNotEmpty) _CompletedList(history: history),
+        AppListSection(
+          header: context.tr(
+              'أو ابدأ بمدة شائعة', 'Or start with a common duration'),
+          children: [
+            for (final days in _quickDays)
+              AppListTile(
+                title: daysLabel(context, days),
+                subtitle: _perDay(context, days),
+                onTap: () => context.push(KhatmaSetupScreen.pathFor(days)),
+              ),
+          ],
+        ),
+        if (history.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.lg),
+          _CompletedList(history: history),
+        ],
       ],
     );
+  }
+
+  /// "جزء واحد يوميًا (21 صفحة)": what [days] asks of each day.
+  static String _perDay(BuildContext context, int days) {
+    final pages = (QuranPages.total / days).ceil();
+    final juz = amountLabel(context, pages, ReadingUnit.juz);
+    final p = pagesLabel(context, pages);
+    return context.tr('$juz يوميًا ($p)', '$juz a day ($p)');
   }
 }
 
@@ -244,6 +273,26 @@ class _Active extends ConsumerWidget {
     }
   }
 
+  /// Opens the Mushaf on [page]. Back from it having turned pages, asks how
+  /// far the reader got, starting from the page they left it on.
+  Future<void> _openMushaf(
+      BuildContext context, WidgetRef ref, int page) async {
+    await context.push('${MushafScreen.path}?page=$page');
+    if (!context.mounted) return;
+    final left = ref.read(mushafProvider).lastPage;
+    final k = ref.read(khatmaProvider).active;
+    if (k == null || left <= page || left <= k.lastPageRead) return;
+    final picked = await showPagePickerSheet(
+      context,
+      title: context.tr('إلى أين وصلت؟', 'How far did you read?'),
+      initial: left,
+      min: k.startPage - 1,
+      confirmLabel: context.tr('سجّل تقدّمي', 'Save my progress'),
+    );
+    if (picked == null || !context.mounted) return;
+    await _progress(context, ref, (n) => n.reachPage(picked));
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final today = dateOnly(ref.watch(khatmaClockProvider)());
@@ -259,10 +308,13 @@ class _Active extends ConsumerWidget {
           _PausedCard(khatma: khatma)
         else if (overdue && !khatma.overdueKept)
           _OverdueCard(khatma: khatma),
-        _OverviewCard(khatma: khatma, today: today),
         if (!paused) ...[
-          _TodayCard(khatma: khatma, today: today),
-          _Actions(
+          _TodayCard(
+            khatma: khatma,
+            today: today,
+            onOpenMushaf: (page) => _openMushaf(context, ref, page),
+          ),
+          _QuickRow(
             khatma: khatma,
             today: today,
             canUndo: state.canUndo,
@@ -272,6 +324,7 @@ class _Active extends ConsumerWidget {
             onUndo: () => _undo(context, ref),
           ),
         ],
+        _OverviewCard(khatma: khatma, today: today),
         _LogSection(logs: logs, today: today),
         const SizedBox(height: AppSpacing.xl),
       ],
@@ -412,53 +465,97 @@ class _PaceChip extends StatelessWidget {
   }
 }
 
+/// Today's portion, framed like a Mushaf page: which surahs, its pages, the
+/// words it opens with, how much is read, and the way into the Mushaf.
 class _TodayCard extends StatelessWidget {
-  const _TodayCard({required this.khatma, required this.today});
+  const _TodayCard({
+    required this.khatma,
+    required this.today,
+    required this.onOpenMushaf,
+  });
 
   final Khatma khatma;
   final DateTime today;
+  final ValueChanged<int> onOpenMushaf;
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
+    final arabic = context.isArabic;
     final k = khatma;
     final plan = KhatmaPlanner.dayPlan(k, today);
     final read = KhatmaPlanner.readToday(k, today);
-    final left = KhatmaPlanner.todayRemaining(k, today);
-    final done = left == 0;
-    final fraction =
-        plan.pages <= 0 ? 1.0 : (read / plan.pages).clamp(0.0, 1.0);
+    final done = KhatmaPlanner.todayDone(k, today);
+    final hasPortion = plan.pages > 0;
+    // Where the reading picks up: the page after the last one read.
+    final next = (k.lastPageRead + 1).clamp(1, QuranPages.total);
+    final fraction = hasPortion ? (read / plan.pages).clamp(0.0, 1.0) : 1.0;
+
+    final firstSurah = QuranPages.surahName(plan.fromPage, arabic: arabic);
+    final lastSurah = QuranPages.surahName(plan.targetPage, arabic: arabic);
+    final surahs =
+        firstSurah == lastSurah ? firstSurah : '$firstSurah – $lastSurah';
+    final pages = plan.pages == 1
+        ? context.tr('صفحة ${plan.fromPage}', 'Page ${plan.fromPage}')
+        : context.tr('الصفحات ${ltr('${plan.fromPage}–${plan.targetPage}')}',
+            'Pages ${plan.fromPage}–${plan.targetPage}');
+    final unit = k.displayUnit == ReadingUnit.pages
+        ? ''
+        : context.tr('، ', ', ') +
+            amountLabel(context, plan.pages, k.displayUnit);
+
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.screenMargin, 0, AppSpacing.screenMargin, AppSpacing.md),
+          AppSpacing.screenMargin, 0, AppSpacing.screenMargin, AppSpacing.ms),
       child: AppCard(
+        // Clear of the frame corners on all four sides.
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.xl),
         borderColor: done ? c.success.withValues(alpha: 0.5) : null,
+        ornament: FrameCornersPainter(c.gold.withValues(alpha: 0.55)),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.tr('ورد اليوم', "Today's portion"),
-                    style: AppTypography.headline.copyWith(color: c.label),
-                  ),
-                ),
-                Text(
-                  amountWithPages(context, plan.pages, k.displayUnit),
-                  style: AppTypography.footnote.copyWith(color: c.accent),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.xs),
             Text(
-              plan.pages <= 0
-                  ? context.tr('لا شيء متبقٍّ', 'Nothing left')
-                  : KhatmaText.range(plan.fromPage, plan.targetPage,
-                      arabic: context.isArabic),
-              style: AppTypography.subheadline.copyWith(color: c.label),
+              context.tr('ورد اليوم', "Today's portion"),
+              style: AppTypography.footnote.copyWith(color: c.secondaryLabel),
             ),
-            const SizedBox(height: AppSpacing.ms),
+            if (hasPortion) ...[
+              Text(
+                surahs,
+                textAlign: TextAlign.center,
+                style: arabic
+                    ? AppTypography.quran(size: 30, height: 1.6)
+                        .copyWith(color: c.label)
+                    : AppTypography.title2.copyWith(color: c.label),
+              ),
+              Text(
+                '$pages$unit',
+                style:
+                    AppTypography.subheadline.copyWith(color: c.secondaryLabel),
+              ),
+            ] else
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: Text(
+                  context.tr('لا شيء متبقٍّ', 'Nothing left'),
+                  style: AppTypography.title3.copyWith(color: c.label),
+                ),
+              ),
+            if (hasPortion && !done) ...[
+              const SizedBox(height: AppSpacing.md),
+              const AppGoldRule(),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                '﴿ ${QuranPages.openingWords(next)} ﴾',
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.quran(size: 21, height: 1.9)
+                    .copyWith(color: c.label),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.md),
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.full),
               child: TweenAnimationBuilder<double>(
@@ -473,24 +570,37 @@ class _TodayCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.sm),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (done)
+                if (done) ...[
                   Icon(CupertinoIcons.checkmark_seal_fill,
                       size: 16, color: c.success),
-                if (done) const SizedBox(width: AppSpacing.xs),
-                Expanded(
+                  const SizedBox(width: AppSpacing.xs),
+                ],
+                Flexible(
                   child: Text(
                     done
                         ? context.tr('أتممت ورد اليوم، تقبّل الله منك',
                             "Today's portion is done. May Allah accept it")
                         : context.tr(
-                            'قرأت ${pagesLabel(context, read)} · بقي ${pagesLabel(context, left)}',
-                            'Read ${pagesLabel(context, read)} · ${pagesLabel(context, left)} left'),
+                            'قرأت ${ltr('$read')} من ${pagesLabel(context, plan.pages)}',
+                            'Read $read of ${pagesLabel(context, plan.pages)}'),
+                    textAlign: TextAlign.center,
                     style: AppTypography.footnote
                         .copyWith(color: done ? c.success : c.secondaryLabel),
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            AppButton.filled(
+              label: done
+                  ? context.tr('واصل في المصحف', 'Keep reading')
+                  : context.tr('افتح المصحف على صفحة $next',
+                      'Open Mushaf at page $next'),
+              icon: CupertinoIcons.book_fill,
+              expand: true,
+              onPressed: () => onOpenMushaf(next),
             ),
           ],
         ),
@@ -513,7 +623,7 @@ class _Bar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        height: 8,
+        height: 6,
         color: track,
         alignment: AlignmentDirectional.centerStart,
         child: FractionallySizedBox(
@@ -523,8 +633,11 @@ class _Bar extends StatelessWidget {
       );
 }
 
-class _Actions extends StatelessWidget {
-  const _Actions({
+/// Progress without the Mushaf, under today's portion: mark it done, set the
+/// page reached, a page or a hizb at a time, the page the Mushaf was left
+/// on, and undo.
+class _QuickRow extends StatelessWidget {
+  const _QuickRow({
     required this.khatma,
     required this.today,
     required this.canUndo,
@@ -553,32 +666,11 @@ class _Actions extends StatelessWidget {
       padding: const EdgeInsetsDirectional.fromSTEB(
           AppSpacing.screenMargin, 0, AppSpacing.screenMargin, AppSpacing.md),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               Expanded(
                 child: AppButton.tinted(
-                  label: context.tr('+ صفحة', '+1 page'),
-                  small: true,
-                  onPressed: () => onProgress((n) => n.addPages(1)),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: AppButton.tinted(
-                  label: context.tr('+ حزب', '+1 hizb'),
-                  small: true,
-                  onPressed: () => onProgress((n) => n.addHizb()),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: AppButton.filled(
                   label: context.tr('أتممت ورد اليوم', 'Mark today done'),
                   icon: CupertinoIcons.checkmark_alt,
                   small: true,
@@ -597,7 +689,23 @@ class _Actions extends StatelessWidget {
               ),
             ],
           ),
-          if (showMushaf || canUndo) const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AppButton.plain(
+                label: context.tr('+ صفحة', '+1 page'),
+                small: true,
+                onPressed: () => onProgress((n) => n.addPages(1)),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              AppButton.plain(
+                label: context.tr('+ حزب', '+1 hizb'),
+                small: true,
+                onPressed: () => onProgress((n) => n.addHizb()),
+              ),
+            ],
+          ),
           if (showMushaf)
             AppButton.plain(
               label: context.tr('وصلت إلى صفحة $mushafPage في المصحف',

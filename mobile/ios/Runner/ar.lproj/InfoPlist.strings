@@ -1,6 +1,6 @@
 /* Home-screen name on Arabic devices. */
-"CFBundleDisplayName" = "لهما";
-"CFBundleName" = "لهما";
+"CFBundleDisplayName" = "إحسان";
+"CFBundleName" = "إحسان";
 
 /* Location: prayer times, city name, Qibla and Fajr Call. */
-"NSLocationWhenInUseUsageDescription" = "يستخدم لهما موقعك التقريبي لعرض مواقيت الصلاة واسم مدينتك، ولتحديد اتجاه القبلة، ولضبط وقت الفجر في نداء الفجر. يُحسب اتجاه القبلة على هاتفك، ويُرسَل موقعك التقريبي إلى خدمة المواقيت Aladhan لجلب أوقات الصلاة.";
+"NSLocationWhenInUseUsageDescription" = "يستخدم تطبيق «إحسان» موقعك التقريبي لعرض مواقيت الصلاة واسم مدينتك، ولتحديد اتجاه القبلة، ولضبط وقت الفجر في نداء الفجر. يُحسب اتجاه القبلة على هاتفك، ويُرسَل موقعك التقريبي إلى خدمة المواقيت Aladhan لجلب أوقات الصلاة.";
