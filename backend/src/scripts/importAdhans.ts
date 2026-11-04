@@ -2,6 +2,16 @@ import { spawnSync } from "child_process";
 import { createHash } from "crypto";
 import fs from "fs";
 import path from "path";
+import {
+  MANIFEST_PATH as MANIFEST,
+  Manifest,
+  ManifestRow,
+  OUTPUT_FILES,
+  OutputInfo,
+  OutputKind,
+  SourceInfo,
+  SourceKind,
+} from "../modules/muezzins/muezzins.manifest";
 
 // Downloads each muezzin's adhans from the pinned source commit, then trims,
 // normalises and encodes them into public/adhan/<slug>/v<version>/:
@@ -14,7 +24,6 @@ import path from "path";
 // PATH, or FFMPEG_PATH / FFPROBE_PATH.
 
 const BACKEND = path.resolve(__dirname, "../..");
-const MANIFEST = path.join(BACKEND, "prisma/data/muezzins.json");
 const SRC_DIR = path.join(BACKEND, "media-src/adhan");
 const PUBLIC_DIR = path.join(BACKEND, "public/adhan");
 
@@ -34,40 +43,7 @@ const PARAMS = {
 };
 const PIPELINE_ID = createHash("sha256").update(JSON.stringify(PARAMS)).digest("hex").slice(0, 12);
 
-type SourceKind = "regular" | "fajr";
-type OutputKind = "regular" | "fajr" | "regularShort" | "fajrShort";
-
-const OUTPUT_FILES: Record<OutputKind, string> = {
-  regular: "regular.mp3",
-  fajr: "fajr.mp3",
-  regularShort: "regular_short.caf",
-  fajrShort: "fajr_short.caf",
-};
-
-type Probe = { durationSec: number; bitRate: number; sampleRate: number; channels: number; codec: string };
-type SourceInfo = Probe & { file: string; sha256: string; bytes: number };
-type OutputInfo = { path: string; sha256: string; bytes: number; durationSec: number };
-
-export type ManifestRow = {
-  slug: string;
-  id: string;
-  nameAr: string;
-  nameFr: string;
-  country: string;
-  sortOrder: number;
-  version: number;
-  isActive: boolean;
-  allowShort?: boolean;
-  source: { repo: string; commit: string; regularFile: string; fajrFile: string };
-  // Written by this script:
-  status?: "ok" | "short" | "failed";
-  warnings?: string[];
-  pipeline?: string;
-  sources?: Partial<Record<SourceKind, SourceInfo>>;
-  outputs?: Partial<Record<OutputKind, OutputInfo>>;
-};
-
-type Manifest = { $comment?: string; muezzins: ManifestRow[] };
+type Probe = Pick<SourceInfo, "durationSec" | "bitRate" | "sampleRate" | "channels" | "codec">;
 
 // ---------------------------------------------------------------- tools
 

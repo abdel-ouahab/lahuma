@@ -71,33 +71,56 @@ The settings are under **Settings → الصلاة → الأذان** (`/setting
 | Model | `Muezzin` in [`backend/prisma/schema.prisma`](../backend/prisma/schema.prisma) |
 | Migration | `20261029120000_add_muezzins` |
 | Endpoint | `GET /api/muezzins` → `{ muezzins: [...] }` |
-| Seed | [`backend/prisma/seed.ts`](../backend/prisma/seed.ts): 3 placeholder muezzins, upserted by fixed id |
-| Env | `MEDIA_BASE_URL`: the public origin of the bucket. A stored URL starting with `/` is prefixed with it; an absolute URL is returned as is. |
+| Manifest | [`backend/prisma/data/muezzins.json`](../backend/prisma/data/muezzins.json): the muezzins, their source files, and what the import produced |
+| Import | `npm run adhan:import` ([`src/scripts/importAdhans.ts`](../backend/src/scripts/importAdhans.ts)): downloads, processes and publishes the files into `public/adhan/` |
+| Seed | [`backend/prisma/seed.ts`](../backend/prisma/seed.ts): upserts the manifest's rows by fixed id; a row that failed the import is seeded inactive |
+| Files | `GET /adhan/<slug>/v<version>/<file>`, served by the backend from `public/adhan/` (30-day `immutable` cache, `Range` support) |
+| Env | `MEDIA_BASE_URL`: the public origin of the files. A stored URL starting with `/` is prefixed with it; an absolute URL is returned as is. |
 
 ```bash
 cd backend
+npm run adhan:import           # needs ffmpeg; fills public/adhan/ (gitignored)
 npx prisma migrate deploy      # or: npm run prisma:migrate   (dev)
 npx prisma db seed             # or: npm run prisma:seed
 ```
 
-There is no admin UI or upload endpoint for muezzins yet: add rows with Prisma Studio (`npx prisma studio`) or SQL.
+`MEDIA_BASE_URL` in development:
 
-### Storage bucket
+| Device | `MEDIA_BASE_URL` |
+|---|---|
+| Android emulator | `http://10.0.2.2:4000` |
+| Real phone on the same Wi-Fi | `http://<this machine's LAN IP>:4000` (and run the app with `--dart-define=API_BASE_URL=http://<LAN IP>:4000/api`) |
+| iOS simulator | `http://localhost:4000` |
 
-Any public-read object storage works (S3, Cloudflare R2, GCS, Supabase Storage…). The seed expects this layout under `MEDIA_BASE_URL`:
+The server reads `.env` once at start, so restart it after changing this.
+
+There is no admin UI for muezzins: change the manifest, re-run the import, then the seed.
+
+### Hosting the files
+
+The layout under `MEDIA_BASE_URL` is:
 
 ```
-adhan/<slug>/regular.mp3          full adhan
-adhan/<slug>/fajr.mp3             full Fajr adhan
-adhan/<slug>/regular_short.caf    ≤ 30 s
-adhan/<slug>/fajr_short.caf       ≤ 30 s
+adhan/<slug>/v<version>/regular.mp3          full adhan
+adhan/<slug>/v<version>/fajr.mp3             full Fajr adhan
+adhan/<slug>/v<version>/regular_short.caf    ≤ 29.5 s, iOS notification sound
+adhan/<slug>/v<version>/fajr_short.caf       ≤ 29.5 s
 ```
 
-with `<slug>` = `makkah`, `madinah`, `algiers`.
+The version is in the path because the files are cached as `immutable`: a re-processed file gets a new URL, and the import bumps `version` so apps download it again. The import keeps only the current version of each muezzin in `public/adhan/`.
 
-- Content types: `audio/mpeg` for mp3, `audio/x-caf` for caf, `audio/wav` for wav.
-- **When you replace a file, bump `version` and change the URL** (for example `adhan/makkah/v2/regular.mp3`). Apps only download again when `version` changes, and a CDN may keep serving the old file from the same URL.
-- No CORS rule is needed; only the mobile app fetches these files.
+**Production, served by the backend (the default).** Set `MEDIA_BASE_URL` to the API's public HTTPS origin. `public/adhan/` is gitignored (about 29 MB), so run `npm run adhan:import` on the machine that builds the image: `docker compose build` copies `public/adhan/` into the image (`.dockerignore` leaves out `media-src/`). Or copy the tree to the server and mount it at `/app/public/adhan`.
+
+**Production, from a bucket or CDN (later).** Any public-read object storage works (S3, Cloudflare R2, GCS…). Upload the same tree, then point `MEDIA_BASE_URL` at the bucket's origin:
+
+```bash
+# rclone (any S3-compatible remote, configured with `rclone config`)
+rclone sync backend/public/adhan <remote>:<bucket>/adhan   --header-upload "Cache-Control: public, max-age=2592000, immutable"
+# AWS CLI
+aws s3 sync backend/public/adhan s3://<bucket>/adhan   --cache-control "public, max-age=2592000, immutable"
+```
+
+Check that the bucket serves `audio/mpeg` for mp3 and `audio/x-caf` for caf (set it with `--header-upload "Content-Type: …"` per extension if not). No CORS rule is needed; only the mobile app fetches these files.
 
 ## Audio files
 
@@ -144,8 +167,8 @@ iOS notification sounds must be `.caf`, `.wav` or `.aiff` (Linear PCM, IMA4, µL
 
 ## Manual steps
 
-1. **Backend:** set `MEDIA_BASE_URL` in `backend/.env`, run the migration and the seed (above), and upload the files to the bucket.
-2. **Audio:** the bundled default is in place (see above); only the muezzins' files need uploading.
+1. **Backend:** set `MEDIA_BASE_URL` in `backend/.env`, run the import, the migration and the seed (above).
+2. **Audio:** the bundled default is in place (see above); the muezzins' files come from the import.
 3. **Xcode:** check that `adhan_default_regular.caf` is in the Runner target's *Copy Bundle Resources*. It is the notification sound.
 4. **Xcode:** turn on the *Time Sensitive Notifications* capability (see [Fajr Call](fajr-call.md#ios)) if it isn't on already. Without it, a Focus mode can hide the prayer-time notification.
 5. **Test on a device:** follow the checklist below.
