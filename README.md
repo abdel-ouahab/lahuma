@@ -10,7 +10,7 @@ The MVP lets anyone browse and read the full Quran **as a guest, with no login r
 
 ## Features
 
-- Splash: the native launch screen hands over to an animated one (a gold rub el hizb draws itself around the إحسان wordmark) that waits for real start-up work (saved theme and language, the cached prayer times, a notification's screen) and never more than 5 s
+- Splash: the native launch screen hands over to an animated one (the shamsa, the gilded medallion that opens a Mushaf, gathers around the إحسان wordmark) that waits for real start-up work (saved theme and language, the cached prayer times, a notification's screen) and never more than 5 s
 - Introduction, shown once and again from Settings: six pages with living miniatures of the features (the Mushaf and reciters, the khatma, prayer times and the qibla, Fajr Call, the tasbih and adhkar), then language and look; Arabic RTL and English, light and dark, Reduce Motion and large text; no permission prompts until the features need them
 - Home with "Last read", today's wird (daily goal + streak) and reading intention
 - Surahs (search by name or number), 30 juz', and reciters tabs; reader opens at the exact ayah (last read, bookmark, juz')

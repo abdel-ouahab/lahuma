@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lahuma/core/design/design.dart'
-    show AppColors, DrawnStarPainter;
+    show AppColors, ShamsaPainter;
 import 'package:lahuma/features/adhkar/domain/dhikr.dart';
 import 'package:lahuma/features/adhkar/presentation/adhkar_providers.dart';
 import 'package:lahuma/features/home/presentation/home_screen.dart';
@@ -36,10 +36,10 @@ Future<void> _wait(WidgetTester tester, Duration total) async {
   }
 }
 
-DrawnStarPainter _star(WidgetTester tester) => tester
+ShamsaPainter _shamsa(WidgetTester tester) => tester
     .widgetList<CustomPaint>(find.byType(CustomPaint))
     .map((p) => p.painter)
-    .whereType<DrawnStarPainter>()
+    .whereType<ShamsaPainter>()
     .single;
 
 void main() {
@@ -66,8 +66,9 @@ void main() {
         .first
         .color;
     expect(background.toARGB32(), AppColors.splashBackground.color.toARGB32());
-    // …and nothing else yet: the star has not started drawing.
-    expect(_star(tester).progress.value, 0);
+    // …and nothing else yet: the shamsa has not started gathering.
+    expect(_shamsa(tester).trace.value, 0);
+    expect(_shamsa(tester).bloom.value, 0);
     await _wait(tester, const Duration(seconds: 3));
   });
 
@@ -128,7 +129,8 @@ void main() {
     SharedPreferences.setMockInitialValues(_seen);
     await _launch(tester);
     await tester.pump();
-    expect(_star(tester).progress.value, 1);
+    expect(_shamsa(tester).trace.value, 1);
+    expect(_shamsa(tester).bloom.value, 1);
 
     // Start-up is quick here: no 1.6 s wait for an animation nobody sees.
     await _wait(tester, const Duration(milliseconds: 600));

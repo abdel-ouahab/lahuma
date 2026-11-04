@@ -23,8 +23,9 @@ class SplashLayout {
   /// Height over width of [wordmarkAsset].
   static const double wordmarkAspect = 407 / 640;
 
-  /// The star around the wordmark; smaller on narrow phones.
-  static const double starRadius = 148;
+  /// The shamsa's scalloped ring around the wordmark; smaller on narrow
+  /// phones, so its rays (to [ShamsaPainter.reach] radii) stay on screen.
+  static const double shamsaRadius = 112;
 }
 
 /// Decodes the wordmark before the first frame (call it in `main`), so that
@@ -47,18 +48,21 @@ Future<void> precacheSplashWordmark() {
 }
 
 /// The opening of an illuminated Mushaf: the gold wordmark the native
-/// launch screen showed stays where it is while a gold rub el hizb draws
-/// itself around it, settles, and a band of light crosses the gold once;
-/// then the tagline rises. One controller drives the timeline:
+/// launch screen showed stays where it is while the shamsa, the medallion
+/// that opens a Mushaf, gathers around it: its scalloped ring traces itself
+/// from the top down both sides, its rays open out, it settles, and a band
+/// of light crosses the gold once; then the tagline rises. One controller
+/// drives the timeline:
 ///
 /// | ms        | what                                                    |
 /// |-----------|---------------------------------------------------------|
 /// | 0         | the native launch screen: flat colour, wordmark         |
-/// | 0–500     | the star draws from its corners; glow and lattice in    |
-/// | 300–900   | the star settles from 1.06× onto the wordmark (spring)  |
-/// | 800–1200  | a band of light crosses the wordmark                    |
-/// | 900–1300  | the tagline rises 12 pt and fades in                    |
-/// | 1020–1400 | the loader, if start-up is still running                |
+/// | 0–600     | the ring traces itself; the glow comes up               |
+/// | 250–1000  | the rays open out, from the top round to the bottom     |
+/// | 300–900   | the medallion settles from 1.06× (spring)               |
+/// | 850–1250  | a band of light crosses the wordmark                    |
+/// | 950–1350  | the tagline rises 12 pt and fades in                    |
+/// | 1050–1400 | the loader, if start-up is still running                |
 ///
 /// It leaves once [bootstrapProvider] is done and [SplashTiming.minimum]
 /// has passed (or after [SplashTiming.maximum]): the content fades out,
@@ -87,15 +91,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   late final AnimationController _breath = AnimationController(
       vsync: this, duration: const Duration(milliseconds: 1400));
 
-  late final Animation<double> _draw = _segment(0, 500, Curves.easeInOutCubic);
-  late final Animation<double> _ambient = _segment(0, 500, Curves.easeOut);
+  late final Animation<double> _trace = _segment(0, 600, Curves.easeInOutCubic);
+  late final Animation<double> _bloom =
+      _segment(250, 1000, Curves.easeOutCubic);
+  late final Animation<double> _ambient = _segment(0, 600, Curves.easeOut);
   late final Animation<double> _settle = Tween<double>(begin: 1.06, end: 1)
       .animate(_segment(
           300, 900, AppMotion.springCurve(const Duration(milliseconds: 600))));
-  late final Animation<double> _sweep = _segment(800, 1200, Curves.easeInOut);
+  late final Animation<double> _sweep = _segment(850, 1250, Curves.easeInOut);
   late final Animation<double> _tagline =
-      _segment(900, 1300, Curves.easeOutCubic);
-  late final Animation<double> _loaderIn = _segment(1020, 1400, Curves.easeOut);
+      _segment(950, 1350, Curves.easeOutCubic);
+  late final Animation<double> _loaderIn = _segment(1050, 1400, Curves.easeOut);
 
   late final Animation<double> _contentOut =
       Tween<double>(begin: 1, end: 0).animate(_exit);
@@ -215,8 +221,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         color: background,
         child: LayoutBuilder(builder: (context, box) {
           final size = box.biggest;
-          final radius =
-              math.min(SplashLayout.starRadius, size.width / 2 - AppSpacing.md);
+          final radius = math.min(SplashLayout.shamsaRadius,
+              (size.width / 2 - AppSpacing.md) / ShamsaPainter.reach);
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -238,19 +244,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      FadeTransition(
-                        opacity: _ambient,
-                        child: RepaintBoundary(
-                          child: CustomPaint(
-                            painter: StarLatticePainter(
-                                gold.withValues(alpha: 0.06)),
-                          ),
-                        ),
-                      ),
                       RepaintBoundary(
                         child: CustomPaint(
-                          painter: DrawnStarPainter(
-                            progress: _draw,
+                          painter: ShamsaPainter(
+                            trace: _trace,
+                            bloom: _bloom,
                             scale: _settle,
                             color: gold,
                             radius: radius,
@@ -259,7 +257,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       ),
                       Center(child: _Wordmark(sweep: _sweep)),
                       Positioned(
-                        top: size.height / 2 + radius + AppSpacing.lg,
+                        top: size.height / 2 +
+                            radius * ShamsaPainter.reach +
+                            AppSpacing.md,
                         left: AppSpacing.xl,
                         right: AppSpacing.xl,
                         child: Column(
@@ -284,7 +284,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                               duration: AppMotion.of(context, AppMotion.fast),
                               child: _Rise(
                                 animation: _loaderIn,
-                                child: _BreathingStars(
+                                child: _BreathingDots(
                                     breath: _breath, color: gold),
                               ),
                             ),
@@ -372,14 +372,15 @@ class _Rise extends StatelessWidget {
       );
 }
 
-/// The loader: three small gold stars, breathing one after another.
-class _BreathingStars extends StatelessWidget {
-  const _BreathingStars({required this.breath, required this.color});
+/// The loader: three small gold dots, like the shamsa's, breathing one
+/// after another.
+class _BreathingDots extends StatelessWidget {
+  const _BreathingDots({required this.breath, required this.color});
 
   final Animation<double> breath;
   final Color color;
 
-  static const double _star = 7;
+  static const double _dot = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -393,10 +394,14 @@ class _BreathingStars extends StatelessWidget {
             for (var i = 0; i < 3; i++)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 5),
-                child: CustomPaint(
-                  size: const Size.square(_star),
-                  painter: StarPainter(color.withValues(
-                      alpha: _alpha(breath.value, i, breath.isAnimating))),
+                child: Container(
+                  width: _dot,
+                  height: _dot,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: color.withValues(
+                        alpha: _alpha(breath.value, i, breath.isAnimating)),
+                  ),
                 ),
               ),
           ],
@@ -405,7 +410,7 @@ class _BreathingStars extends StatelessWidget {
     );
   }
 
-  /// 0.35…1 on a slow sine, each star a third of a breath behind the last;
+  /// 0.35…1 on a slow sine, each dot a third of a breath behind the last;
   /// a steady 0.6 when not breathing (Reduce Motion).
   static double _alpha(double t, int i, bool breathing) {
     if (!breathing) return 0.6;

@@ -5,10 +5,9 @@ double onboardingPageOf(PageController controller) => controller.hasClients
     ? controller.page ?? controller.initialPage.toDouble()
     : controller.initialPage.toDouble();
 
-/// Behind the pages: the page colour, a faint star-and-cross lattice, and a
-/// wash of each page's [tints] falling from the top, cross-fading as the
-/// pages turn (dawn on the Fajr page). Only the wash repaints while
-/// swiping; the lattice is painted once.
+/// Behind the pages: the page colour and a wash of each page's [tints]
+/// falling from the top, cross-fading as the pages turn (dawn on the Fajr
+/// page). Only the wash repaints while swiping.
 class OnboardingBackdrop extends StatelessWidget {
   const OnboardingBackdrop({
     super.key,
@@ -50,14 +49,6 @@ class OnboardingBackdrop extends StatelessWidget {
                 ),
               );
             },
-          ),
-        ),
-        RepaintBoundary(
-          child: CustomPaint(
-            painter: StarLatticePainter(
-              c.gold.withValues(alpha: c.isDark ? 0.07 : 0.1),
-              spacing: 64,
-            ),
           ),
         ),
       ],

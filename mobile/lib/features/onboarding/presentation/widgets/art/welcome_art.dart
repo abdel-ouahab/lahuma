@@ -1,12 +1,10 @@
-import 'dart:math' as math;
-
 import '../../../../../core/design/design.dart';
 import '../../../../../core/localization/tr.dart';
 import '../../../../splash/splash_screen.dart' show SplashLayout;
 import 'art_timeline.dart';
 
-/// Page 1: the intention. The wordmark inside the gold star (drawn from its
-/// corners, as on the splash), soft rays turning slowly behind it, and the
+/// Page 1: the intention. The wordmark inside the shamsa (its ring tracing
+/// itself and its rays opening, as on the splash) in a soft glow, and the
 /// ayahs read for one's parents counting up.
 class WelcomeArt extends OnboardingArtWidget {
   const WelcomeArt({super.key, required super.active});
@@ -24,48 +22,59 @@ class _WelcomeArtState extends OnboardingArtState<WelcomeArt> {
   @override
   Duration get length => const Duration(milliseconds: 2400);
 
-  @override
-  Duration get ambientLength => const Duration(seconds: 60);
-
-  late final Animation<double> _draw = segment(0, 900, Curves.easeInOutCubic);
+  late final Animation<double> _trace = segment(0, 700, Curves.easeInOutCubic);
+  late final Animation<double> _bloom = segment(300, 1100);
   late final Animation<double> _mark = segment(300, 900);
-  late final Animation<double> _count = segment(700, 2400);
-  late final Animation<double> _counterIn = segment(600, 1000);
+  late final Animation<double> _count = segment(800, 2400);
+  late final Animation<double> _counterIn = segment(700, 1100);
+
+  static const Offset _center = Offset(150, 104);
+  static const double _radius = 72;
+  static const double _markWidth = 106;
 
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
     // Green ink on ivory; at night the gold carries it.
     final ink = c.isDark ? c.gold : c.accent;
-    const center = Offset(150, 108);
+    const reach = _radius * ShamsaPainter.reach;
     return Stack(
       children: [
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _RaysPainter(
-              turn: ambient,
-              center: center,
-              color: c.gold.withValues(alpha: c.isDark ? 0.12 : 0.16),
+        Positioned.fromRect(
+          rect: Rect.fromCircle(center: _center, radius: reach + 24),
+          child: FadeTransition(
+            opacity: _trace,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(colors: [
+                  c.gold.withValues(alpha: c.isDark ? 0.14 : 0.18),
+                  c.gold.withValues(alpha: 0),
+                ]),
+              ),
             ),
           ),
         ),
-        Positioned.fill(
+        Positioned.fromRect(
+          rect: Rect.fromCircle(center: _center, radius: reach),
           child: CustomPaint(
-            painter: _CenteredStar(
-              DrawnStarPainter(progress: _draw, color: c.gold, radius: 96),
-              center,
+            painter: ShamsaPainter(
+              trace: _trace,
+              bloom: _bloom,
+              color: c.gold,
+              radius: _radius,
             ),
           ),
         ),
         Positioned(
-          left: center.dx - 58,
-          top: center.dy - 58 * SplashLayout.wordmarkAspect,
+          left: _center.dx - _markWidth / 2,
+          top: _center.dy - _markWidth / 2 * SplashLayout.wordmarkAspect,
           child: FadeTransition(
             opacity: _mark,
             child: Image.asset(
               SplashLayout.wordmarkAsset,
-              width: 116,
-              height: 116 * SplashLayout.wordmarkAspect,
+              width: _markWidth,
+              height: _markWidth * SplashLayout.wordmarkAspect,
               color: ink,
               colorBlendMode: BlendMode.srcIn,
               filterQuality: FilterQuality.medium,
@@ -75,7 +84,7 @@ class _WelcomeArtState extends OnboardingArtState<WelcomeArt> {
         Positioned(
           left: 0,
           right: 0,
-          top: 218,
+          top: 216,
           child: FadeTransition(
             opacity: _counterIn,
             child: Column(
@@ -101,69 +110,4 @@ class _WelcomeArtState extends OnboardingArtState<WelcomeArt> {
       ],
     );
   }
-}
-
-/// Paints [star] centred on [center] instead of on the box.
-class _CenteredStar extends CustomPainter {
-  _CenteredStar(this.star, this.center) : super(repaint: star.progress);
-
-  final DrawnStarPainter star;
-  final Offset center;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final side = star.radius * 2.4;
-    canvas.save();
-    canvas.translate(center.dx - side / 2, center.dy - side / 2);
-    star.paint(canvas, Size.square(side));
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(_CenteredStar old) => star.shouldRepaint(old.star);
-}
-
-/// Sixteen soft rays from [center], fading outwards, turning once a
-/// minute with [turn].
-class _RaysPainter extends CustomPainter {
-  _RaysPainter({
-    required this.turn,
-    required this.center,
-    required this.color,
-  }) : super(repaint: turn);
-
-  final Animation<double> turn;
-  final Offset center;
-  final Color color;
-
-  static const int _rays = 16;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final reach = size.longestSide * 0.62;
-    final paint = Paint()
-      ..shader = RadialGradient(
-        colors: [color, color.withValues(alpha: 0)],
-        stops: const [0.25, 1],
-      ).createShader(Rect.fromCircle(center: center, radius: reach));
-    final rotation = turn.value * 2 * math.pi;
-    const half = math.pi / _rays / 3;
-    for (var i = 0; i < _rays; i++) {
-      final a = rotation + i * 2 * math.pi / _rays;
-      canvas.drawPath(
-        Path()
-          ..moveTo(center.dx, center.dy)
-          ..lineTo(center.dx + math.cos(a - half) * reach,
-              center.dy + math.sin(a - half) * reach)
-          ..lineTo(center.dx + math.cos(a + half) * reach,
-              center.dy + math.sin(a + half) * reach)
-          ..close(),
-        paint,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(_RaysPainter old) =>
-      old.color != color || old.center != center || old.turn != turn;
 }
