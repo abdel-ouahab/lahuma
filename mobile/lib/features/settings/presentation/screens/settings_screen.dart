@@ -341,7 +341,12 @@ class _Card extends StatelessWidget {
         ),
       ],
       padding: EdgeInsets.zero,
-      child: Column(children: children),
+      // List tiles paint their ink on the nearest Material: this one, inside
+      // the card, rather than the page under the card's colour.
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(children: children),
+      ),
     );
   }
 }

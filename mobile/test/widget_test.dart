@@ -73,8 +73,8 @@ void main() {
     expect(find.byType(SettingsScreen), findsOneWidget);
     // The last tab (index 4) is the More branch (index 3).
     expect(tester.widget<AppTabBar>(find.byType(AppTabBar)).currentIndex, 4);
-    // Settings trips Flutter's debug "ListTile in a coloured DecoratedBox"
-    // check — unrelated to the tab mapping under test.
-    expect(tester.takeException(), isA<FlutterError>());
+    // Settings' list tiles paint on their own Material inside each card, so
+    // Flutter's "ListTile in a coloured DecoratedBox" check stays quiet.
+    expect(tester.takeException(), isNull);
   });
 }

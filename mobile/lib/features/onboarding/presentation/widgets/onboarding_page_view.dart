@@ -80,7 +80,7 @@ class OnboardingPageView extends StatelessWidget {
                         context.trPair(page.body),
                         textAlign: TextAlign.center,
                         style: AppTypography.callout
-                            .copyWith(color: c.secondaryLabel, height: 1.6),
+                            .copyWith(color: c.supportingLabel, height: 1.6),
                       ),
                       if (iosNote) ...[
                         const SizedBox(height: AppSpacing.sm),
@@ -88,7 +88,7 @@ class OnboardingPageView extends StatelessWidget {
                           context.trPair(page.iosNote!),
                           textAlign: TextAlign.center,
                           style: AppTypography.footnote
-                              .copyWith(color: c.secondaryLabel),
+                              .copyWith(color: c.supportingLabel),
                         ),
                       ],
                       if (footer != null) ...[
