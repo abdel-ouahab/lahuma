@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import '../../../../../core/design/design.dart';
@@ -24,24 +25,30 @@ class _PrayerArtState extends OnboardingArtState<PrayerArt> {
   @override
   Duration get length => const Duration(milliseconds: 2200);
 
-  /// The countdown's clock: an hour, read in whole seconds.
-  @override
-  Duration get ambientLength => const Duration(hours: 1);
-
   static const _countdownStart = Duration(hours: 1, minutes: 24, seconds: 10);
 
   late final Animation<double> _swing = segment(0, 1900, Curves.linear);
   late final Animation<double> _rowIn = segment(300, 900);
 
+  /// Seconds the countdown has run. A once-a-second timer rather than an
+  /// animation: nothing needs drawing between the ticks.
   int _elapsed = 0;
+  Timer? _clock;
 
   @override
-  void initState() {
-    super.initState();
-    ambient.addListener(() {
-      final s = (ambient.value * 3600).floor();
-      if (s != _elapsed) setState(() => _elapsed = s);
-    });
+  void playingChanged(bool playing) {
+    _clock?.cancel();
+    _clock = playing
+        ? Timer.periodic(const Duration(seconds: 1), (_) {
+            if (mounted) setState(() => _elapsed++);
+          })
+        : null;
+  }
+
+  @override
+  void dispose() {
+    _clock?.cancel();
+    super.dispose();
   }
 
   /// A swing that dies away onto the qibla: from 95° short of it, twice

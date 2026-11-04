@@ -27,6 +27,15 @@ class _FajrCallArtState extends OnboardingArtState<FajrCallArt> {
 
   late final Animation<double> _dawn = segment(0, 3600, Curves.easeInOut);
 
+  @override
+  void initState() {
+    super.initState();
+    // Everyone is awake: the phone stops ringing, so stop drawing rings.
+    timeline.addStatusListener((status) {
+      if (status == AnimationStatus.completed) ambient.stop();
+    });
+  }
+
   /// When each one is being called, and when they wake (ms).
   static const _calls = [(400, 1700), (1900, 3200)];
 

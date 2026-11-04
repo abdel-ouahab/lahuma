@@ -195,6 +195,22 @@ void main() {
     expect(find.textContaining('iPhone'), findsNothing);
   });
 
+  testWidgets('the prayer page counts down once a second while shown',
+      (tester) async {
+    await _firstLaunch(tester);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text('التالي'));
+      await _wait(tester);
+    }
+    expect(find.text('صلاتك في وقتها'), findsOneWidget);
+    final before = find.textContaining('01:24:');
+    expect(before, findsOneWidget);
+    final first = tester.widget<Text>(before).data!;
+    await _wait(tester, const Duration(seconds: 2));
+    final later = tester.widget<Text>(find.textContaining('01:24:')).data!;
+    expect(later, isNot(first));
+  });
+
   testWidgets('Settings shows it again and returns to Settings',
       (tester) async {
     SharedPreferences.setMockInitialValues({_flag: true});

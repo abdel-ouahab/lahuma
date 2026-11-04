@@ -51,21 +51,30 @@ abstract class OnboardingArtState<T extends OnboardingArtWidget>
     if (oldWidget.active != widget.active) _sync(restart: widget.active);
   }
 
+  /// Called whenever the miniature starts or stops playing, for work that
+  /// is not an animation (a once-a-second clock).
+  void playingChanged(bool playing) {}
+
+  bool _playing = false;
+
   void _sync({required bool restart}) {
+    final playing = widget.active && !still;
     if (still) {
       timeline.value = 1;
       ambient.stop();
-      return;
-    }
-    if (!widget.active) {
+    } else if (!widget.active) {
       timeline.stop();
       ambient.stop();
-      return;
+    } else {
+      if (restart || (!timeline.isAnimating && timeline.value == 0)) {
+        timeline.forward(from: 0);
+      }
+      if (ambientLength != null && !ambient.isAnimating) ambient.repeat();
     }
-    if (restart || (!timeline.isAnimating && timeline.value == 0)) {
-      timeline.forward(from: 0);
+    if (playing != _playing) {
+      _playing = playing;
+      playingChanged(playing);
     }
-    if (ambientLength != null && !ambient.isAnimating) ambient.repeat();
   }
 
   @override
