@@ -258,7 +258,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // ── About ────────────────────────────────────────────────────
-            _SectionHeader(title: context.tr('عن لهما', 'About Lahuma')),
+            _SectionHeader(title: context.tr('عن إحسان', 'About Ihsan')),
             LahumaCard(
               color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -266,7 +266,7 @@ class SettingsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'لهما',
+                    'إحسان',
                     style: GoogleFonts.scheherazadeNew(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -287,8 +287,8 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     context.tr(
-                      'لهما تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.',
-                      'Lahuma is a Quran app made as an ongoing charity for parents.',
+                      'إحسان تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.',
+                      'Ihsan is a Quran app made as an ongoing charity for parents.',
                     ),
                     style: GoogleFonts.cairo(
                       fontSize: 13,

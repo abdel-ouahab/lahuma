@@ -278,7 +278,7 @@ class _SidebarPanel extends StatelessWidget {
 }
 
 /// The niche with a gilded hilal and the app's name, and under it the dua
-/// it is named after (al-Isra 17:24).
+/// it is named after (al-Isra 17:23).
 class _Masthead extends StatelessWidget {
   const _Masthead();
 
@@ -306,7 +306,7 @@ class _Masthead extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'لهما',
+                      'إحسان',
                       textDirection: TextDirection.rtl,
                       style: AppTypography.title1
                           .copyWith(color: AppColors.onAccent, height: 1.2),
@@ -321,7 +321,7 @@ class _Masthead extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Text(
-            '﴿رَبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا﴾',
+            '﴿وَبِالْوَالِدَيْنِ إِحْسَانًا﴾',
             textAlign: TextAlign.center,
             textDirection: TextDirection.rtl,
             style: AppTypography.quran(size: 19, height: 1.7)

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon background: the logo's green, lighter at the top.
+     Mirrors GREEN_TOP / GREEN_BOTTOM in tools/generate_icon/generate.py. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient
+        android:angle="270"
+        android:endColor="#0B473B"
+        android:startColor="#156B5B" />
+</shape>

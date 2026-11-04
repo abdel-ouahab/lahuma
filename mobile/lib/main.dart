@@ -112,7 +112,7 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     return ThemeProvider(
       initTheme: AppTheme.light,
       child: MaterialApp.router(
-        title: 'لهما',
+        title: 'إحسان',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

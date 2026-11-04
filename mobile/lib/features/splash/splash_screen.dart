@@ -107,7 +107,7 @@ class _SplashScreenState extends State<SplashScreen>
                       'assets/images/logo.png',
                       width: 200,
                       height: 200,
-                      semanticLabel: 'لهما',
+                      semanticLabel: 'إحسان',
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),

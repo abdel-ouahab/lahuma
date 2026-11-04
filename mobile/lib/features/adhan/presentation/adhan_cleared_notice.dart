@@ -36,8 +36,8 @@ Future<void> showAdhanClearedNoticeIfNeeded(
     context,
     title: context.tr('توقّف الأذان', 'The adhan was stopped'),
     message: context.tr(
-      'أوقف هاتفك لهما بالكامل، غالباً عند إغلاقه من قائمة التطبيقات الأخيرة، فلم يُرفع الأذان منذ ذلك الحين. أعدنا تفعيله الآن. لكي لا يتكرر هذا لا تغلق لهما من التطبيقات الأخيرة، واتبع خطوات هاتفك.',
-      'Your phone fully stopped Lahuma, usually when it is swiped away from Recents, so no adhan has played since. It is back on now. To keep it on, don\'t swipe Lahuma away, and follow the steps for your phone.',
+      'أوقف هاتفك تطبيق «إحسان» بالكامل، غالباً عند إغلاقه من قائمة التطبيقات الأخيرة، فلم يُرفع الأذان منذ ذلك الحين. أعدنا تفعيله الآن. لكي لا يتكرر هذا لا تغلق «إحسان» من التطبيقات الأخيرة، واتبع خطوات هاتفك.',
+      'Your phone fully stopped Ihsan, usually when it is swiped away from Recents, so no adhan has played since. It is back on now. To keep it on, don\'t swipe Ihsan away, and follow the steps for your phone.',
     ),
     actions: [
       AppDialogAction(label: context.tr('حسناً', 'OK'), value: false),

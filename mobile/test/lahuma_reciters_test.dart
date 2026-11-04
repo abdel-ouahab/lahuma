@@ -71,7 +71,7 @@ void main() {
     ));
     await tester.pump();
 
-    expect(find.text('قرّاء لهما'), findsOneWidget);
+    expect(find.text('قرّاء إحسان'), findsOneWidget);
     expect(find.text('أحمد العجمي'), findsOneWidget);
     expect(find.text('2 سورة'), findsOneWidget);
 

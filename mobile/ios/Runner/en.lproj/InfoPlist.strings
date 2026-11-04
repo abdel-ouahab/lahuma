@@ -1,6 +1,6 @@
 /* Home-screen name (English and fallback). */
-"CFBundleDisplayName" = "Lahuma";
-"CFBundleName" = "Lahuma";
+"CFBundleDisplayName" = "Ihsan";
+"CFBundleName" = "Ihsan";
 
 /* Location: prayer times, city name, Qibla and Fajr Call. */
-"NSLocationWhenInUseUsageDescription" = "Lahuma uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.";
+"NSLocationWhenInUseUsageDescription" = "Ihsan uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.";

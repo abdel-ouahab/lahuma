@@ -24,7 +24,7 @@ class LahumaRecitersSection extends ConsumerWidget {
         (ref.watch(audioPlayerStateProvider).valueOrNull?.playing ?? false);
 
     return AppListSection(
-      header: context.tr('قرّاء لهما', 'Lahuma reciters'),
+      header: context.tr('قرّاء إحسان', 'Ihsan reciters'),
       hasLeading: true,
       margin: EdgeInsetsDirectional.zero,
       children: [
