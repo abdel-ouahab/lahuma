@@ -3,3 +3,5 @@ dist
 .env
 *.log
 public/audio/.tmp
+media-src
+public/adhan

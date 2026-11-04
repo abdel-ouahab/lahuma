@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "make-admin": "tsc -p tsconfig.json && node dist/scripts/makeAdmin.js",
+    "adhan:import": "ts-node --transpile-only src/scripts/importAdhans.ts",
     "test": "jest"
   },
   "prisma": {
