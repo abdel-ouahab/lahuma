@@ -17,6 +17,7 @@ import '../../../dedication/presentation/dedication_providers.dart';
 import '../../../dedication/presentation/dedication_sheet.dart';
 import '../../../fajr_call/presentation/fajr_call_providers.dart';
 import '../../../fajr_call/presentation/widgets/prayer_settings_sheet.dart';
+import '../../../onboarding/presentation/screens/onboarding_screen.dart';
 import '../../../wird/presentation/goal_sheet.dart';
 import '../../../wird/presentation/wird_providers.dart';
 import '../../data/settings_repository.dart';
@@ -300,6 +301,21 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            _Card(
+              isDark: isDark,
+              children: [
+                _NavTile(
+                  icon: Icons.auto_stories_outlined,
+                  label: context.tr(
+                      'عرض المقدمة مرة أخرى', 'Show the introduction again'),
+                  detail: context.tr('جولة قصيرة في ميزات إحسان',
+                      'A short tour of what Ihsan does'),
+                  isDark: isDark,
+                  onTap: () => context.push(OnboardingScreen.replayPath),
+                ),
+              ],
             ),
           ].listEntrance(),
         ),

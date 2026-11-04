@@ -5,6 +5,7 @@ import '../../fajr_call/data/location_service.dart';
 import '../../fajr_call/data/places.dart' show distanceKm;
 import '../../fajr_call/domain/prayer_settings.dart' show LocationSource;
 import '../../fajr_call/presentation/fajr_call_providers.dart';
+import '../../settings/presentation/settings_providers.dart';
 import '../data/prayer_times_cache.dart';
 import '../data/prayer_times_config.dart';
 import '../data/prayer_times_service.dart';
@@ -59,6 +60,7 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
     required ReverseGeocoder geocoder,
     required DateTime Function() now,
     this.manualLocation,
+    this.mayAskForLocation,
     bool autoLoad = true,
   })  : _service = service,
         _cache = cache,
@@ -78,6 +80,12 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
   /// The place saved in the location settings, used when GPS gives nothing.
   final Future<({PrayerLocation location, bool chosen})?> Function()?
       manualLocation;
+
+  /// Whether the first load may show the system location prompt. False
+  /// while the introduction is still to come: it asks for nothing, and
+  /// finishing it refreshes with the prompt allowed (see
+  /// OnboardingController). Null allows it.
+  final Future<bool> Function()? mayAskForLocation;
 
   Future<void>? _ready;
   Future<void> get ready => _ready ?? Future.value();
@@ -113,7 +121,12 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
     } finally {
       if (!_cacheLoaded.isCompleted) _cacheLoaded.complete();
     }
-    await refresh(request: true);
+    var ask = true;
+    try {
+      ask = await mayAskForLocation?.call() ?? true;
+    } catch (_) {}
+    if (!mounted) return;
+    await refresh(request: ask);
     _initial = false;
   }
 
@@ -285,6 +298,8 @@ final prayerTimesProvider =
     location: ref.watch(prayerLocationServiceProvider),
     geocoder: ref.watch(reverseGeocoderProvider),
     now: ref.watch(prayerClockProvider),
+    mayAskForLocation: () =>
+        ref.read(settingsRepositoryProvider).getOnboardingCompleted(),
     manualLocation: () async {
       await ref.read(fajrCallProvider.notifier).ready;
       final p = ref.read(fajrCallProvider).prayer;

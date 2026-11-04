@@ -73,8 +73,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ── Introduction (outside shell — first launch, or from Settings) ──
       GoRoute(
         path: OnboardingScreen.path,
-        pageBuilder: (context, state) =>
-            _fadePage(state, const OnboardingScreen()),
+        pageBuilder: (context, state) => _fadePage(
+          state,
+          OnboardingScreen(replay: state.uri.queryParameters['replay'] == '1'),
+        ),
       ),
 
       // ── Surah reader (outside shell — full-screen reading experience) ───
