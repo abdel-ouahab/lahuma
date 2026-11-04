@@ -50,6 +50,9 @@ class StorageKeys {
   /// Id of the last adhan the app played itself, so it plays once.
   static const String adhanLastPlayed = 'adhan.lastPlayed';
 
+  /// When the "adhans were cancelled" notice was last shown (ms).
+  static const String adhanClearedNoticeAt = 'adhan.clearedNoticeAt';
+
   static const String khatmaActive = 'khatma.active';
   static const String khatmaHistory = 'khatma.history';
   static const String khatmaLogs = 'khatma.logs';

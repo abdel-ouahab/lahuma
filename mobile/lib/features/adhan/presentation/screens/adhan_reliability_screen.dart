@@ -28,22 +28,10 @@ class AdhanReliabilityScreen extends ConsumerWidget {
     }
 
     Future<void> battery() async {
-      final go = await showAppDialog<bool>(
-        context,
-        title: context.tr('العمل في الخلفية', 'Run in the background'),
-        message: context.tr(
-          'يوقف توفير البطارية التطبيقات المغلقة، فقد لا يُرفع الأذان في وقته. اختر «السماح» في النافذة التالية ليعمل الأذان والتطبيق مغلق. لا يزيد هذا من استهلاك البطارية إلا وقت الأذان.',
-          'Battery saving stops closed apps, so the adhan may not play on time. Choose "Allow" in the next window so it plays with the app closed. The app only wakes at prayer times.',
-        ),
-        actions: [
-          AppDialogAction(label: context.tr('لاحقًا', 'Later'), value: false),
-          AppDialogAction(
-              label: context.tr('متابعة', 'Continue'),
-              value: true,
-              isDefault: true),
-        ],
-      );
-      if (go == true) await after(native.requestIgnoreBatteryOptimizations());
+      if (await askToRunInBackground(context, native)) {
+        ref.invalidate(adhanPermissionsProvider);
+        await ref.read(adhanProvider.notifier).reschedule();
+      }
     }
 
     Future<void> openMaker(PhoneMaker m) async {
@@ -72,8 +60,8 @@ class AdhanReliabilityScreen extends ConsumerWidget {
             header: context.tr('الأذونات', 'Permissions'),
             hasLeading: true,
             footer: context.tr(
-              'يُرفع الأذان بصوت المنبّه، فتأكد أن صوت المنبّه ليس منخفضاً. وضع «عدم الإزعاج» قد يكتمه إذا كانت المنبّهات ممنوعة فيه.',
-              'The adhan plays at alarm volume, so keep the alarm volume up. Do Not Disturb can mute it if it blocks alarms.',
+              'يُرفع الأذان بصوت الإشعارات، فتأكد أن صوت الإشعارات ليس منخفضاً. الوضع الصامت و«عدم الإزعاج» يكتمانه.',
+              'The adhan plays at notification volume, so keep it up. Silent mode and Do Not Disturb mute it.',
             ),
             children: [
               _CheckRow(
@@ -163,7 +151,11 @@ class AdhanReliabilityScreen extends ConsumerWidget {
             context.tr('«تحسين استخدام البطارية»: لا تحسّن لهما.',
                 'Optimise battery use: don\'t optimise Lahuma.'),
             context.tr(
-                'في التطبيقات الأخيرة، اقفل لهما.', 'In Recents, lock Lahuma.'),
+                'في التطبيقات الأخيرة، اضغط ⋮ على لهما واختر «قفل». لا يمكن القفل و«وضع توفير الطاقة» مفعّل.',
+                'In Recents, tap ⋮ on Lahuma and choose Lock. Apps can\'t be locked while Power saving mode is on.'),
+            context.tr(
+                'لا تسحب لهما لإغلاقه من التطبيقات الأخيرة: هذا يوقفه بالكامل فلا يُرفع الأذان حتى تفتحه من جديد.',
+                'Don\'t swipe Lahuma away from Recents: that fully stops it, and no adhan plays until you open it again.'),
           ],
         PhoneMaker.huawei => [
             context.tr(
@@ -184,6 +176,31 @@ class AdhanReliabilityScreen extends ConsumerWidget {
           ],
         PhoneMaker.other => const [],
       };
+}
+
+/// Android: why the adhan needs to run in the background, then the system
+/// "stop optimising battery usage?" dialog. True when the user went on to
+/// it (the system dialog's own answer isn't reported back).
+Future<bool> askToRunInBackground(
+    BuildContext context, AdhanAlarmPlatform native) async {
+  final go = await showAppDialog<bool>(
+    context,
+    title: context.tr('العمل في الخلفية', 'Run in the background'),
+    message: context.tr(
+      'ليُرفع الأذان والتطبيق مغلق، يحتاج لهما أن يعمل في الخلفية: في وقت كل صلاة يظهر إشعار ويُرفع الأذان بصوت الإشعارات. اختر «السماح» في النافذة التالية. لا يزيد هذا من استهلاك البطارية إلا وقت الأذان.',
+      'To play the adhan with the app closed, Lahuma needs to run in the background: at each prayer time a notification appears and the adhan plays at notification volume. Choose "Allow" in the next window. The app only wakes at prayer times.',
+    ),
+    actions: [
+      AppDialogAction(label: context.tr('لاحقًا', 'Later'), value: false),
+      AppDialogAction(
+          label: context.tr('متابعة', 'Continue'),
+          value: true,
+          isDefault: true),
+    ],
+  );
+  if (go != true) return false;
+  await native.requestIgnoreBatteryOptimizations();
+  return true;
 }
 
 /// A requirement: a tick when met, otherwise a tappable fix.

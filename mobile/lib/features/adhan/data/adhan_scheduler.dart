@@ -11,8 +11,8 @@ import 'adhan_alarm_platform.dart';
 ///
 /// **Android.** Each audible adhan is a native exact alarm
 /// ([AdhanAlarmPlatform]): `setAlarmClock` fires a receiver, which starts a
-/// `mediaPlayback` foreground service that plays the full adhan on the
-/// alarm stream, with or without the app. Silent prayers and reminders stay
+/// `mediaPlayback` foreground service that plays the full adhan as a
+/// notification sound (not the alarm), with or without the app. Silent prayers and reminders stay
 /// `flutter_local_notifications` alarm clocks. When the native engine is
 /// missing, every adhan falls back to a silent notification.
 ///

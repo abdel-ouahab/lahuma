@@ -434,6 +434,14 @@ class AdhanSettingsScreen extends ConsumerWidget {
       );
       if (go == true) await n.requestExactAlarms();
     }
+    // Android: the user confirms running in the background, so the adhan
+    // plays with the app closed.
+    final native = ref.read(adhanAlarmPlatformProvider);
+    if (native.supported &&
+        !(await native.reliability()).ignoringBatteryOptimizations &&
+        context.mounted) {
+      await askToRunInBackground(context, native);
+    }
     ref.invalidate(adhanPermissionsProvider);
     await ref.read(adhanProvider.notifier).reschedule();
   }

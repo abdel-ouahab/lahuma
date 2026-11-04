@@ -92,6 +92,11 @@ class AdhanAlarmStore(context: Context) {
         get() = prefs.getStringSet(KEY_ARMED, emptySet())!!.mapNotNull { it.toIntOrNull() }.toSet()
         set(value) = prefs.edit().putStringSet(KEY_ARMED, value.map { it.toString() }.toSet()).apply()
 
+    /** When [armedIds] were last armed (wall clock, ms). */
+    var armedAt: Long
+        get() = prefs.getLong(KEY_ARMED_AT, 0L)
+        set(value) = prefs.edit().putLong(KEY_ARMED_AT, value).apply()
+
     var strings: AdhanStrings
         get() = AdhanStrings.fromJson(prefs.getString(KEY_STRINGS, null)?.let {
             runCatching { JSONObject(it) }.getOrNull()
@@ -116,6 +121,7 @@ class AdhanAlarmStore(context: Context) {
         const val KEY_SLOTS = "slots"
         const val KEY_TESTS = "tests"
         const val KEY_ARMED = "armed"
+        const val KEY_ARMED_AT = "armedAt"
         const val KEY_STRINGS = "strings"
     }
 }

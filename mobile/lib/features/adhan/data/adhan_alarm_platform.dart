@@ -107,8 +107,8 @@ class AdhanReliability {
 ///
 /// Native side: `android/app/src/main/kotlin/com/lahuma/app/adhan/`.
 /// Exact alarms (`setAlarmClock`) fire `AdhanAlarmReceiver`, which starts
-/// `AdhanPlaybackService` (a `mediaPlayback` foreground service playing on
-/// the alarm stream). The alarms are kept natively and re-armed after a
+/// `AdhanPlaybackService` (a `mediaPlayback` foreground service playing as
+/// a notification sound). The alarms are kept natively and re-armed after a
 /// reboot, an update or a clock change; a WorkManager job then runs
 /// [adhanBackgroundMain] to recompute them, and again once a day.
 ///
@@ -150,6 +150,12 @@ class AdhanAlarmPlatform {
       await _invoke<bool>(
           'test', {'alarm': alarm.toMap(), 'strings': strings.toMap()}) ??
       false;
+
+  /// True, once, when this launch found the armed adhans cancelled: the
+  /// app was force-stopped (Settings, or a swipe from Recents on ColorOS
+  /// and other skins), so any adhan due since then didn't play.
+  Future<bool> takeCleared() async =>
+      await _invoke<bool>('takeCleared') ?? false;
 
   /// Stops an adhan that is playing.
   Future<void> stop() => _invoke<void>('stop');

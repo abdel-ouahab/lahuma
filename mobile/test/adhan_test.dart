@@ -8,6 +8,7 @@ import 'package:lahuma/features/adhan/data/muezzin_repository.dart';
 import 'package:lahuma/features/adhan/domain/adhan_plan.dart';
 import 'package:lahuma/features/adhan/domain/adhan_settings.dart';
 import 'package:lahuma/features/adhan/domain/muezzin.dart';
+import 'package:lahuma/features/adhan/presentation/adhan_cleared_notice.dart';
 import 'package:lahuma/features/adhan/presentation/adhan_foreground.dart';
 import 'package:lahuma/features/adhan/presentation/adhan_providers.dart';
 import 'package:lahuma/features/prayer_times/domain/prayer_times.dart';
@@ -522,5 +523,18 @@ void main() {
     expect(slots.any((s) => s.reminder), isFalse);
     // Not capped by the iOS notification budget.
     expect(slots.length, 34);
+  });
+
+  test('the "adhans were cancelled" notice waits 3 days between showings', () {
+    final now = DateTime(2026, 11, 4, 16);
+    expect(shouldShowAdhanClearedNotice(null, now), isTrue);
+    expect(
+        shouldShowAdhanClearedNotice(
+            now.subtract(const Duration(days: 2, hours: 23)), now),
+        isFalse);
+    expect(
+        shouldShowAdhanClearedNotice(
+            now.subtract(const Duration(days: 3)), now),
+        isTrue);
   });
 }
