@@ -58,6 +58,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Performance scenarios (integration_test/perf_test.dart) and the driver
+  # that writes their timeline summaries (test_driver/perf_driver.dart).
+  integration_test:
+    sdk: flutter
+  flutter_driver:
+    sdk: flutter
   flutter_lints: ^4.0.0
   hive_generator: ^2.0.1
   build_runner: ^2.4.11
