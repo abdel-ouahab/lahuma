@@ -114,18 +114,14 @@ class AppColors {
     color: Color(0xFF15302A),
     darkColor: Color(0xFFF3F1EA),
   );
+  /// Supporting text. Reads at WCAG AA (4.5:1 or more) on every surface it
+  /// sits on: at least 4.6:1 in light mode (ivory, cells, wells, bars,
+  /// accent-tinted rows, the introduction's tinted washes) and 4.8:1 at
+  /// night. Lighter than this, it fails on ivory.
   static const CupertinoDynamicColor secondaryLabel =
       CupertinoDynamicColor.withBrightness(
-    color: Color(0x9E2A3F38),
+    color: Color(0xC42A3F38),
     darkColor: Color(0x99F3F1EA),
-  );
-  /// Body copy that has to read at WCAG AA (4.5:1) over a tinted wash,
-  /// where [secondaryLabel] (about 3.5:1 on ivory) is too faint: the
-  /// introduction's page text.
-  static const CupertinoDynamicColor supportingLabel =
-      CupertinoDynamicColor.withBrightness(
-    color: Color(0xCC2A3F38),
-    darkColor: Color(0xADF3F1EA),
   );
   static const CupertinoDynamicColor tertiaryLabel =
       CupertinoDynamicColor.withBrightness(
@@ -516,7 +512,6 @@ class AppPalette {
 
   Color get label => _r(AppColors.label);
   Color get secondaryLabel => _r(AppColors.secondaryLabel);
-  Color get supportingLabel => _r(AppColors.supportingLabel);
   Color get tertiaryLabel => _r(AppColors.tertiaryLabel);
   Color get quaternaryLabel => _r(AppColors.quaternaryLabel);
   Color get placeholder => _r(AppColors.placeholder);
