@@ -1,9 +1,16 @@
 import '../../../../core/design/design.dart';
 import '../../data/onboarding_pages.dart';
+import 'art/fajr_call_art.dart';
+import 'art/khatma_art.dart';
+import 'art/prayer_art.dart';
+import 'art/read_listen_art.dart';
+import 'art/remembrance_art.dart';
+import 'art/start_art.dart';
+import 'art/welcome_art.dart';
 import 'onboarding_chrome.dart';
 
-/// The living miniature for page [id]. It plays while [active] (its page is
-/// the current one) and rests otherwise.
+/// The living miniature for page [id], in its gilded frame. It plays while
+/// [active] (its page is the current one) and rests otherwise.
 class OnboardingArt extends StatelessWidget {
   const OnboardingArt({super.key, required this.id, required this.active});
 
@@ -12,20 +19,24 @@ class OnboardingArt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Phase 2 placeholders; the miniatures arrive in phase 3.
-    final icon = switch (id) {
-      OnboardingPageId.welcome => CupertinoIcons.heart,
-      OnboardingPageId.readAndListen => CupertinoIcons.book,
-      OnboardingPageId.khatma => CupertinoIcons.circle_grid_hex,
-      OnboardingPageId.prayer => CupertinoIcons.compass,
-      OnboardingPageId.fajrCall => CupertinoIcons.phone,
-      OnboardingPageId.remembrance => CupertinoIcons.circle_grid_3x3,
-      OnboardingPageId.start => CupertinoIcons.star,
+    final (Size size, Widget art) = switch (id) {
+      OnboardingPageId.welcome => (WelcomeArt.size, WelcomeArt(active: active)),
+      OnboardingPageId.readAndListen => (
+          ReadListenArt.size,
+          ReadListenArt(active: active),
+        ),
+      OnboardingPageId.khatma => (KhatmaArt.size, KhatmaArt(active: active)),
+      OnboardingPageId.prayer => (PrayerArt.size, PrayerArt(active: active)),
+      OnboardingPageId.fajrCall => (
+          FajrCallArt.size,
+          FajrCallArt(active: active),
+        ),
+      OnboardingPageId.remembrance => (
+          RemembranceArt.size,
+          RemembranceArt(active: active),
+        ),
+      OnboardingPageId.start => (StartArt.size, StartArt(active: active)),
     };
-    return OnboardingArtFrame(
-      child: Center(
-        child: Icon(icon, size: 72, color: context.palette.accent),
-      ),
-    );
+    return OnboardingArtFrame(size: size, child: art);
   }
 }
