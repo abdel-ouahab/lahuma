@@ -1,9 +1,10 @@
-// Performance scenarios, run in profile mode on a device:
+// Performance scenarios, run in profile mode on a device, from mobile/:
 //
-//   flutter drive --profile --no-dds --driver=test_driver/perf_driver.dart \
-//     --target=integration_test/perf_test.dart
+//   integration_test/run_perf.sh [device-id]
 //
-// `--no-dds` is needed: `traceAction` connects to the VM service itself.
+// which runs `flutter drive --profile --no-dds` (`traceAction` connects to
+// the VM service itself) and grants location permission once the app is
+// installed, since a test can't answer the system prompt.
 //
 // Each scenario is traced with `traceAction`; the driver turns every trace
 // into a timeline summary (frame build / raster percentiles, missed frames)
@@ -11,11 +12,16 @@
 //
 // The Quran list, the reader and the reciters need the network (or a warm
 // cache), as in normal use.
+import 'dart:convert';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:lahuma/core/constants/storage_keys.dart';
 import 'package:lahuma/core/router/app_router.dart';
+import 'package:lahuma/features/fajr_call/domain/prayer_settings.dart';
+import 'package:lahuma/features/prayer_times/presentation/prayer_times_providers.dart';
 import 'package:lahuma/features/bookmarks/presentation/screens/bookmarks_screen.dart';
 import 'package:lahuma/features/home/presentation/home_screen.dart';
 import 'package:lahuma/features/mp3quran/presentation/mp3quran_reciters_screen.dart';
@@ -23,6 +29,7 @@ import 'package:lahuma/features/quran/mushaf/presentation/screens/mushaf_screen.
 import 'package:lahuma/features/quran/presentation/screens/surah_list_screen.dart';
 import 'package:lahuma/features/quran/presentation/screens/surah_reading_screen.dart';
 import 'package:lahuma/main.dart' as app;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   final binding = IntegrationTestWidgetsFlutterBinding.ensureInitialized();
@@ -33,6 +40,18 @@ void main() {
   testWidgets('performance scenarios', (tester) async {
     final metrics = <String, Object>{};
 
+    // A fixed city, so Home shows the real countdown (an emulator has no
+    // location fix, and Home would stay on its loading skeleton).
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      StorageKeys.fajrCallPrayerSettings,
+      jsonEncode(const PrayerSettings(
+        latitude: 36.7538,
+        longitude: 3.0588,
+        placeName: 'Algiers',
+      ).toJson()),
+    );
+
     // ── Startup: main() to Home on screen (includes the splash). ─────────
     final startup = Stopwatch()..start();
     await binding.traceAction(() async {
@@ -41,12 +60,21 @@ void main() {
     }, reportKey: 'startup');
     metrics['startup_to_home_ms'] = startup.elapsedMilliseconds;
 
-    final router = ProviderScope.containerOf(
+    final container = ProviderScope.containerOf(
       tester.element(find.byType(HomeScreen)),
       listen: false,
-    ).read(routerProvider);
+    );
+    final router = container.read(routerProvider);
 
     // ── Home left alone: countdown, lanterns, anything else running. ─────
+    // GPS is tried first and gives up after 20 s on a device with no fix.
+    final loaded = DateTime.now().add(const Duration(seconds: 60));
+    while (container.read(prayerTimesProvider).today == null) {
+      if (DateTime.now().isAfter(loaded)) {
+        throw TestFailure('Prayer times never loaded');
+      }
+      await tester.pump(const Duration(milliseconds: 200));
+    }
     await tester.pump(const Duration(seconds: 2));
     await binding.traceAction(() async {
       await tester.pump(const Duration(seconds: 10));
