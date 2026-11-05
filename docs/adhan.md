@@ -59,8 +59,8 @@ The settings are under **Settings → الصلاة → الأذان** (`/setting
 ## Muezzins and downloads
 
 - `GET /api/muezzins` (public) returns the active muezzins, ordered by `sortOrder`. The app caches the list in SharedPreferences (`adhan.muezzins`), so the picker works offline after the first load.
-- Each row has a play/stop preview that streams `regularUrl` with just_audio (it takes audio focus from the Quran players).
-- Picking a muezzin downloads all its files with a progress bar. Android downloads `regularUrl` and `fajrUrl`; iOS also downloads the two short files. A download is all or nothing. If it fails, the previous choice (or the bundled default) stays and the row says so.
+- Each row has a play/stop preview with just_audio (it takes audio focus from the Quran players). It plays the downloaded file for the selected muezzin, so it works offline, and streams `regularUrl` for the others.
+- Picking a muezzin downloads all its files with a progress bar. Android downloads `regularUrl` and `fajrUrl`; iOS also downloads the two short files. A download is all or nothing, and each file must start like audio, so a wrong `MEDIA_BASE_URL` that answers with an HTML page fails instead of being saved. If it fails, the previous choice (or the bundled default) stays, the row says «فشل التنزيل · اضغط لإعادة المحاولة», and a toast names the adhan that stays.
 - Files live in `<app support>/adhan/<muezzinId>/v<version>/`. Picking another muezzin, or "الأذان الافتراضي", deletes the other files, their MediaStore entries and their `Library/Sounds` copies.
 - When the server's `version` for the selected muezzin is higher than the downloaded one, the app downloads it again in the background on the next launch, then reschedules.
 
@@ -115,55 +115,106 @@ The version is in the path because the files are cached as `immutable`: a re-pro
 
 ```bash
 # rclone (any S3-compatible remote, configured with `rclone config`)
-rclone sync backend/public/adhan <remote>:<bucket>/adhan   --header-upload "Cache-Control: public, max-age=2592000, immutable"
+rclone sync backend/public/adhan <remote>:<bucket>/adhan --header-upload "Cache-Control: public, max-age=2592000, immutable"
 # AWS CLI
-aws s3 sync backend/public/adhan s3://<bucket>/adhan   --cache-control "public, max-age=2592000, immutable"
+aws s3 sync backend/public/adhan s3://<bucket>/adhan --cache-control "public, max-age=2592000, immutable"
 ```
 
 Check that the bucket serves `audio/mpeg` for mp3 and `audio/x-caf` for caf (set it with `--header-upload "Content-Type: …"` per extension if not). No CORS rule is needed; only the mobile app fetches these files.
 
 ## Audio files
 
+### Source
+
+Every muezzin comes from **[Kiwifu/adhan-mp3](https://github.com/Kiwifu/adhan-mp3)**, pinned to commit **`b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b`** (231 MP3s at the repo root, no index). The repo has no license file; its README says the recordings are free to use in Islamic and prayer-time apps. Never point the manifest at `main`: a moved or re-encoded file would change our audio silently.
+
+The app never streams from GitHub or jsDelivr. The import downloads each file once (`raw.githubusercontent.com`, then `cdn.jsdelivr.net` as a fallback, with the name percent-encoded), processes it, and the backend serves the result.
+
+Many of the repo's recordings are 16 kbps / 16 kHz mono (every Haram Makki, Haram Madani and Algeria Fajr file). Re-encoding can't bring back what they lost, so they sound duller than the others; the import flags them as `low-quality source`.
+
+### Processing pipeline (`npm run adhan:import`)
+
+[`backend/src/scripts/importAdhans.ts`](../backend/src/scripts/importAdhans.ts), driven by [`prisma/data/muezzins.json`](../backend/prisma/data/muezzins.json). It needs `ffmpeg` and `ffprobe` on `PATH`, or `FFMPEG_PATH` (and `FFPROBE_PATH`, else the one beside it). On Windows: `winget install Gyan.FFmpeg`.
+
+```bash
+cd backend
+npm run adhan:import                    # every muezzin
+npm run adhan:import -- --only algeria  # one
+npm run adhan:import -- --force         # reprocess even if nothing changed
+```
+
+For each muezzin:
+
+1. **Download** `source.regularFile` and `source.fajrFile` into `media-src/adhan/<slug>/` (gitignored): 3 attempts, a 60 s timeout, an HTTP 2xx and an `audio/*` content type, or it fails.
+2. **Probe** with ffprobe: duration, bitrate, sample rate, channels. Under 60 s is a probable clip (`status: "short"`, not seeded unless the row says `"allowShort": true`); over 6 minutes and under 32 kbps are warnings.
+3. **Process** each source (`D` is the trimmed length, `T` = min(29.5, `D`)):
+
+   ```bash
+   # A. trim leading and trailing silence only; the pauses between phrases stay
+   ffmpeg -i src.mp3 -af "silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.1,areverse,silenceremove=start_periods=1:start_threshold=-50dB:start_silence=0.3,areverse" -ac 1 -ar 44100 -c:a pcm_s16le trimmed.wav
+   # B. measure (loudnorm pass 1, JSON on stderr)
+   ffmpeg -i trimmed.wav -af loudnorm=I=-16:TP=-1.5:LRA=11:print_format=json -f null -
+   # C. normalise to -16 LUFS / -1.5 dBTP (pass 2, measured values), back to 44.1 kHz, 300 ms fade-in
+   ffmpeg -i trimmed.wav -af "loudnorm=I=-16:TP=-1.5:LRA=11:measured_I=…:measured_TP=…:measured_LRA=…:measured_thresh=…:offset=…:linear=true,aresample=44100,afade=t=in:d=0.3" -ac 1 -c:a pcm_s16le norm.wav
+   # D. full file: mono 96 kbps mp3, 1.5 s fade-out
+   ffmpeg -i norm.wav -af "afade=t=out:st=<D-1.5>:d=1.5" -c:a libmp3lame -b:a 96k regular.mp3
+   # E. iOS notification clip: IMA4 CAF, 22.05 kHz mono, 2 s fade-out ending at the cut
+   ffmpeg -i norm.wav -t <T> -af "afade=t=out:st=<T-2>:d=2,aresample=22050" -ac 1 -c:a adpcm_ima_qt -f caf regular_short.caf
+   ```
+
+   Every output also gets `-fflags +bitexact -flags:a +bitexact -map_metadata -1`, so the same ffmpeg gives the same bytes on every run. The clip has the format of `mobile/ios/Runner/adhan_default_regular.caf`, about 345 KB.
+4. **Publish** to `public/adhan/<slug>/v<version>/` and record each output's path, SHA-256, size and duration in the manifest, with the sources' SHA-256 and the pipeline id (a hash of the settings above).
+5. **Print** a table: slug, file, source → output duration, size, warnings.
+
+**Idempotent.** A muezzin whose sources, pipeline id and outputs (by SHA-256) are unchanged is skipped. When the outputs do change (a new source file, new settings, another ffmpeg version), the import bumps that muezzin's `version` and publishes under the new `v<version>/`, deleting the old one; after the seed, apps download it again on their next launch. The manifest is saved after each muezzin, so commit it with the change.
+
+### Adding a muezzin
+
+1. Find the files in the repo at the pinned commit (`gh api repos/Kiwifu/adhan-mp3/git/trees/<commit> --jq '.tree[].path'`) and listen to them. The Fajr file must contain «الصلاة خير من النوم».
+2. Add a row to `prisma/data/muezzins.json`: a new `slug`, a new fixed `id` (`00000000-0000-4000-8000-00000000000N`; never reuse one), `nameAr`, `nameFr`, `country` (ISO alpha-2, shown as a flag), `sortOrder`, `version: 1`, `isActive: true`, and `source { repo, commit, regularFile, fajrFile }` with the exact file names.
+3. Run `npm run adhan:import -- --only <slug>` and read its warnings.
+4. Run `npx prisma db seed`, then check `GET /api/muezzins`.
+5. Deploy the new `public/adhan/<slug>/` (rebuild the image or sync the bucket) **before** the seed reaches production, or the apps download a 404 and show «فشل التنزيل».
+6. Commit the manifest and add the muezzin to [Credits](#credits).
+
+To retire one, set `"isActive": false` and seed. The row stays, so an app that picked it keeps a valid id and its downloaded files.
+
+Candidates in the repo for later (ffprobe durations):
+
+| File | Length | Bitrate | Note |
+|---|---|---|---|
+| `Waled_Mahsas_1` | 216 s | 320k | Algerian, no Fajr file |
+| `Waled_Mahsas_2_-_Algeria` | 231 s | 64k | Algerian |
+| `Haj_Sulaiman_Mukhtar_-_Algeria` | 195 s | 56k | Algerian |
+| `Rabeh_Ibn_Darah_Al_Jazairi` | 174 s | 192k | Algerian |
+| `Aby_Yasser_Al_Jazaire` | 133 s | 128k | Algerian |
+| `Fajr_Adhan_by_Nasreddine_Toubar` | 288 s | 129k | Fajr; Egyptian, not Algerian |
+| `Abdulbasit_Abdusamad_3_-_Egypt` | 187 s | 192k | a better-quality `abdulbasit` regular |
+| `Muhammad_Ramadan_Saad_-_Al_Haram_Al_Maki` | 219 s | 128k | a better-quality Makkah regular (another muezzin) |
+
 ### The bundled default adhan
 
-The default is «أذان إدريس من الجزائر» (3:38, mono 96 kbps, leading and trailing silence trimmed). It has no Fajr version, so all five prayers play it:
+The default is the processed `algeria` regular adhan by Riad Al Djazairi (2:57, mono 96 kbps, from the pipeline above). It has no Fajr version, so all five prayers play it:
 
 | File | Format | Used for |
 |---|---|---|
 | `mobile/android/app/src/main/res/raw/adhan_default_regular.mp3` | mp3, full length | Android native player |
-| `mobile/ios/Runner/adhan_default_regular.caf` | IMA4 caf, first 29 s with a fade | iOS notification sound |
-| `mobile/assets/audio/adhan/default_regular_v2.mp3` | mp3, full length | In-app player (tap) and preview, both platforms |
+| `mobile/ios/Runner/adhan_default_regular.caf` | IMA4 caf, first 29.5 s with a fade | iOS notification sound |
+| `mobile/assets/audio/adhan/default_regular_v3.mp3` | mp3, full length | In-app player (tap) and preview, both platforms |
 
-The Android MediaStore / FileProvider publishing of downloaded files (`AdhanSoundChannel`) is left over from when a channel played the adhan; the native player reads the downloaded files directly. A replaced default must also replace the `res/raw` copy.
+To replace it, copy `public/adhan/<slug>/v<n>/regular.mp3` and `regular_short.caf` over the first two. Add the mp3 to `assets/audio/adhan/` under a **new name** (bump the `_v` suffix), point `adhanDefaultAsset` at it and delete the old file. just_audio copies an asset to its cache the first time it plays it and keeps playing that copy, so a recording replaced under the same name keeps playing the old one on phones that already played it. To add a separate Fajr default, add a Fajr file the same way and return it from `adhanDefaultAsset` for Fajr.
 
-To replace it, add the new recording to `assets/audio/adhan/` under a **new name** (bump the `_v` suffix), point `adhanDefaultAsset` at it and delete the old file. just_audio copies an asset to its cache the first time it plays it and keeps playing that copy, so a recording replaced under the same name keeps playing the old one on phones that already played it. To add a separate Fajr default, add a Fajr file the same way and return it from `adhanDefaultAsset` for Fajr.
+The Android MediaStore / FileProvider publishing of downloaded files (`AdhanSoundChannel`) is left over from when a channel played the adhan; the native player reads the downloaded files directly.
 
 Android resource names must stay lowercase letters, digits and `_`. Don't add a second file with the same base name (for example both `.mp3` and `.wav`), or the build fails. `res/raw/keep.xml` stops R8 from stripping these sounds in release builds, since they're referenced only by name from Dart.
 
-### Converting
+### iOS notification sounds
 
-Full length, for Android and the in-app player (mono, 96 kbps keeps a 3-minute adhan near 2 MB):
+iOS plays the default sound instead if the file is longer than 30 seconds, hence the 29.5 s cut. A notification sound must be `.caf`, `.wav` or `.aiff` (Linear PCM, IMA4, µLaw or aLaw), never mp3, and must be in `Library/Sounds` (downloads) or the app bundle (the default). «الصلاة خير من النوم» comes late in the Fajr adhan, so the clip from the start doesn't include it; the full recording plays when the user taps.
 
-```bash
-ffmpeg -i adhan.wav -ac 1 -ar 44100 -b:a 96k regular.mp3
-```
+### Release builds
 
-Short clip for iOS. iOS plays the default sound instead if the file is longer than 30 seconds, so trim it to 29 s with a fade, then convert it to IMA4 CAF:
-
-```bash
-# trim (any platform)
-ffmpeg -i regular.mp3 -t 29 -af "afade=t=out:st=26:d=3" -ac 1 -ar 22050 regular_short.wav
-# convert (macOS)
-afconvert regular_short.wav regular_short.caf -d ima4 -f caff
-```
-
-Without a Mac, ffmpeg can write the CAF directly:
-
-```bash
-ffmpeg -i regular.mp3 -t 29 -af "afade=t=out:st=26:d=3" -ac 1 -ar 22050 -c:a adpcm_ima_qt -f caf regular_short.caf
-```
-
-iOS notification sounds must be `.caf`, `.wav` or `.aiff` (Linear PCM, IMA4, µLaw or aLaw), never mp3. «الصلاة خير من النوم» comes late in the Fajr adhan, so a 29-second clip from the start won't include it. If you want the phrase in the notification itself, cut the Fajr short clip around it. The full recording still plays when the user taps.
+Android release builds are HTTPS only: `usesCleartextTraffic` is set in the `debug` and `profile` manifests, not in `main`. A release build therefore needs an `https://` API (`--dart-define=API_BASE_URL=https://…/api`) and an `https://` `MEDIA_BASE_URL`; an `http://` file fails to download and the row shows «فشل التنزيل».
 
 ## Manual steps
 
@@ -210,7 +261,7 @@ Use a real phone, on Android 12, 13 and 14 if possible. Turn the adhan on, allow
 7. **Modes:** set Dhuhr to «إشعار صامت» and Asr to «متوقف». `dumpsys alarm` lists no Asr alarm, and Dhuhr arrives as a silent notification.
 8. **Timezone:** change the phone's timezone. The alarms are re-armed and, after the background run, move to the new local times.
 9. **iOS**
-   1. Run the 10-second test with the app in the background: the 29-second clip plays.
+   1. Run the 10-second test with the app in the background: the 29.5-second clip plays.
    2. Tap the notification: the full adhan plays.
    3. With the app open, only the in-app player is heard.
 
@@ -231,3 +282,17 @@ Use a real phone, on Android 12, 13 and 14 if possible. Turn the adhan on, allow
 - No app code runs at a scheduled time, and a notification sound is 30 seconds at most, so only the clip plays by itself. The full adhan needs a tap, or the app open. The clip has no Stop; it ends on its own.
 - iOS keeps 64 pending notifications per app, shared with Fajr Call (15) and the khatma (4). The adhan keeps 7 days (35) plus 2 days of reminders (10). If the app isn't opened for a week, the schedule runs out.
 - The silent switch mutes the clip, and a Focus can hide it unless Time Sensitive notifications are allowed.
+
+## Credits
+
+The recordings come from [Kiwifu/adhan-mp3](https://github.com/Kiwifu/adhan-mp3) at commit `b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b`, which shares them for use in Islamic and prayer-time apps. May Allah reward the muezzins and everyone who recorded and shared them.
+
+| Slug | In the app | Regular adhan: muezzin, source file | Fajr adhan: muezzin, source file |
+|---|---|---|---|
+| `algeria` | أذان الجزائر · Adhan d'Algérie | Riad Al Djazairi (رياض الجزائري): `Riad_Al_Djazairi_-_Algeria_(رياض_الجزائري_-_الجزائر).mp3` | unnamed, Algeria: `Adhan_Fajr_Algeria_(أذان_الفجر_الجزائر).mp3` |
+| `alafasy` | مشاري راشد العفاسي · Mishary Rashid Alafasy | Mishary Rashid Alafasy: `Mishary_Rashid_Alafasy_1_-_Kuwait_(مشاري_راشد_العفاسي_-_الكويت).mp3` | Mishary Rashid Alafasy: `Mishary_Rashid_Alafasy_3_-_Fajr_Kuwait_(مشاري_راشد_العفاسي_-_فجر_الكويت).mp3` |
+| `makkah` | أذان الحرم المكي · Adhan de La Mecque | Ali Ibn Ahmad Mala (علي بن أحمد ملا), Al-Haram al-Makki: `Ali_Ibn_Ahmad_Mala_1_-_Al_Haram_Al_Maki_(علي_بن_أحمد_ملا_-_الحرم_المكي).mp3` | unnamed, Al-Haram al-Makki: `Adhan_Fajr_Al_Haram_Al_Maki_(أذان_الفجر_الحرم_المكي).mp3` |
+| `madinah` | أذان المسجد النبوي · Adhan de Médine | unnamed, Al-Masjid an-Nabawi: `Adhan_Al_Haram_Al_Madani_-_Al_Madinah_1_(أذان_الحرم_المدني_-_المدينة_المنورة).mp3` | unnamed, Al-Masjid an-Nabawi: `Adhan_Fajr_Al_Haram_Al_Madani_(أذان_الفجر_الحرم_المدني).mp3` |
+| `abdulbasit` | عبد الباسط عبد الصمد · Abdulbasit Abdusamad | Abdulbasit Abdusamad: `Abdulbasit_Abdusamad_1_-_Egypt_(عبد_الباسط_عبد_الصمد_-_مصر).mp3` | Abdulbasit Abdusamad: `Abdulbasit_Abdusamad_7_-_Fajr_Egypt_(عبد_الباسط_عبد_الصمد_-_فجر_مصر).mp3` |
+
+`makkah` and `algeria` pair two different muezzins: the repo has no Fajr recording by Ali Ibn Ahmad Mala or by Riad Al Djazairi. The bundled default adhan is the `algeria` regular recording.
