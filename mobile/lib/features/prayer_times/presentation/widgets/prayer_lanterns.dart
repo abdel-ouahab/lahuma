@@ -25,7 +25,8 @@ final screenGravityProvider = Provider<Stream<double>>((ref) {
 /// Paints the Ramadan lanterns behind [child] and swings them as the phone
 /// tilts: each is a damped pendulum pulled towards hanging plumb, the
 /// shorter chain a little quicker. Still under Reduce Motion; the ticker
-/// stops whenever both are at rest.
+/// stops whenever both are at rest, and the accelerometer is only read
+/// while the lanterns are on screen and the app is in the foreground.
 class PrayerLanterns extends ConsumerStatefulWidget {
   const PrayerLanterns({
     super.key,
@@ -43,7 +44,7 @@ class PrayerLanterns extends ConsumerStatefulWidget {
 }
 
 class _PrayerLanternsState extends ConsumerState<PrayerLanterns>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   /// Pull back to plumb (rad/s² per rad) for each chain length.
   static const double _stiffShort = 30;
   static const double _stiffLong = 20;
@@ -56,6 +57,8 @@ class _PrayerLanternsState extends ConsumerState<PrayerLanterns>
   late final Ticker _ticker = createTicker(_step);
   StreamSubscription<double>? _gravity;
   bool _still = false;
+  bool _visible = true;
+  bool _resumed = true;
   double _target = 0;
   double _vShort = 0;
   double _vLong = 0;
@@ -64,36 +67,68 @@ class _PrayerLanternsState extends ConsumerState<PrayerLanterns>
   @override
   void initState() {
     super.initState();
-    _gravity = ref.read(screenGravityProvider).listen(_onGravity);
+    WidgetsBinding.instance.addObserver(this);
+    final state = WidgetsBinding.instance.lifecycleState;
+    _resumed = state == null || state == AppLifecycleState.resumed;
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     _still = MediaQuery.disableAnimationsOf(context);
+    // False while another route covers Home or its tab is in the background.
+    _visible = TickerMode.valuesOf(context).enabled;
     if (_still) {
       _ticker.stop();
       _vShort = _vLong = 0;
       _sway.set(0, 0);
     }
+    _listen();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _resumed = state == AppLifecycleState.resumed;
+    _listen();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _gravity?.cancel();
     _ticker.dispose();
     _sway.dispose();
     super.dispose();
   }
 
+  /// Reads the accelerometer only while the lanterns can be seen, so a
+  /// covered Home or a backgrounded app doesn't keep the sensor running.
+  void _listen() {
+    final want = !_still && _visible && _resumed;
+    if (want && _gravity == null) {
+      _gravity = ref.read(screenGravityProvider).listen(_onGravity);
+    } else if (!want && _gravity != null) {
+      _gravity!.cancel();
+      _gravity = null;
+    }
+  }
+
+  bool _resting(double angle, double v) =>
+      (angle - _target).abs() < 1e-3 && v.abs() < 1e-3;
+
   void _onGravity(double angle) {
     if (_still) return;
     // Smooth the sensor's jitter before it becomes the pendulums' target.
     _target += (angle.clamp(-_maxAngle, _maxAngle) - _target) * 0.35;
-    if (!_ticker.isActive) {
-      _last = Duration.zero;
-      _ticker.start();
+    if (_ticker.isActive) return;
+    // A phone held still sends the same reading over and over: nothing to
+    // swing, so no frame.
+    if (_resting(_sway.shortChain, _vShort) &&
+        _resting(_sway.longChain, _vLong)) {
+      return;
     }
+    _last = Duration.zero;
+    _ticker.start();
   }
 
   void _step(Duration elapsed) {
@@ -113,18 +148,20 @@ class _PrayerLanternsState extends ConsumerState<PrayerLanterns>
         (_sway.longChain + _vLong * dt).clamp(-_maxAngle, _maxAngle).toDouble();
     _sway.set(short, long);
 
-    bool resting(double angle, double v) =>
-        (angle - _target).abs() < 1e-3 && v.abs() < 1e-3;
-    if (resting(short, _vShort) && resting(long, _vLong)) _ticker.stop();
+    if (_resting(short, _vShort) && _resting(long, _vLong)) _ticker.stop();
   }
 
+  // The boundaries keep a swing from repainting the card under the lanterns
+  // and the rest of Home with them.
   @override
-  Widget build(BuildContext context) => CustomPaint(
-        painter: PrayerLanternsPainter(
-          gold: widget.gold,
-          glow: widget.glow,
-          sway: _sway,
+  Widget build(BuildContext context) => RepaintBoundary(
+        child: CustomPaint(
+          painter: PrayerLanternsPainter(
+            gold: widget.gold,
+            glow: widget.glow,
+            sway: _sway,
+          ),
+          child: RepaintBoundary(child: widget.child),
         ),
-        child: widget.child,
       );
 }
