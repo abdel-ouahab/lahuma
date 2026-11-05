@@ -45,11 +45,16 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: background,
+      // The lists scroll under the tab bar; they pad for it themselves.
       body: SafeArea(
+        bottom: false,
         child: ListView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
+          padding: EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              MediaQuery.paddingOf(context).bottom + AppSpacing.lg),
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.lg),

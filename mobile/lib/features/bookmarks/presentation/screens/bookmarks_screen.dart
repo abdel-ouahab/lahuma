@@ -37,7 +37,9 @@ class BookmarksScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: background,
+      // The lists scroll under the tab bar; they pad for it themselves.
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             Padding(
@@ -72,8 +74,11 @@ class BookmarksScreen extends ConsumerWidget {
                   ? _EmptyState(isDark: isDark)
                   : ListView.separated(
                       physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                      padding: EdgeInsets.fromLTRB(
+                          AppSpacing.lg,
+                          0,
+                          AppSpacing.lg,
+                          MediaQuery.paddingOf(context).bottom + AppSpacing.lg),
                       itemCount: bookmarks.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(height: AppSpacing.sm),

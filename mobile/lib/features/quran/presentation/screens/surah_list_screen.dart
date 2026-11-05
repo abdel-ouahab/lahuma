@@ -72,7 +72,9 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
 
     return Scaffold(
       backgroundColor: background,
+      // The lists scroll under the tab bar; they pad for it themselves.
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             // ── Header ──────────────────────────────────────────────────────
@@ -187,8 +189,8 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                         physics: const BouncingScrollPhysics(),
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
-                        padding: const EdgeInsets.fromLTRB(
-                            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                        padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
+                            AppSpacing.lg, _listBottom(context)),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.sm),
@@ -201,10 +203,10 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
                         },
                       );
                     },
-                    loading: () => const AppSkeletonList(
+                    loading: () => AppSkeletonList(
                       itemCount: 10,
-                      padding: EdgeInsets.fromLTRB(
-                          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+                      padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
+                          AppSpacing.lg, _listBottom(context)),
                       spacing: AppSpacing.sm,
                     ),
                     error: (e, _) => ErrorRetry(
@@ -228,6 +230,11 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
   }
 }
 
+/// Room under a list's last row for the tab bar and mini player, which
+/// the shell reports as bottom padding (see `MainShell`).
+double _listBottom(BuildContext context) =>
+    MediaQuery.paddingOf(context).bottom + AppSpacing.lg;
+
 class _JuzList extends StatelessWidget {
   const _JuzList({required this.surahs});
 
@@ -240,8 +247,8 @@ class _JuzList extends StatelessWidget {
 
     return ListView.separated(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+      padding: EdgeInsets.fromLTRB(
+          AppSpacing.lg, 0, AppSpacing.lg, _listBottom(context)),
       itemCount: juzStarts.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
