@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -73,30 +74,55 @@ class PlayerBackdropSheet extends ConsumerWidget {
                 fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
           ),
           const SizedBox(height: AppSpacing.md),
-          GridView.count(
-            crossAxisCount: 3,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.md,
-            crossAxisSpacing: AppSpacing.sm + 4,
-            childAspectRatio: 0.6,
-            children: [
-              for (final b in PlayerBackdrop.values)
-                _BackdropCard(
-                  backdrop: b,
-                  label: playerBackdropLabel(context, b),
-                  selected: b == selected,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    notifier.select(b);
-                  },
+          // The sheet gets at most 9/16 of the screen, so on a wide or short
+          // screen the cards are cut to the height left; below the minimum
+          // (large text, landscape) the grid scrolls instead.
+          Flexible(
+            child: LayoutBuilder(builder: (context, box) {
+              final rows = (PlayerBackdrop.values.length / _columns).ceil();
+              final cellWidth =
+                  (box.maxWidth - _columnGap * (_columns - 1)) / _columns;
+              final fit = (box.maxHeight - _rowGap * (rows - 1)) / rows;
+              final cardHeight = math.max(
+                  _minCardHeight, math.min(cellWidth / 0.6, fit));
+              return GridView(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                physics: cardHeight > fit
+                    ? const ClampingScrollPhysics()
+                    : const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: _columns,
+                  mainAxisSpacing: _rowGap,
+                  crossAxisSpacing: _columnGap,
+                  mainAxisExtent: cardHeight,
                 ),
-            ],
+                children: [
+                  for (final b in PlayerBackdrop.values)
+                    _BackdropCard(
+                      backdrop: b,
+                      label: playerBackdropLabel(context, b),
+                      selected: b == selected,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        notifier.select(b);
+                      },
+                    ),
+                ],
+              );
+            }),
           ),
         ],
       ),
     );
   }
+
+  static const _columns = 3;
+  static const _rowGap = AppSpacing.md;
+  static const _columnGap = AppSpacing.sm + 4;
+
+  /// A thumbnail still worth looking at, plus its label.
+  static const _minCardHeight = 120.0;
 }
 
 class _BackdropCard extends StatelessWidget {

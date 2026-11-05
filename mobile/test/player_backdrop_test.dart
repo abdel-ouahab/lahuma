@@ -51,9 +51,12 @@ void main() {
     expect(prefs.getString(StorageKeys.playerBackdrop), 'sea');
   });
 
-  Future<ProviderContainer> pumpSheet(WidgetTester tester, String locale) async {
-    tester.view.physicalSize = const Size(390, 844) * 3;
+  Future<ProviderContainer> pumpSheet(WidgetTester tester, String locale,
+      {Size size = const Size(390, 844), double textScale = 1}) async {
+    tester.view.physicalSize = size * 3;
     tester.view.devicePixelRatio = 3;
+    tester.platformDispatcher.textScaleFactorTestValue = textScale;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     addTearDown(tester.view.reset);
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -112,6 +115,35 @@ void main() {
       matchesSemantics(isButton: true, isSelected: true, hasSelectedState: true),
     );
   });
+
+  // A 9:16 screen leaves the sheet less height than the cards' 0.6 ratio
+  // wants (600 x 1067 is the 900 x 1600 / 1.5 emulator where it overflowed).
+  for (final (name, size, scale) in [
+    ('a wide 9:16 screen', const Size(600, 1067), 1.0),
+    ('a small phone', const Size(320, 568), 1.0),
+    ('large text', const Size(390, 844), 2.0),
+    ('landscape', const Size(844, 390), 1.0),
+  ]) {
+    testWidgets('the picker fits on $name', (tester) async {
+      await pumpSheet(tester, 'ar', size: size, textScale: scale);
+      expect(tester.takeException(), isNull);
+      // Every card keeps the same height and shows its label.
+      final heights = {
+        for (final label in ['بدون فيديو', 'مطر خفيف'])
+          tester
+              .getSize(find
+                  .ancestor(
+                      of: find.text(label), matching: find.byType(Column))
+                  .first)
+              .height,
+      };
+      expect(heights, hasLength(1));
+      // The last option is on screen, or one scroll away when nothing fits.
+      await tester.scrollUntilVisible(find.text('بحر'), 100,
+          scrollable: find.byType(Scrollable).last);
+      expect(find.text('بحر'), findsOneWidget);
+    });
+  }
 
   testWidgets('labels follow the app language', (tester) async {
     await pumpSheet(tester, 'en');
