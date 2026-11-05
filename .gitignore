@@ -1,0 +1,2 @@
+# Production compose secrets (see .env.example)
+.env
