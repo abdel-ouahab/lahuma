@@ -85,8 +85,9 @@ class AdhanAudioStore {
         await _dio.download(url, part, onReceiveProgress: (got, total) {
           if (total > 0) onProgress?.call((i + got / total) / kinds.length);
         });
-        if (await File(part).length() == 0) {
-          throw const FormatException('Empty audio file');
+        // A wrong MEDIA_BASE_URL can answer 200 with an HTML page.
+        if (!await _looksLikeAudio(File(part))) {
+          throw FormatException('Not an audio file: $url');
         }
         await File(part).rename(path);
         files[kind] = path;
@@ -197,6 +198,26 @@ class AdhanAudioStore {
     const known = {'.mp3', '.m4a', '.ogg', '.wav', '.caf', '.aiff'};
     if (known.contains(ext)) return ext;
     return kind.isShort ? '.caf' : '.mp3';
+  }
+
+  /// Whether [file] starts like one of the [_ext] formats: mp3 (an ID3 tag
+  /// or a frame sync), caf, wav, aiff, ogg or m4a.
+  static Future<bool> _looksLikeAudio(File file) async {
+    final raf = await file.open();
+    final List<int> b;
+    try {
+      b = await raf.read(12);
+    } finally {
+      await raf.close();
+    }
+    if (b.length < 4) return false;
+    String tag(int at) => at + 4 <= b.length
+        ? String.fromCharCodes(b.sublist(at, at + 4))
+        : '';
+    if (tag(0).startsWith('ID3')) return true;
+    if (b[0] == 0xFF && b[1] & 0xE0 == 0xE0) return true;
+    return const {'caff', 'RIFF', 'FORM', 'OggS'}.contains(tag(0)) ||
+        tag(4) == 'ftyp';
   }
 
   static Future<void> _deleteDir(Directory dir) async {

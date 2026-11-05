@@ -31,8 +31,9 @@
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <!-- Qibla compass; phones without one get the angle from north instead. -->
     <uses-feature android:name="android.hardware.sensor.compass" android:required="false"/>
+    <!-- HTTPS only in release (cleartext is off by default from API 28);
+         debug and profile builds allow http:// for the local backend. -->
     <application
-        android:usesCleartextTraffic="true"
         android:label="@string/app_name"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">

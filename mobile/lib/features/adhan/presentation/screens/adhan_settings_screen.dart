@@ -56,13 +56,20 @@ class AdhanSettingsScreen extends ConsumerWidget {
       if (m.id == settings.muezzinId && state.download?.version == m.version) {
         return;
       }
+      // What still plays if this download fails.
+      final previous = state.download != null ? state.selected : null;
       final ok = await notifier.select(m);
       if (!context.mounted) return;
       if (!ok) {
         AppToast.show(
           context,
-          context.tr('تعذّر تنزيل الأذان. سيُرفع الأذان الافتراضي.',
-              "Couldn't download the adhan. The default one will play."),
+          previous != null
+              ? context.tr(
+                  'تعذّر تنزيل الأذان. يبقى «${previous.name(true)}».',
+                  "Couldn't download the adhan. "
+                      '“${previous.name(false)}” stays.')
+              : context.tr('تعذّر تنزيل الأذان. سيُرفع الأذان الافتراضي.',
+                  "Couldn't download the adhan. The default one will play."),
           icon: CupertinoIcons.exclamationmark_circle,
         );
         return;
@@ -268,7 +275,14 @@ class AdhanSettingsScreen extends ConsumerWidget {
                         state.downloadingId == m.id ? state.progress : null,
                     previewing: playback.isActive(m.id),
                     previewLoading: playback.key == m.id && playback.loading,
-                    onPreview: () => player.toggle(m.id, url: m.regularUrl),
+                    // The downloaded file when there is one, so it plays
+                    // offline; otherwise streamed from the server.
+                    onPreview: () => player.toggle(m.id,
+                        file: state.download?.muezzinId == m.id &&
+                                state.download?.version == m.version
+                            ? state.download!.files[AdhanSoundKind.regular]
+                            : null,
+                        url: m.regularUrl),
                     onTap: () => select(m),
                   ),
                 if (state.muezzins.isEmpty && state.listLoading)
