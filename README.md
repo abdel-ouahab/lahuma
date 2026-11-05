@@ -150,6 +150,30 @@ Stop everything:
 docker compose down
 ```
 
+## Production Deployment
+
+`docker-compose.prod.yml` runs Postgres, the API and Caddy on one server. Caddy gets the HTTPS certificate, serves the admin panel at `https://<DOMAIN>/` and forwards `/api`, `/health`, `/audio`, `/adhan` and `/public` to the API. Only ports 80 and 443 are open; the database is reachable only inside the stack. `docker-compose.yml` stays the dev stack.
+
+On a Linux server with Docker, with the domain's DNS A record pointing at it:
+
+```bash
+cp .env.example .env                    # DOMAIN, POSTGRES_PASSWORD (openssl rand -hex 24)
+cp backend/.env.example backend/.env    # JWT_SECRET (openssl rand -hex 32)
+(cd backend && npm ci && npm run adhan:import)   # muezzin files baked into the image
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec backend npx prisma db seed   # once, and after each adhan import
+```
+
+Migrations run automatically on every start of the API container (`prisma migrate deploy`). Compose overrides `DATABASE_URL`, `CORS_ORIGIN`, `MEDIA_BASE_URL` and `TRUST_PROXY` in `backend/.env`. In production the API refuses to start if `JWT_SECRET` is the example value or shorter than 32 characters. Reciter audio uploaded from the admin panel goes into the `reciter_audio` volume, so it survives rebuilds; back it up along with `postgres_data`.
+
+To make an admin, register in the app, then run:
+
+```bash
+docker compose -f docker-compose.prod.yml exec backend node dist/scripts/makeAdmin.js you@example.com
+```
+
+Build the mobile app against the server with `--dart-define=API_BASE_URL=https://<DOMAIN>/api`.
+
 ## Running Tests
 
 ```bash

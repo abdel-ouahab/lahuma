@@ -1,0 +1,65 @@
+# Production stack: Postgres + API + Caddy (HTTPS, admin panel).
+#   cp .env.example .env            # DOMAIN, POSTGRES_PASSWORD
+#   cp backend/.env.example backend/.env   # JWT_SECRET etc.
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Only Caddy is reachable from outside (ports 80/443). The database and the
+# API stay on the internal network. docker-compose.yml remains the dev stack.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lahuma
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: lahuma
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lahuma -d lahuma"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    # These win over backend/.env, so that file cannot point the API at the
+    # wrong database or origin.
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      DATABASE_URL: postgresql://lahuma:${POSTGRES_PASSWORD}@postgres:5432/lahuma?schema=public
+      CORS_ORIGIN: https://${DOMAIN:?set DOMAIN in .env}
+      MEDIA_BASE_URL: https://${DOMAIN}
+      TRUST_PROXY: "1"
+    volumes:
+      # Reciter audio uploaded from the admin panel; survives rebuilds.
+      - reciter_audio:/app/public/audio
+
+  caddy:
+    build: ./client
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  reciter_audio:
+  caddy_data:
+  caddy_config:
