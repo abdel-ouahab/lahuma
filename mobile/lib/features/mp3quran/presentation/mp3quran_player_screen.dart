@@ -18,6 +18,7 @@ import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
 import 'player_backdrop_layer.dart';
 import 'player_backdrop_sheet.dart';
+import 'recitation_artwork.dart';
 
 /// Lists the Surahs the chosen Moshaf really has and plays them.
 ///
@@ -301,7 +302,7 @@ class _LibraryHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        const _Artwork(size: 112, radius: 22, shadow: false),
+        const RecitationArtwork(size: 112, radius: 22),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -524,7 +525,7 @@ class Mp3MiniPlayer extends ConsumerWidget {
       controller: controller,
       state: state,
       builder: (context, playing, busy) => AppMiniPlayerBar(
-        artwork: const _Artwork(size: 40, radius: 0, shadow: false),
+        artwork: const RecitationArtwork(size: 40),
         title: names[surah] ?? context.tr('سورة $surah', 'Surah $surah'),
         subtitle: session.reciter.name,
         playing: playing,
@@ -723,8 +724,16 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                           alignment: Alignment.topCenter,
                           child: _swipeable(
                             surah,
-                            _Artwork(
-                                size: cardSize, radius: 26, shadow: true),
+                            _PlaybackBuilder(
+                              controller: controller,
+                              state: state,
+                              builder: (context, playing, _) =>
+                                  RecitationArtwork(
+                                      size: cardSize,
+                                      radius: 26,
+                                      shadow: true,
+                                      animate: playing),
+                            ),
                           ),
                         ),
                       )
@@ -749,10 +758,15 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                               opacity: 0.85,
                               child: FittedBox(
                                 fit: BoxFit.cover,
-                                child: _Artwork(
-                                    size: screen.width,
-                                    radius: 0,
-                                    shadow: false),
+                                child: _PlaybackBuilder(
+                                  controller: controller,
+                                  state: state,
+                                  builder: (context, playing, _) =>
+                                      RecitationArtwork(
+                                          size: screen.width,
+                                          scale: 0.62,
+                                          animate: playing),
+                                ),
                               ),
                             ),
                           ),
@@ -1503,96 +1517,4 @@ class _SurahRow extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Artwork ──────────────────────────────────────────────────────────────────
-
-/// Abstract cross-section artwork: a pale disc with growth rings on a deep
-/// slate tile, echoing the slate palette.
-class _Artwork extends StatelessWidget {
-  const _Artwork({
-    required this.size,
-    required this.radius,
-    required this.shadow,
-  });
-
-  final double size;
-  final double radius;
-  final bool shadow;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.prayerSilhouette, AppColors.primaryDark],
-        ),
-        boxShadow: shadow
-            ? [
-                // Cast onto a background video: dark enough to read on a
-                // dark scene, soft enough not to look like a cut-out.
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.45),
-                  blurRadius: 36,
-                  offset: const Offset(0, 18),
-                ),
-              ]
-            : null,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius),
-        child: CustomPaint(painter: _RingsPainter()),
-      ),
-    );
-  }
-}
-
-class _RingsPainter extends CustomPainter {
-  Path _blob(Offset c, double r, int salt) {
-    final path = Path();
-    const steps = 72;
-    for (var i = 0; i <= steps; i++) {
-      final a = 2 * pi * i / steps;
-      final wobble =
-          1 + 0.035 * sin(a * 3 + salt) + 0.02 * cos(a * 5 + salt * 2);
-      final p = c + Offset(cos(a), sin(a)) * (r * wobble);
-      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
-    }
-    return path..close();
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = size.center(Offset.zero);
-    final r = size.shortestSide * 0.36;
-
-    canvas.drawPath(
-      _blob(c, r, 0),
-      Paint()..color = AppColors.backgroundLight,
-    );
-
-    final line = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = max(0.6, size.shortestSide / 150)
-      ..color = AppColors.inkDark.withValues(alpha: 0.22);
-    for (var i = 1; i <= 7; i++) {
-      canvas.drawPath(_blob(c, r * i / 8, i), line);
-    }
-
-    // A couple of radial cracks.
-    final crack = Paint()
-      ..strokeWidth = line.strokeWidth * 1.2
-      ..strokeCap = StrokeCap.round
-      ..color = AppColors.inkDark.withValues(alpha: 0.35);
-    canvas.drawLine(c, c + Offset(cos(0.5), sin(0.5)) * r * 0.95, crack);
-    canvas.drawLine(c, c + Offset(cos(2.4), sin(2.4)) * r * 0.8, crack);
-  }
-
-  @override
-  bool shouldRepaint(_RingsPainter old) => false;
 }
