@@ -1,16 +1,52 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/mp3quran_models.dart';
 
+/// The last `/reciters` and `/suwar` answers, kept on the device so the
+/// reciters list and downloaded surahs work without a connection.
+class Mp3QuranCache {
+  Mp3QuranCache({Future<Directory> Function()? dir})
+      : _dir = dir ?? getApplicationSupportDirectory;
+
+  final Future<Directory> Function() _dir;
+
+  Future<File> _file(String key) async =>
+      File('${(await _dir()).path}/mp3quran_$key.json');
+
+  Future<Object?> read(String key) async {
+    try {
+      final f = await _file(key);
+      if (!await f.exists()) return null;
+      return jsonDecode(await f.readAsString());
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> write(String key, Object? data) async {
+    try {
+      final f = await _file(key);
+      await f.writeAsString(jsonEncode(data), flush: true);
+    } catch (_) {
+      // Best effort: the next successful request writes it again.
+    }
+  }
+}
+
 /// Client for the public MP3Quran API (https://mp3quran.net/api/v3/).
+/// With a [cache], a failed request answers with the last good one.
 class Mp3QuranApi {
-  Mp3QuranApi([ApiClient? client])
+  Mp3QuranApi([ApiClient? client, this.cache])
       : _dio = (client ?? ApiClient(baseUrl: baseUrl)).dio;
 
   static const String baseUrl = 'https://mp3quran.net/api/v3/';
 
   final Dio _dio;
+  final Mp3QuranCache? cache;
 
   Future<List<Mp3Reciter>> fetchReciters({String language = 'ar'}) async {
     final data = await _get('reciters', language);
@@ -23,11 +59,17 @@ class Mp3QuranApi {
   }
 
   Future<Object?> _get(String path, String language) async {
+    final key = '${path}_$language';
     try {
       final res = await _dio
           .get<Object?>(path, queryParameters: {'language': language});
+      _listUnder(res.data, path); // only cache a usable answer
+      await cache?.write(key, res.data);
       return res.data;
     } catch (e) {
+      final saved = await cache?.read(key);
+      if (saved != null) return saved;
+      if (e is ApiException) rethrow;
       throw ApiException.fromDioError(e);
     }
   }

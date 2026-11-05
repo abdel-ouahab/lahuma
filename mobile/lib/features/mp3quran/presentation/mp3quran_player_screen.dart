@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/error_retry.dart';
 import '../../../core/design/widgets/app_mini_player.dart';
+import '../../../core/design/widgets/app_overlays.dart';
 import '../../quran/presentation/providers/quran_providers.dart';
 import '../domain/mp3quran_models.dart';
 import 'mp3quran_providers.dart';
@@ -242,7 +243,13 @@ class _PlayerBody extends ConsumerWidget {
                       state: state,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                    child: _DownloadsBar(pal: pal, moshaf: moshaf),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   if (state.status == Mp3PlaybackStatus.error)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
@@ -252,8 +259,8 @@ class _PlayerBody extends ConsumerWidget {
                             ? context.tr('هذه السورة غير متوفرة لهذه التلاوة',
                                 'This surah is not available for this recitation')
                             : context.tr(
-                                'تعذّر تشغيل التلاوة. تحقق من الاتصال وأعد المحاولة.',
-                                'Could not play this recitation. Check your connection and try again.'),
+                                'تعذّر تشغيل التلاوة. تحقق من الاتصال، أو نزّل السورة لتسمعها دون إنترنت.',
+                                'Could not play this recitation. Check your connection, or download the surah to listen offline.'),
                         style: _inter(12, FontWeight.w500, AppColors.error),
                       ),
                     ),
@@ -271,6 +278,12 @@ class _PlayerBody extends ConsumerWidget {
                           subtitle: reciter.name,
                           active: state.surah == n,
                           onTap: () => controller.playSurah(n),
+                          trailing: _DownloadButton(
+                            pal: pal,
+                            moshaf: moshaf,
+                            surah: n,
+                            title: nameOf(n),
+                          ),
                         ).listEntrance(i);
                       },
                     ),
@@ -438,6 +451,7 @@ class _TrackTile extends StatelessWidget {
     required this.subtitle,
     required this.active,
     required this.onTap,
+    this.trailing,
   });
 
   final _Pal pal;
@@ -446,6 +460,7 @@ class _TrackTile extends StatelessWidget {
   final String subtitle;
   final bool active;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -496,12 +511,224 @@ class _TrackTile extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (trailing != null) trailing!,
               ],
             ),
           ),
         ),
       ),
     );
+  }
+}
+
+// ── Offline downloads ────────────────────────────────────────────────────────
+
+/// A surah's download control: download, then a ring while it comes in
+/// (tap to stop), a tick once it is on the phone (tap to remove it), or a
+/// retry after a failure.
+class _DownloadButton extends ConsumerWidget {
+  const _DownloadButton({
+    required this.pal,
+    required this.moshaf,
+    required this.surah,
+    required this.title,
+  });
+
+  final _Pal pal;
+  final Mp3Moshaf moshaf;
+  final int surah;
+  final String title;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final downloads = ref.watch(surahDownloadsProvider);
+    final notifier = ref.read(surahDownloadsProvider.notifier);
+    final progress = downloads.progressOf(moshaf, surah);
+
+    final Widget icon;
+    final String label;
+    final VoidCallback onTap;
+    if (progress != null) {
+      icon = SizedBox(
+        width: 22,
+        height: 22,
+        child: Stack(alignment: Alignment.center, children: [
+          CircularProgressIndicator(
+            value: progress > 0 ? progress : null,
+            strokeWidth: 2.2,
+            color: pal.ink,
+            backgroundColor: pal.chip,
+          ),
+          Icon(Icons.stop_rounded, size: 12, color: pal.ink),
+        ]),
+      );
+      label = context.tr('إيقاف تنزيل $title', 'Stop downloading $title');
+      onTap = () => notifier.cancel(moshaf, surah);
+    } else if (downloads.isQueued(moshaf, surah)) {
+      icon = Icon(Icons.schedule_rounded, size: 22, color: pal.sub);
+      label =
+          context.tr('في انتظار التنزيل: $title', 'Waiting to download $title');
+      onTap = () => notifier.cancel(moshaf, surah);
+    } else if (downloads.isSaved(moshaf, surah)) {
+      icon = const Icon(Icons.download_done_rounded,
+          size: 22, color: AppColors.primary);
+      label = context.tr('$title على الجهاز', '$title is on this phone');
+      onTap = () => _confirmDelete(context, notifier);
+    } else if (downloads.hasFailed(moshaf, surah)) {
+      icon = const Icon(Icons.error_outline_rounded,
+          size: 22, color: AppColors.error);
+      label = context.tr('فشل تنزيل $title، أعد المحاولة',
+          'Download of $title failed, try again');
+      onTap = () => notifier.download(moshaf, surah);
+    } else {
+      icon = Icon(Icons.download_rounded, size: 22, color: pal.sub);
+      label = context.tr('تنزيل $title', 'Download $title');
+      onTap = () => notifier.download(moshaf, surah);
+    }
+
+    return IconButton(
+      onPressed: onTap,
+      tooltip: label,
+      visualDensity: VisualDensity.compact,
+      icon: Semantics(label: label, excludeSemantics: true, child: icon),
+    );
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, SurahDownloadsNotifier notifier) async {
+    final remove = await showAppActionSheet<bool>(
+      context,
+      title: title,
+      message: context.tr('السورة محفوظة على هاتفك وتعمل دون إنترنت.',
+          'Saved on your phone; it plays without a connection.'),
+      cancelLabel: context.tr('إلغاء', 'Cancel'),
+      actions: [
+        AppSheetAction(
+          label: context.tr('حذف من الجهاز', 'Remove from this phone'),
+          value: true,
+          icon: Icons.delete_outline_rounded,
+          isDestructive: true,
+        ),
+      ],
+    );
+    if (remove == true) await notifier.delete(moshaf, surah);
+  }
+}
+
+/// How much of the recitation is on the phone, with download all, stop and
+/// remove all.
+class _DownloadsBar extends ConsumerWidget {
+  const _DownloadsBar({required this.pal, required this.moshaf});
+
+  final _Pal pal;
+  final Mp3Moshaf moshaf;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final downloads = ref.watch(surahDownloadsProvider);
+    final notifier = ref.read(surahDownloadsProvider.notifier);
+    final saved = downloads.savedIn(moshaf).length;
+    final total = moshaf.surahNumbers.length;
+    final busy = downloads.busyIn(moshaf);
+
+    final status = busy
+        ? context.tr(
+            'جارٍ التنزيل… $saved من $total', 'Downloading… $saved of $total')
+        : saved == 0
+            ? context.tr('نزّل السور لتسمعها دون إنترنت',
+                'Download surahs to listen offline')
+            : context.tr('على الجهاز: $saved من $total',
+                'On this phone: $saved of $total');
+
+    return Semantics(
+      button: true,
+      label: status,
+      excludeSemantics: true,
+      child: Material(
+        color: pal.chip.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => _menu(context, notifier, saved, total, busy),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: 10),
+            child: Row(
+              children: [
+                Icon(
+                  busy
+                      ? Icons.downloading_rounded
+                      : saved == total
+                          ? Icons.offline_pin_rounded
+                          : Icons.download_for_offline_outlined,
+                  size: 20,
+                  color: saved > 0 || busy ? AppColors.primary : pal.sub,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _inter(13, FontWeight.w600, pal.ink)),
+                ),
+                Icon(Icons.more_horiz_rounded, size: 20, color: pal.sub),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _menu(BuildContext context, SurahDownloadsNotifier notifier,
+      int saved, int total, bool busy) async {
+    final size = saved == 0 ? 0 : await notifier.sizeOf(moshaf);
+    if (!context.mounted) return;
+    final mb = (size / (1024 * 1024)).round();
+    final choice = await showAppActionSheet<String>(
+      context,
+      title: context.tr('الاستماع دون إنترنت', 'Listen offline'),
+      message: saved == 0
+          ? context.tr(
+              'تُحفظ السور على هاتفك. التلاوة الكاملة قد تشغل أكثر من 1 غيغابايت.',
+              'Surahs are saved on your phone. A full recitation can take over 1 GB.')
+          : context.tr('$saved من $total سورة على الجهاز ($mb ميغابايت).',
+              '$saved of $total surahs on this phone ($mb MB).'),
+      cancelLabel: context.tr('إلغاء', 'Cancel'),
+      actions: [
+        if (busy)
+          AppSheetAction(
+            label: context.tr('إيقاف التنزيل', 'Stop downloading'),
+            value: 'stop',
+            icon: Icons.stop_circle_outlined,
+          )
+        else if (saved < total)
+          AppSheetAction(
+            label: saved == 0
+                ? context.tr('تنزيل كل السور', 'Download all surahs')
+                : context.tr('تنزيل الباقي (${total - saved})',
+                    'Download the rest (${total - saved})'),
+            value: 'all',
+            icon: Icons.download_rounded,
+            isDefault: true,
+          ),
+        if (saved > 0)
+          AppSheetAction(
+            label: context.tr('حذف كل التنزيلات', 'Remove all downloads'),
+            value: 'delete',
+            icon: Icons.delete_outline_rounded,
+            isDestructive: true,
+          ),
+      ],
+    );
+    switch (choice) {
+      case 'all':
+        notifier.downloadAll(moshaf);
+      case 'stop':
+        notifier.cancelAll(moshaf);
+      case 'delete':
+        await notifier.deleteAll(moshaf);
+    }
   }
 }
 

@@ -275,24 +275,35 @@ class _ReciterTile extends StatelessWidget {
 /// A play glyph, the riwaya with its style beside it, and how much of the
 /// Quran the edition covers: "كامل" for a full mushaf, otherwise the number
 /// of surahs.
-class _EditionRow extends StatelessWidget {
+class _EditionRow extends ConsumerWidget {
   const _EditionRow({required this.moshaf, required this.onTap});
 
   final Mp3Moshaf moshaf;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = context.palette;
     final label = moshaf.label;
     final coverage = moshaf.isComplete
         ? context.tr('كامل', 'Complete')
         : _surahCount(context, moshaf.surahNumbers.length);
+    final saved = ref
+        .watch(surahDownloadsProvider.select((s) => s.savedIn(moshaf).length));
+    final savedLabel = saved == 0
+        ? null
+        : context.isArabic
+            ? 'على الجهاز: ${_surahCount(context, saved)}'
+            : 'On this phone: ${_surahCount(context, saved)}';
 
     return Semantics(
       button: true,
-      label: [label.riwaya, if (label.style != null) label.style!, coverage]
-          .join('، '),
+      label: [
+        label.riwaya,
+        if (label.style != null) label.style!,
+        coverage,
+        if (savedLabel != null) savedLabel,
+      ].join('، '),
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
@@ -334,6 +345,27 @@ class _EditionRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: AppTypography.caption1
                               .copyWith(color: c.secondaryLabel, height: 1.3),
+                        ),
+                      if (savedLabel != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            children: [
+                              Icon(Icons.download_done_rounded,
+                                  size: 14, color: c.accent),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  savedLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTypography.caption1
+                                      .weight(FontWeight.w600)
+                                      .copyWith(color: c.accent, height: 1.3),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                     ],
                   ),
