@@ -18,6 +18,7 @@ import 'features/fajr_call/presentation/fajr_call_providers.dart';
 import 'features/adhkar/presentation/adhkar_providers.dart';
 import 'features/khatma/presentation/khatma_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
+import 'features/splash/splash_screen.dart';
 
 /// Android's background engine (`AdhanWorker.kt`) starts here, with no UI:
 /// it reschedules the adhan after a reboot, an update, a clock change, and
@@ -39,6 +40,9 @@ Future<void> main() async {
   // A Fajr Call engine notification (results / fallback) launched the app.
   final engineRoute = await const FajrCallPlatform().takeLaunchRoute();
   if (engineRoute != null) notifications.setLaunchRoute(engineRoute);
+  // The native launch screen stays up meanwhile, so the splash's first
+  // frame already has its wordmark.
+  await precacheSplashWordmark();
 
   runApp(ProviderScope(
     overrides: [localNotificationsProvider.overrideWithValue(notifications)],

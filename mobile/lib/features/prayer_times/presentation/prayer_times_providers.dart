@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../fajr_call/data/location_service.dart';
 import '../../fajr_call/data/places.dart' show distanceKm;
 import '../../fajr_call/domain/prayer_settings.dart' show LocationSource;
 import '../../fajr_call/presentation/fajr_call_providers.dart';
+import '../../settings/presentation/settings_providers.dart';
 import '../data/prayer_times_cache.dart';
 import '../data/prayer_times_config.dart';
 import '../data/prayer_times_service.dart';
@@ -57,6 +60,7 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
     required ReverseGeocoder geocoder,
     required DateTime Function() now,
     this.manualLocation,
+    this.mayAskForLocation,
     bool autoLoad = true,
   })  : _service = service,
         _cache = cache,
@@ -77,8 +81,21 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
   final Future<({PrayerLocation location, bool chosen})?> Function()?
       manualLocation;
 
+  /// Whether the first load may show the system location prompt. False
+  /// while the introduction is still to come: it asks for nothing, and
+  /// finishing it refreshes with the prompt allowed (see
+  /// OnboardingController). Null allows it.
+  final Future<bool> Function()? mayAskForLocation;
+
   Future<void>? _ready;
   Future<void> get ready => _ready ?? Future.value();
+
+  final Completer<void> _cacheLoaded = Completer<void>();
+
+  /// Completes once the cached days are in [state] (or the cache could not
+  /// be read), before any location fix or network call. The splash waits
+  /// for this so Home opens with times instead of a skeleton.
+  Future<void> get cacheLoaded => _cacheLoaded.future;
 
   PrayerLocation? _location;
   final Map<String, DayPrayerTimes> _days = {};
@@ -92,15 +109,24 @@ class PrayerTimesNotifier extends StateNotifier<PrayerTimesState> {
   /// Shows the cache at once, then refreshes in the background. Prompts for
   /// location permission only when no location is saved yet.
   Future<void> load() async {
-    final snap = await _cache.load();
-    _location = snap.location;
-    _days
-      ..clear()
-      ..addAll(snap.days);
-    _cacheRead = true;
+    try {
+      final snap = await _cache.load();
+      _location = snap.location;
+      _days
+        ..clear()
+        ..addAll(snap.days);
+      _cacheRead = true;
+      if (!mounted) return;
+      _publish();
+    } finally {
+      if (!_cacheLoaded.isCompleted) _cacheLoaded.complete();
+    }
+    var ask = true;
+    try {
+      ask = await mayAskForLocation?.call() ?? true;
+    } catch (_) {}
     if (!mounted) return;
-    _publish();
-    await refresh(request: true);
+    await refresh(request: ask);
     _initial = false;
   }
 
@@ -272,6 +298,8 @@ final prayerTimesProvider =
     location: ref.watch(prayerLocationServiceProvider),
     geocoder: ref.watch(reverseGeocoderProvider),
     now: ref.watch(prayerClockProvider),
+    mayAskForLocation: () =>
+        ref.read(settingsRepositoryProvider).getOnboardingCompleted(),
     manualLocation: () async {
       await ref.read(fajrCallProvider.notifier).ready;
       final p = ref.read(fajrCallProvider).prayer;

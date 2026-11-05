@@ -1,0 +1,350 @@
+{
+  "$comment": "Single source of truth for the muezzins: read by `npm run adhan:import` (which fills `sources`, `outputs`, `status`, `warnings`, and bumps `version` when an output changes) and by `prisma/seed.ts`. See docs/adhan.md.",
+  "muezzins": [
+    {
+      "slug": "algeria",
+      "id": "00000000-0000-4000-8000-000000000003",
+      "nameAr": "أذان الجزائر",
+      "nameFr": "Adhan d'Algérie",
+      "country": "DZ",
+      "sortOrder": 0,
+      "version": 2,
+      "isActive": true,
+      "source": {
+        "repo": "Kiwifu/adhan-mp3",
+        "commit": "b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b",
+        "regularFile": "Riad_Al_Djazairi_-_Algeria_(رياض_الجزائري_-_الجزائر).mp3",
+        "fajrFile": "Adhan_Fajr_Algeria_(أذان_الفجر_الجزائر).mp3"
+      },
+      "sources": {
+        "regular": {
+          "file": "Riad_Al_Djazairi_-_Algeria_(رياض_الجزائري_-_الجزائر).mp3",
+          "sha256": "1fc89abef7d19e050b579cb945676ebbf23a042bc602f04ce17625b030318f8f",
+          "bytes": 2885125,
+          "durationSec": 180.07,
+          "bitRate": 128177,
+          "sampleRate": 44100,
+          "channels": 2,
+          "codec": "mp3"
+        },
+        "fajr": {
+          "file": "Adhan_Fajr_Algeria_(أذان_الفجر_الجزائر).mp3",
+          "sha256": "4e847445403cb41e530f882dd486d45903d66dd7365b09439f1f49e7dda62efd",
+          "bytes": 358472,
+          "durationSec": 177.29,
+          "bitRate": 16175,
+          "sampleRate": 16000,
+          "channels": 1,
+          "codec": "mp3"
+        }
+      },
+      "outputs": {
+        "regular": {
+          "path": "/adhan/algeria/v2/regular.mp3",
+          "sha256": "3b84024f52dc7f126ad16c3226aaf5e117055cbd9d027e8b57f7d0168dd037d0",
+          "bytes": 2130044,
+          "durationSec": 177.43
+        },
+        "fajr": {
+          "path": "/adhan/algeria/v2/fajr.mp3",
+          "sha256": "dc51d99b392868982ec0178f4797ec8b77e92fec9fa60fe9c75fd1f1d541322f",
+          "bytes": 2109042,
+          "durationSec": 175.69
+        },
+        "regularShort": {
+          "path": "/adhan/algeria/v2/regular_short.caf",
+          "sha256": "9b21d09f2a499689ecd2773227f7c5e8459a14bcfe7b1fcf9412272ff243cb43",
+          "bytes": 345704,
+          "durationSec": 29.5
+        },
+        "fajrShort": {
+          "path": "/adhan/algeria/v2/fajr_short.caf",
+          "sha256": "0942f6b576b7651682675e19917125d117151f5c310eaf48fd38bd92b3f3dd00",
+          "bytes": 345704,
+          "durationSec": 29.5
+        }
+      },
+      "pipeline": "ab911ca88aad",
+      "status": "ok",
+      "warnings": [
+        "fajr: low-quality source (16 kbps, 16000 Hz)"
+      ]
+    },
+    {
+      "slug": "alafasy",
+      "id": "00000000-0000-4000-8000-000000000004",
+      "nameAr": "مشاري راشد العفاسي",
+      "nameFr": "Mishary Rashid Alafasy",
+      "country": "KW",
+      "sortOrder": 1,
+      "version": 1,
+      "isActive": true,
+      "source": {
+        "repo": "Kiwifu/adhan-mp3",
+        "commit": "b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b",
+        "regularFile": "Mishary_Rashid_Alafasy_1_-_Kuwait_(مشاري_راشد_العفاسي_-_الكويت).mp3",
+        "fajrFile": "Mishary_Rashid_Alafasy_3_-_Fajr_Kuwait_(مشاري_راشد_العفاسي_-_فجر_الكويت).mp3"
+      },
+      "sources": {
+        "regular": {
+          "file": "Mishary_Rashid_Alafasy_1_-_Kuwait_(مشاري_راشد_العفاسي_-_الكويت).mp3",
+          "sha256": "7889fb396f7d29debf1258c4d522d43fe680c786a9d9f06d4542d22cebe58fb8",
+          "bytes": 1931082,
+          "durationSec": 240.75,
+          "bitRate": 64168,
+          "sampleRate": 22050,
+          "channels": 2,
+          "codec": "mp3"
+        },
+        "fajr": {
+          "file": "Mishary_Rashid_Alafasy_3_-_Fajr_Kuwait_(مشاري_راشد_العفاسي_-_فجر_الكويت).mp3",
+          "sha256": "23ae76424bb8a4398fc0edde11e6b3d0ff5ca80bcb1e206e691f989179a37045",
+          "bytes": 1503337,
+          "durationSec": 187.27,
+          "bitRate": 64219,
+          "sampleRate": 22050,
+          "channels": 2,
+          "codec": "mp3"
+        }
+      },
+      "outputs": {
+        "regular": {
+          "path": "/adhan/alafasy/v1/regular.mp3",
+          "sha256": "ce26cbcbdf51a05833af57d52afb16cecca3aaea033c56cdae25efa9faa2e788",
+          "bytes": 2820931,
+          "durationSec": 235.02
+        },
+        "fajr": {
+          "path": "/adhan/alafasy/v1/fajr.mp3",
+          "sha256": "cea9fcc451234c2523bac2ba1adcc17cc7b69bb31412aaa8cf68f509c8f693f7",
+          "bytes": 2186155,
+          "durationSec": 182.1
+        },
+        "regularShort": {
+          "path": "/adhan/alafasy/v1/regular_short.caf",
+          "sha256": "e665c029368ffb1f9b994a59ce775e14c08c68707d9a2a850e6690041a7c8bda",
+          "bytes": 345704,
+          "durationSec": 29.5
+        },
+        "fajrShort": {
+          "path": "/adhan/alafasy/v1/fajr_short.caf",
+          "sha256": "aa441490a41ea15b08920c957faa0ff26acc52cc549e53d522f802be9f20b8f9",
+          "bytes": 345704,
+          "durationSec": 29.5
+        }
+      },
+      "pipeline": "ab911ca88aad",
+      "status": "ok",
+      "warnings": []
+    },
+    {
+      "slug": "makkah",
+      "id": "00000000-0000-4000-8000-000000000001",
+      "nameAr": "أذان الحرم المكي",
+      "nameFr": "Adhan de La Mecque",
+      "country": "SA",
+      "sortOrder": 2,
+      "version": 2,
+      "isActive": true,
+      "source": {
+        "repo": "Kiwifu/adhan-mp3",
+        "commit": "b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b",
+        "regularFile": "Ali_Ibn_Ahmad_Mala_1_-_Al_Haram_Al_Maki_(علي_بن_أحمد_ملا_-_الحرم_المكي).mp3",
+        "fajrFile": "Adhan_Fajr_Al_Haram_Al_Maki_(أذان_الفجر_الحرم_المكي).mp3"
+      },
+      "sources": {
+        "regular": {
+          "file": "Ali_Ibn_Ahmad_Mala_1_-_Al_Haram_Al_Maki_(علي_بن_أحمد_ملا_-_الحرم_المكي).mp3",
+          "sha256": "21814bbe0e34e634894b484c1b9a810d9980331ee51fe19bf0274920191c6271",
+          "bytes": 492824,
+          "durationSec": 246.41,
+          "bitRate": 16000,
+          "sampleRate": 16000,
+          "channels": 1,
+          "codec": "mp3"
+        },
+        "fajr": {
+          "file": "Adhan_Fajr_Al_Haram_Al_Maki_(أذان_الفجر_الحرم_المكي).mp3",
+          "sha256": "3f556c76c74af088d89afdccc13293beb320d70c7c3cbd48f2e02cd9c886fa68",
+          "bytes": 450002,
+          "durationSec": 222.98,
+          "bitRate": 16145,
+          "sampleRate": 16000,
+          "channels": 1,
+          "codec": "mp3"
+        }
+      },
+      "outputs": {
+        "regular": {
+          "path": "/adhan/makkah/v2/regular.mp3",
+          "sha256": "f42b5cff5a596bc38d754e60369b6e35beffb950a668f316593787e95dd2c975",
+          "bytes": 2956976,
+          "durationSec": 246.35
+        },
+        "fajr": {
+          "path": "/adhan/makkah/v2/fajr.mp3",
+          "sha256": "a076052e7e1bb70d3dfa3c15d867fd3d39ee51fb2052c9f1360c4f3d5afdd42c",
+          "bytes": 2641626,
+          "durationSec": 220.06
+        },
+        "regularShort": {
+          "path": "/adhan/makkah/v2/regular_short.caf",
+          "sha256": "f5fb9bcfa0faa9caa53080aa3662e31eec0382cb21df7085c27c682bedce700a",
+          "bytes": 345704,
+          "durationSec": 29.5
+        },
+        "fajrShort": {
+          "path": "/adhan/makkah/v2/fajr_short.caf",
+          "sha256": "96445365103c2cf5cc02efe39aaa3e57fd53c0ffa4495a7e8248b79b799d11ed",
+          "bytes": 345704,
+          "durationSec": 29.5
+        }
+      },
+      "pipeline": "ab911ca88aad",
+      "status": "ok",
+      "warnings": [
+        "regular: low-quality source (16 kbps, 16000 Hz)",
+        "fajr: low-quality source (16 kbps, 16000 Hz)"
+      ]
+    },
+    {
+      "slug": "madinah",
+      "id": "00000000-0000-4000-8000-000000000002",
+      "nameAr": "أذان المسجد النبوي",
+      "nameFr": "Adhan de Médine",
+      "country": "SA",
+      "sortOrder": 3,
+      "version": 2,
+      "isActive": true,
+      "source": {
+        "repo": "Kiwifu/adhan-mp3",
+        "commit": "b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b",
+        "regularFile": "Adhan_Al_Haram_Al_Madani_-_Al_Madinah_1_(أذان_الحرم_المدني_-_المدينة_المنورة).mp3",
+        "fajrFile": "Adhan_Fajr_Al_Haram_Al_Madani_(أذان_الفجر_الحرم_المدني).mp3"
+      },
+      "sources": {
+        "regular": {
+          "file": "Adhan_Al_Haram_Al_Madani_-_Al_Madinah_1_(أذان_الحرم_المدني_-_المدينة_المنورة).mp3",
+          "sha256": "619605b98536264f6143d0b9d4d2725cf20ee85a827e4c038dc6e42583272958",
+          "bytes": 379784,
+          "durationSec": 189.89,
+          "bitRate": 16000,
+          "sampleRate": 16000,
+          "channels": 1,
+          "codec": "mp3"
+        },
+        "fajr": {
+          "file": "Adhan_Fajr_Al_Haram_Al_Madani_(أذان_الفجر_الحرم_المدني).mp3",
+          "sha256": "0df433d909388b11a4fe556f8f76786cc2349fcab5b49b7d14df0496ed4f3f2f",
+          "bytes": 561776,
+          "durationSec": 278.85,
+          "bitRate": 16117,
+          "sampleRate": 16000,
+          "channels": 1,
+          "codec": "mp3"
+        }
+      },
+      "outputs": {
+        "regular": {
+          "path": "/adhan/madinah/v2/regular.mp3",
+          "sha256": "9350be01bde0c2617828c5473497aed9b9db92750f40f19acdd317633fac401f",
+          "bytes": 2275807,
+          "durationSec": 189.58
+        },
+        "fajr": {
+          "path": "/adhan/madinah/v2/fajr.mp3",
+          "sha256": "bb1d1c44935d720c5ce57c31adf37621b24ffac3230badebe9c24d31f03014ee",
+          "bytes": 3335334,
+          "durationSec": 277.87
+        },
+        "regularShort": {
+          "path": "/adhan/madinah/v2/regular_short.caf",
+          "sha256": "dc99e5fca755daa2a55a43b409d1896a148504be5c6a4fad16acb5a8b623cf74",
+          "bytes": 345704,
+          "durationSec": 29.5
+        },
+        "fajrShort": {
+          "path": "/adhan/madinah/v2/fajr_short.caf",
+          "sha256": "2554f451bca434e0adbae640a99efb652a06cabbf30fe7e5431760399de1a2df",
+          "bytes": 345704,
+          "durationSec": 29.5
+        }
+      },
+      "pipeline": "ab911ca88aad",
+      "status": "ok",
+      "warnings": [
+        "regular: low-quality source (16 kbps, 16000 Hz)",
+        "fajr: low-quality source (16 kbps, 16000 Hz)"
+      ]
+    },
+    {
+      "slug": "abdulbasit",
+      "id": "00000000-0000-4000-8000-000000000005",
+      "nameAr": "عبد الباسط عبد الصمد",
+      "nameFr": "Abdulbasit Abdusamad",
+      "country": "EG",
+      "sortOrder": 4,
+      "version": 1,
+      "isActive": true,
+      "source": {
+        "repo": "Kiwifu/adhan-mp3",
+        "commit": "b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b",
+        "regularFile": "Abdulbasit_Abdusamad_1_-_Egypt_(عبد_الباسط_عبد_الصمد_-_مصر).mp3",
+        "fajrFile": "Abdulbasit_Abdusamad_7_-_Fajr_Egypt_(عبد_الباسط_عبد_الصمد_-_فجر_مصر).mp3"
+      },
+      "sources": {
+        "regular": {
+          "file": "Abdulbasit_Abdusamad_1_-_Egypt_(عبد_الباسط_عبد_الصمد_-_مصر).mp3",
+          "sha256": "7647b908b03ab1944b1497d8cbbd726f26a288435cf35011f26b1593f7d0202d",
+          "bytes": 489872,
+          "durationSec": 244.94,
+          "bitRate": 16000,
+          "sampleRate": 16000,
+          "channels": 1,
+          "codec": "mp3"
+        },
+        "fajr": {
+          "file": "Abdulbasit_Abdusamad_7_-_Fajr_Egypt_(عبد_الباسط_عبد_الصمد_-_فجر_مصر).mp3",
+          "sha256": "1c01b45b4137fa9bba2007ed66ecb321f29631cf545d22105161a8ad69f8e184",
+          "bytes": 3095800,
+          "durationSec": 193.24,
+          "bitRate": 128166,
+          "sampleRate": 44100,
+          "channels": 2,
+          "codec": "mp3"
+        }
+      },
+      "outputs": {
+        "regular": {
+          "path": "/adhan/abdulbasit/v1/regular.mp3",
+          "sha256": "3d1bf976dbee5a018d3d746b8ab75a00bc5661e971223bd6f4efa408327e034f",
+          "bytes": 2866384,
+          "durationSec": 238.8
+        },
+        "fajr": {
+          "path": "/adhan/abdulbasit/v1/fajr.mp3",
+          "sha256": "0e533516383270b6380cda586cf317c18736517c83282080c026d9f79fa06549",
+          "bytes": 2319380,
+          "durationSec": 193.21
+        },
+        "regularShort": {
+          "path": "/adhan/abdulbasit/v1/regular_short.caf",
+          "sha256": "db7473c27582ca1ec913b0a85a9aeffab1f8d9d0e78ef29135772c3131037873",
+          "bytes": 345704,
+          "durationSec": 29.5
+        },
+        "fajrShort": {
+          "path": "/adhan/abdulbasit/v1/fajr_short.caf",
+          "sha256": "e0773cd67e75fc52baccf1dbfebcb0122d295b3daaf01016bb257bde3794b036",
+          "bytes": 345704,
+          "durationSec": 29.5
+        }
+      },
+      "pipeline": "ab911ca88aad",
+      "status": "ok",
+      "warnings": [
+        "regular: low-quality source (16 kbps, 16000 Hz)"
+      ]
+    }
+  ]
+}

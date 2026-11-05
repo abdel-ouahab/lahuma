@@ -10,13 +10,16 @@ The MVP lets anyone browse and read the full Quran **as a guest, with no login r
 
 ## Features
 
-- Splash screen, Home with "Last read", today's wird (daily goal + streak) and reading intention
+- Splash: the native launch screen hands over to an animated one (the shamsa, the gilded medallion that opens a Mushaf, gathers around the إحسان wordmark) that waits for real start-up work (saved theme and language, the cached prayer times, a notification's screen) and never more than 5 s
+- Introduction, shown once and again from Settings: six pages with living miniatures of the features (the Mushaf and reciters, the khatma, prayer times and the qibla, Fajr Call, the tasbih and adhkar), then language and look; Arabic RTL and English, light and dark, Reduce Motion and large text; no permission prompts until the features need them
+- Home with "Last read", today's wird (daily goal + streak) and reading intention
 - Surahs (search by name or number), 30 juz', and reciters tabs; reader opens at the exact ayah (last read, bookmark, juz')
 - Reader: saves your real position, text size, jump to ayah, English translation (Sahih International), Arabic tafsir (Al-Muyassar), per-ayah audio that continues through the surah, copy/share, personal notes
 - Reading intention: dedicate your recitation to your parents (or someone else); every ayah read is counted and the dua closes each surah
 - Offline: any surah/translation/tafsir you've opened once is cached and readable without a connection
 - Bookmarks with swipe-to-delete and undo
 - Fajr Call (نداء الفجر): at Fajr the app phones your parents and loved ones one by one to wake them for prayer (Android), or reminds you with a one-tap call list (iOS / manual mode), then shows who was called and who is awake. Offline Fajr time (Algerian method by default), everything stays on the device. See [docs/fajr-call.md](docs/fajr-call.md)
+- Adhan (الأذان): the full adhan at each prayer time, from five real muezzins (Algeria first) downloaded once from our backend, with the Fajr recording at Fajr. Android plays it natively with the app closed; iOS plays a 29.5 s clip as the notification sound and the full adhan on tap. See [docs/adhan.md](docs/adhan.md)
 - Settings: language (Arabic/English, whole UI), theme, text size, goal, intention, optional account
 - Optional account (sign in / create / sign out) against the backend; the whole app works as a guest
 - Backend: register / login / get current user (JWT), plus a thin Quran API proxy
@@ -50,6 +53,7 @@ lahuma/
 - Node.js ≥ 20
 - Docker & Docker Compose
 - PostgreSQL 16 (via Docker, or local install)
+- ffmpeg and ffprobe, only to (re)build the muezzin audio (`npm run adhan:import`; Windows: `winget install Gyan.FFmpeg`)
 
 ## Installation
 
@@ -82,6 +86,8 @@ cp .env.example .env
 npm install
 npm run prisma:generate
 npm run prisma:migrate
+npm run adhan:import   # downloads and processes the muezzins' adhans into public/adhan/ (needs ffmpeg)
+npm run prisma:seed    # the muezzins, from prisma/data/muezzins.json
 npm run dev
 ```
 
@@ -119,7 +125,10 @@ DATABASE_URL="postgresql://lahuma:lahuma@localhost:5432/lahuma?schema=public"
 JWT_SECRET="change-me-in-production"
 JWT_EXPIRES_IN="7d"
 CORS_ORIGIN="*"
+MEDIA_BASE_URL=""   # origin of the adhan files; empty = this backend, as the app reached it
 ```
+
+Leave `MEDIA_BASE_URL` empty in development; in production set it to the public HTTPS origin (see [docs/adhan.md](docs/adhan.md#hosting-the-files)).
 
 ## Running the Application
 
@@ -160,6 +169,8 @@ cd mobile && flutter test
 | GET    | `/api/auth/me`      | Yes            | Get current user         |
 | GET    | `/api/quran/surahs` | No             | List all Surahs (proxy)  |
 | GET    | `/api/quran/surahs/:number` | No     | Get one Surah's Ayahs    |
+| GET    | `/api/muezzins`     | No             | Active muezzins, in order, with absolute audio URLs |
+| GET    | `/adhan/<slug>/v<n>/<file>` | No     | Muezzin audio (mp3 / caf), cached as immutable, Range supported |
 | GET    | `/health`            | No             | Health check              |
 
 The mobile app currently talks to the Quran data provider (`api.alquran.cloud`) directly from `QuranRemoteDataSource`; the backend's `/api/quran/*` proxy is available for when you want centralized caching or an offline bundle later — swapping it in only requires a new `QuranRepository` implementation.
@@ -192,6 +203,17 @@ Design, Play-policy notes, iOS signing steps and a two-phone test script: [docs/
 # Kotlin unit tests (call loop)
 cd mobile/android && ./gradlew :app:testDebugUnitTest
 ```
+
+## Adhan (الأذان)
+
+At each prayer time the app plays the full adhan of the muezzin the user picked, under **Settings → الصلاة → الأذان**.
+
+- **Muezzins:** five real recordings from [Kiwifu/adhan-mp3](https://github.com/Kiwifu/adhan-mp3), pinned to a commit and listed in `backend/prisma/data/muezzins.json`: Algeria, Mishary Rashid Alafasy, Al-Haram al-Makki, Al-Masjid an-Nabawi, Abdulbasit Abdusamad. Each has a regular and a Fajr adhan. The bundled default is the Algeria recording.
+- **Pipeline:** `npm run adhan:import` downloads them once, trims the silence, normalises the loudness (−16 LUFS), and writes a mono 96 kbps mp3 plus a 29.5 s IMA4 `.caf` for iOS per adhan into `backend/public/adhan/<slug>/v<version>/` (gitignored, about 29 MB). It is idempotent and bumps a muezzin's version when its audio changes, so the app downloads it again.
+- **Serving:** the backend serves `/adhan/…` itself; a bucket works too (`rclone sync`). The app downloads the files once and works offline.
+- **Release builds** are HTTPS only on Android (cleartext is allowed in debug and profile builds only).
+
+Pipeline, hosting, how to add a muezzin, the test checklist and the credits for every recording: [docs/adhan.md](docs/adhan.md).
 
 ## Future Roadmap
 

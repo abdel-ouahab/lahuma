@@ -11,7 +11,7 @@ import '../data/adhan_scheduler.dart';
 /// just_audio copies an asset to its cache the first time and keeps that
 /// copy, so a new recording needs a new file name (bump the `_v` suffix).
 String adhanDefaultAsset({required bool fajr}) =>
-    'assets/audio/adhan/default_regular_v2.mp3';
+    'assets/audio/adhan/default_regular_v3.mp3';
 
 /// What the adhan player is doing. [key] names what is loaded (a muezzin
 /// id for a preview, or [AdhanScheduler.playRoute] for the full adhan).

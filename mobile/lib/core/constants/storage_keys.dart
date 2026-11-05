@@ -9,6 +9,10 @@ class StorageKeys {
   static const String showTranslation = 'settings.showTranslation';
   static const String autoScrollSpeed = 'settings.autoScrollSpeed';
 
+  /// The introduction was finished or skipped (bump the version to show a
+  /// rewritten one again).
+  static const String onboardingCompleted = 'onboarding_completed_v1';
+
   static const String lastReadSurahId = 'progress.lastSurahId';
   static const String lastReadSurahName = 'progress.lastSurahName';
   static const String lastReadAyahNumber = 'progress.lastAyahNumber';

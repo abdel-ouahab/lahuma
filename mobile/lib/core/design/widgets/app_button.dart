@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../app_colors.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import 'app_direction.dart';
 import 'app_surface.dart';
 
 enum AppButtonVariant {
@@ -28,6 +29,7 @@ class AppButton extends StatelessWidget {
     required this.onPressed,
     this.variant = AppButtonVariant.filled,
     this.icon,
+    this.trailingIcon,
     this.loading = false,
     this.expand = false,
     this.small = false,
@@ -38,6 +40,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
     this.loading = false,
     this.expand = false,
     this.small = false,
@@ -48,6 +51,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
     this.loading = false,
     this.expand = false,
     this.small = false,
@@ -58,6 +62,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
     this.loading = false,
     this.expand = false,
     this.small = false,
@@ -68,6 +73,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.trailingIcon,
     this.loading = false,
     this.expand = false,
     this.small = false,
@@ -77,6 +83,10 @@ class AppButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
   final IconData? icon;
+
+  /// A glyph after the label that points the way the button goes (e.g.
+  /// `chevron_forward` on "Next"); mirrored in RTL.
+  final IconData? trailingIcon;
 
   /// Shows a spinner and ignores taps while true.
   final bool loading;
@@ -133,6 +143,11 @@ class AppButton extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if (trailingIcon != null) ...[
+                const SizedBox(width: AppSpacing.xs + 2),
+                AppDirectionalIcon(trailingIcon!,
+                    size: small ? 14 : 17, color: style.color),
+              ],
             ],
           );
 

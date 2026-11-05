@@ -16,6 +16,12 @@ describe("muezzin urls", () => {
     );
   });
 
+  it("resolves the import's versioned paths", () => {
+    expect(resolveMediaUrl("/adhan/algeria/v2/fajr_short.caf", "http://10.0.2.2:4000")).toBe(
+      "http://10.0.2.2:4000/adhan/algeria/v2/fajr_short.caf"
+    );
+  });
+
   it("maps every audio field and drops internal columns", () => {
     const dto = toDto({
       id: "1",

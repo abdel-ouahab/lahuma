@@ -9,8 +9,11 @@ under it, in gold on the app's deep green. The name is from
 
 Run from mobile/. The Dart step shapes the Arabic and writes wordmark_ar.png
 and wordmark_en.png (white on transparent). This script colours them, lays
-them out and writes assets/images/logo.png (splash), the Android legacy,
-adaptive (foreground + monochrome) and iOS AppIcon PNGs. Needs Pillow only.
+them out and writes the Android legacy, adaptive (foreground + monochrome)
+and iOS AppIcon PNGs; logo.png next to this script (store listings, docs);
+and the splash wordmark: assets/images/wordmark.png (white, tinted in
+Flutter) plus the gold assets/splash/ images flutter_native_splash reads
+(`dart run flutter_native_splash:create`). Needs Pillow only.
 """
 
 from __future__ import annotations
@@ -34,8 +37,15 @@ GOLD = (0xDD, 0xB8, 0x6A)
 ARABIC_WIDTH = 0.64
 LATIN_WIDTH = 0.30
 GAP = 0.035
-# iOS-style continuous corner, close enough for the splash logo.
+# iOS-style continuous corner, close enough for the store logo.
 TILE_RADIUS = 0.2237
+
+# The splash wordmark: SPLASH_WIDTH pt wide, written at 4x (the density
+# flutter_native_splash assumes). Android 12 centres it on a 288 dp canvas.
+# Keep SPLASH_WIDTH equal to SplashLayout.wordmarkWidth in the app.
+SPLASH_WIDTH = 160
+SPLASH_SCALE = 4
+ANDROID_12_CANVAS = 288
 
 # Android adaptive icons: a 108 dp layer seen through a 72 dp mask.
 ADAPTIVE_VIEW = 72 / 108
@@ -77,6 +87,19 @@ def draw_mark(im: Image.Image, tile: float, color) -> None:
         im.alpha_composite(ink, ((im.width - mask.width) // 2, y))
 
 
+def wordmark(width: int, color) -> Image.Image:
+    """The two-line wordmark alone, [width] px wide, cropped to its layout."""
+    ar = _scaled(ARABIC, width)
+    en = _scaled(LATIN, width * LATIN_WIDTH / ARABIC_WIDTH)
+    gap = round(width * GAP / ARABIC_WIDTH)
+    im = Image.new("RGBA", (width, ar.height + gap + en.height), (0, 0, 0, 0))
+    for mask, y in ((ar, 0), (en, ar.height + gap)):
+        ink = Image.new("RGBA", mask.size, color + (255,))
+        ink.putalpha(mask)
+        im.alpha_composite(ink, ((width - mask.width) // 2, y))
+    return im
+
+
 def full_tile(size: int) -> Image.Image:
     """Square, opaque: gradient plus wordmark (iOS masks it itself)."""
     big = gradient(size * SS)
@@ -101,7 +124,19 @@ def adaptive_layer(size: int, color) -> Image.Image:
 
 
 def main() -> None:
-    rounded_tile(1024).save(ROOT / "assets/images/logo.png", optimize=True)
+    rounded_tile(1024).save(HERE / "logo.png", optimize=True)
+
+    px = SPLASH_WIDTH * SPLASH_SCALE
+    (ROOT / "assets/images").mkdir(exist_ok=True)
+    wordmark(px, (255, 255, 255)).save(ROOT / "assets/images/wordmark.png", optimize=True)
+    splash = ROOT / "assets/splash"
+    splash.mkdir(exist_ok=True)
+    gold = wordmark(px, GOLD)
+    gold.save(splash / "wordmark.png", optimize=True)
+    canvas = Image.new("RGBA", (ANDROID_12_CANVAS * SPLASH_SCALE,) * 2, (0, 0, 0, 0))
+    canvas.alpha_composite(
+        gold, ((canvas.width - gold.width) // 2, (canvas.height - gold.height) // 2))
+    canvas.save(splash / "wordmark_android12.png", optimize=True)
 
     for name, scale in DENSITIES.items():
         folder = RES / f"mipmap-{name}"

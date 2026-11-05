@@ -22,6 +22,142 @@ Path rubElHizb(Offset center, double radius, {double rotation = 0}) {
   return path;
 }
 
+/// The shamsa: the sunburst medallion that opens an illuminated Mushaf. A
+/// scalloped gold ring of [radius], a fine ring and a circle of dots inside
+/// it, and rays long and short around it, fading as they reach out.
+///
+/// [trace] draws the scalloped ring from its top down both sides at once
+/// (so it reads the same in either direction) and brings in the inner
+/// rings; [bloom] grows the rays, from the top round to the bottom. [scale]
+/// grows or shrinks the whole medallion about the box's centre. Without
+/// animations it is drawn whole.
+class ShamsaPainter extends CustomPainter {
+  ShamsaPainter({
+    required this.color,
+    required this.radius,
+    Animation<double>? trace,
+    Animation<double>? bloom,
+    Animation<double>? scale,
+  })  : trace = trace ?? kAlwaysCompleteAnimation,
+        bloom = bloom ?? kAlwaysCompleteAnimation,
+        scale = scale ?? const AlwaysStoppedAnimation(1),
+        super(repaint: Listenable.merge([trace, bloom, scale]));
+
+  final Color color;
+  final double radius;
+  final Animation<double> trace;
+  final Animation<double> bloom;
+  final Animation<double> scale;
+
+  static const int _lobes = 36;
+  static const int _rays = 72;
+
+  /// From the centre to the tip of a long ray, in radii.
+  static const double reach = 1.44;
+
+  // Built once at the base radius; [scale] is applied to the canvas.
+  late final Path _edge = _scallops(radius);
+  late final ui.PathMetric _edgeMetric = _edge.computeMetrics().single;
+
+  static Path _scallops(double r) {
+    final path = Path();
+    for (var i = 0; i <= _lobes; i++) {
+      final a = -math.pi / 2 + i * 2 * math.pi / _lobes;
+      final p = Offset(math.cos(a), math.sin(a)) * r;
+      if (i == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.arcToPoint(p, radius: Radius.circular(r * 0.094));
+      }
+    }
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final t = trace.value.clamp(0.0, 1.0);
+    final b = bloom.value.clamp(0.0, 1.0);
+    if (t == 0 && b == 0) return;
+    final r = radius;
+    canvas
+      ..save()
+      ..translate(size.width / 2, size.height / 2)
+      ..scale(scale.value);
+
+    if (b > 0) {
+      final gap = r * 0.085;
+      final rays = Path();
+      for (var i = 0; i < _rays; i++) {
+        // 0 at the top, 1 at the bottom: the rays open out round both sides.
+        final from = math.min(i, _rays - i) / (_rays / 2);
+        final grown = ((b - from * 0.5) / 0.5).clamp(0.0, 1.0);
+        if (grown == 0) continue;
+        final a = -math.pi / 2 + i * 2 * math.pi / _rays;
+        final d = Offset(math.cos(a), math.sin(a));
+        final n = Offset(-d.dy, d.dx) * (r * 0.015);
+        final base = d * (r + gap);
+        final tip = d * (r + gap + r * (i.isEven ? 0.36 : 0.19) * grown);
+        rays
+          ..moveTo(base.dx + n.dx, base.dy + n.dy)
+          ..lineTo(tip.dx, tip.dy)
+          ..lineTo(base.dx - n.dx, base.dy - n.dy)
+          ..close();
+      }
+      canvas.drawPath(
+        rays,
+        Paint()
+          ..shader = ui.Gradient.radial(Offset.zero, r * reach, [
+            color.withValues(alpha: color.a * 0.95),
+            color.withValues(alpha: color.a * 0.95),
+            color.withValues(alpha: 0),
+          ], const [
+            0,
+            0.78,
+            1
+          ]),
+      );
+    }
+
+    if (t > 0) {
+      final line = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4
+        ..strokeCap = StrokeCap.round;
+      final length = _edgeMetric.length;
+      // The path starts and ends at the top: draw from both ends.
+      canvas
+        ..drawPath(_edgeMetric.extractPath(0, length * t / 2), line)
+        ..drawPath(_edgeMetric.extractPath(length * (1 - t / 2), length), line);
+
+      final inner = color.withValues(alpha: color.a * t);
+      canvas.drawCircle(
+        Offset.zero,
+        r * 0.915,
+        Paint()
+          ..color = inner
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 0.8,
+      );
+      final dot = Paint()..color = inner;
+      for (var i = 0; i < _rays; i++) {
+        final a = i * 2 * math.pi / _rays;
+        canvas.drawCircle(
+            Offset(math.cos(a), math.sin(a)) * (r * 0.86), r * 0.0095, dot);
+      }
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(ShamsaPainter old) =>
+      old.color != color ||
+      old.radius != radius ||
+      old.trace != trace ||
+      old.bloom != bloom ||
+      old.scale != scale;
+}
+
 /// A crescent (hilal) of [radius] around [center], its horns pointing
 /// along [facing] (radians, 0 = right, clockwise).
 Path crescent(Offset center, double radius, double facing) {

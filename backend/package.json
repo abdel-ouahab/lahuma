@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "make-admin": "tsc -p tsconfig.json && node dist/scripts/makeAdmin.js",
+    "adhan:import": "ts-node --transpile-only src/scripts/importAdhans.ts",
     "test": "jest"
   },
   "prisma": {
@@ -35,8 +36,10 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^2.3.0",
     "@types/node": "^20.14.10",
+    "@types/supertest": "^6.0.3",
     "jest": "^29.7.0",
     "prisma": "^5.19.1",
+    "supertest": "^7.3.1",
     "ts-jest": "^29.2.5",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4"
