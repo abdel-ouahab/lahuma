@@ -20,6 +20,8 @@ import 'mp3quran_providers.dart';
 import 'player_backdrop_layer.dart';
 import 'player_backdrop_sheet.dart';
 import 'recitation_artwork.dart';
+import 'sleep_timer_sheet.dart';
+import '../../../core/audio/sleep_timer.dart';
 
 /// Lists the Surahs the chosen Moshaf really has and plays them.
 ///
@@ -1198,7 +1200,53 @@ class _NowPlayingControls extends StatelessWidget {
   }
 }
 
-/// Shuffle · repeat · background · surah list; inactive toggles are dimmed.
+/// Moon when off (dimmed like the other toggles); while a countdown runs it
+/// shows the time left, and a lit moon for "end of this surah".
+class _SleepTimerButton extends StatelessWidget {
+  const _SleepTimerButton({required this.timer});
+
+  final SleepTimer timer;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: timer,
+      builder: (context, _) {
+        final remaining = timer.remaining;
+        final label = remaining != null
+            ? context.tr(
+                'مؤقت الإيقاف: ${formatSleepRemaining(remaining)}',
+                'Sleep timer: ${formatSleepRemaining(remaining)} left')
+            : timer.endOfTrack
+                ? context.tr('مؤقت الإيقاف: نهاية السورة',
+                    'Sleep timer: end of surah')
+                : context.tr('مؤقت الإيقاف', 'Sleep timer');
+        return IconButton(
+          tooltip: label,
+          onPressed: () => SleepTimerSheet.show(context, timer),
+          constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+          icon: remaining != null
+              ? Text(
+                  formatSleepRemaining(remaining),
+                  semanticsLabel: label,
+                  style: _inter(14, FontWeight.w700, _Np.white).copyWith(
+                      fontFeatures: const [FontFeature.tabularFigures()]),
+                )
+              : Icon(
+                  timer.isActive
+                      ? Icons.bedtime_rounded
+                      : Icons.bedtime_outlined,
+                  size: 26,
+                  color: timer.isActive ? _Np.white : _Np.dim(0.5),
+                ),
+        );
+      },
+    );
+  }
+}
+
+/// Shuffle · repeat · sleep timer · background · surah list; inactive
+/// toggles are dimmed.
 class _BottomRow extends StatelessWidget {
   const _BottomRow({
     required this.controller,
@@ -1234,6 +1282,7 @@ class _BottomRow extends StatelessWidget {
             context.tr('عشوائي', 'Shuffle')),
         _toggle(controller.repeat, Icons.repeat_one_rounded,
             context.tr('تكرار', 'Repeat')),
+        _SleepTimerButton(timer: controller.sleepTimer),
         IconButton(
           tooltip: context.tr('خلفية المشغّل', 'Player background'),
           onPressed: onBackdrop,
@@ -1371,12 +1420,11 @@ class _VolumeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final player = controller.player;
-    return StreamBuilder<double>(
-      initialData: player.volume,
-      stream: player.volumeStream,
-      builder: (context, snap) {
-        final volume = snap.data ?? player.volume;
+    // The listener's level, not the player's: that one dips while the sleep
+    // timer fades out.
+    return ValueListenableBuilder<double>(
+      valueListenable: controller.volume,
+      builder: (context, volume, _) {
         return Row(
           children: [
             GestureDetector(
