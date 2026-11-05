@@ -15,7 +15,8 @@ type MuezzinRow = {
 };
 
 /** A stored URL as the app should fetch it: absolute URLs pass through,
- *  "/adhan/…" is prefixed with MEDIA_BASE_URL (the object-storage origin). */
+ *  "/adhan/…" is prefixed with [base]: MEDIA_BASE_URL, or the request's own
+ *  origin when that is empty (see muezzins.controller.ts). */
 export function resolveMediaUrl(url: string, base = env.mediaBaseUrl): string {
   if (!url.startsWith("/")) return url;
   return base.replace(/\/+$/, "") + url;
@@ -36,10 +37,10 @@ export function toDto(m: MuezzinRow, base = env.mediaBaseUrl) {
   };
 }
 
-export async function listActiveMuezzins() {
+export async function listActiveMuezzins(base = env.mediaBaseUrl) {
   const rows = await prisma.muezzin.findMany({
     where: { isActive: true },
     orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }],
   });
-  return rows.map((m) => toDto(m));
+  return rows.map((m) => toDto(m, base));
 }

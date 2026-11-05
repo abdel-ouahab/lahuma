@@ -43,6 +43,18 @@ describe("GET /api/muezzins", () => {
       expect(m.regularUrl).toContain(`/v${m.version}/`);
     }
   });
+
+  it("without MEDIA_BASE_URL, points at the origin the request came to", async () => {
+    const { env } = jest.requireMock("../../../config/env");
+    env.mediaBaseUrl = "";
+    try {
+      mockFindMany.mockImplementation(seededTable());
+      const res = await request(createApp()).get("/api/muezzins").set("Host", "10.0.2.2:4000").expect(200);
+      expect(res.body.muezzins[0].regularUrl).toBe("http://10.0.2.2:4000/adhan/algeria/v2/regular.mp3");
+    } finally {
+      env.mediaBaseUrl = "http://10.0.2.2:4000";
+    }
+  });
 });
 
 describe("seedRows", () => {

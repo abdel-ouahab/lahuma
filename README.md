@@ -125,10 +125,10 @@ DATABASE_URL="postgresql://lahuma:lahuma@localhost:5432/lahuma?schema=public"
 JWT_SECRET="change-me-in-production"
 JWT_EXPIRES_IN="7d"
 CORS_ORIGIN="*"
-MEDIA_BASE_URL="http://10.0.2.2:4000"   # origin of the adhan files: the emulator's view of this backend
+MEDIA_BASE_URL=""   # origin of the adhan files; empty = this backend, as the app reached it
 ```
 
-`MEDIA_BASE_URL` is `http://<LAN IP>:4000` for a real phone, and the public HTTPS origin in production (see [docs/adhan.md](docs/adhan.md#hosting-the-files)).
+Leave `MEDIA_BASE_URL` empty in development; in production set it to the public HTTPS origin (see [docs/adhan.md](docs/adhan.md#hosting-the-files)).
 
 ## Running the Application
 

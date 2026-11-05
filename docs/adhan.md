@@ -75,7 +75,7 @@ The settings are under **Settings → الصلاة → الأذان** (`/setting
 | Import | `npm run adhan:import` ([`src/scripts/importAdhans.ts`](../backend/src/scripts/importAdhans.ts)): downloads, processes and publishes the files into `public/adhan/` |
 | Seed | [`backend/prisma/seed.ts`](../backend/prisma/seed.ts): upserts the manifest's rows by fixed id; a row that failed the import is seeded inactive |
 | Files | `GET /adhan/<slug>/v<version>/<file>`, served by the backend from `public/adhan/` (30-day `immutable` cache, `Range` support) |
-| Env | `MEDIA_BASE_URL`: the public origin of the files. A stored URL starting with `/` is prefixed with it; an absolute URL is returned as is. |
+| Env | `MEDIA_BASE_URL`: the public origin of the files. A stored URL starting with `/` is prefixed with it; an absolute URL is returned as is. Empty (the default): the origin the request came to, so the API points at its own `/adhan` route on whatever host the app used. |
 
 ```bash
 cd backend
@@ -84,15 +84,7 @@ npx prisma migrate deploy      # or: npm run prisma:migrate   (dev)
 npx prisma db seed             # or: npm run prisma:seed
 ```
 
-`MEDIA_BASE_URL` in development:
-
-| Device | `MEDIA_BASE_URL` |
-|---|---|
-| Android emulator | `http://10.0.2.2:4000` |
-| Real phone on the same Wi-Fi | `http://<this machine's LAN IP>:4000` (and run the app with `--dart-define=API_BASE_URL=http://<LAN IP>:4000/api`) |
-| iOS simulator | `http://localhost:4000` |
-
-The server reads `.env` once at start, so restart it after changing this.
+In development, leave `MEDIA_BASE_URL` empty: the file URLs follow the host the app used, `http://10.0.2.2:4000` on the Android emulator, `http://<LAN IP>:4000` on a phone (run the app with `--dart-define=API_BASE_URL=http://<LAN IP>:4000/api`), `http://localhost:4000` on the iOS simulator. The app also resolves a relative file URL against its API origin. The server reads `.env` once at start, so restart it after changing this.
 
 There is no admin UI for muezzins: change the manifest, re-run the import, then the seed.
 
