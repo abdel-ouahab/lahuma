@@ -77,10 +77,14 @@ class PrayerHero extends ConsumerWidget {
                   color: CupertinoColors.white.withValues(alpha: 0.9)),
             ),
             const SizedBox(height: AppSpacing.md),
-            // The adhan chip always shows its whole label; the city chip
-            // takes what is left and truncates a long name instead.
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            // Side by side when both chips fit; otherwise (a small phone,
+            // large text, a long city name) the city chip goes under the
+            // adhan chip, and truncates there if it is wider still.
+            OverflowBar(
+              alignment: MainAxisAlignment.spaceBetween,
+              overflowAlignment: OverflowBarAlignment.start,
+              spacing: AppSpacing.sm,
+              overflowSpacing: AppSpacing.sm,
               children: [
                 _HeroChip(
                   semanticLabel: adhanLabel,
@@ -101,22 +105,18 @@ class PrayerHero extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                Flexible(
-                  child: _HeroChip(
-                    semanticLabel:
-                        context.tr('المدينة: $place', 'City: $place'),
-                    onTap: onPickCity,
-                    children: [
-                      Icon(CupertinoIcons.location_solid,
-                          size: 16, color: c.resolve(AppColors.prayerGreen)),
-                      const SizedBox(width: AppSpacing.xs + 2),
-                      Flexible(child: _ChipText(place)),
-                      const SizedBox(width: AppSpacing.xs + 2),
-                      Icon(CupertinoIcons.chevron_down,
-                          size: 13, color: c.secondaryLabel),
-                    ],
-                  ),
+                _HeroChip(
+                  semanticLabel: context.tr('المدينة: $place', 'City: $place'),
+                  onTap: onPickCity,
+                  children: [
+                    Icon(CupertinoIcons.location_solid,
+                        size: 16, color: c.resolve(AppColors.prayerGreen)),
+                    const SizedBox(width: AppSpacing.xs + 2),
+                    Flexible(child: _ChipText(place)),
+                    const SizedBox(width: AppSpacing.xs + 2),
+                    Icon(CupertinoIcons.chevron_down,
+                        size: 13, color: c.secondaryLabel),
+                  ],
                 ),
               ],
             ),

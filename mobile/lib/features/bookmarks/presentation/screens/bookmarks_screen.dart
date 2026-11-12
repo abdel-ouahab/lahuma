@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/design/app_layout.dart';
 import '../../../../core/design/widgets/app_entrance.dart';
 import '../../../../core/localization/tr.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -59,15 +60,19 @@ class BookmarksScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: AppSpacing.xs),
                   ],
-                  Text(
-                    context.tr('العلامات المرجعية', 'Bookmarks'),
-                    style: GoogleFonts.cairo(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                  // Wraps rather than pushing the count off a narrow screen.
+                  Expanded(
+                    child: Text(
+                      context.tr('العلامات المرجعية', 'Bookmarks'),
+                      style: GoogleFonts.cairo(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color:
+                            isDark ? AppColors.textDark : AppColors.textLight,
+                      ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: AppSpacing.sm),
                   if (bookmarks.isNotEmpty)
                     Text(
                       context.tr('${bookmarks.length} علامة',
@@ -143,7 +148,8 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    // Scrolls in landscape and with large text instead of overflowing.
+    return AppScrollableCenter(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(

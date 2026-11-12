@@ -127,22 +127,27 @@ class SleepTimerSheet extends StatelessWidget {
                         label: context.tr('$m دقيقة', '$m minutes'),
                         onTap: () => _pick(
                             context, () => timer.start(Duration(minutes: m))),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('$m',
-                                style: GoogleFonts.cairo(
-                                    fontSize: 22,
-                                    height: 1.15,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white)),
-                            Text(_unit(context, m),
-                                style: GoogleFonts.cairo(
-                                    fontSize: 12,
-                                    height: 1.2,
-                                    color:
-                                        Colors.white.withValues(alpha: 0.65))),
-                          ],
+                        // The tile keeps its shape; large text shrinks to
+                        // fit it instead of spilling out.
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text('$m',
+                                  style: GoogleFonts.cairo(
+                                      fontSize: 22,
+                                      height: 1.15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white)),
+                              Text(_unit(context, m),
+                                  style: GoogleFonts.cairo(
+                                      fontSize: 12,
+                                      height: 1.2,
+                                      color: Colors.white
+                                          .withValues(alpha: 0.65))),
+                            ],
+                          ),
                         ),
                       ),
                   ],

@@ -416,16 +416,22 @@ class _SurahBodyState extends ConsumerState<_SurahBody> {
                 tooltip: context.tr('رجوع', 'Back'),
                 onTap: () => _leave(context),
               ),
-              const Spacer(),
-              Text(
-                _detail.arabicName,
-                style: GoogleFonts.scheherazadeNew(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textDark : AppColors.textLight,
+              // Centred between the buttons; shrinks to fit rather than push
+              // them off a narrow screen at a large text size.
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _detail.arabicName,
+                    maxLines: 1,
+                    style: GoogleFonts.scheherazadeNew(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                    ),
+                  ),
                 ),
               ),
-              const Spacer(),
               LahumaIconButton(
                 icon: Icons.keyboard_double_arrow_down_rounded,
                 tooltip: context.tr('التمرير التلقائي', 'Auto-scroll'),

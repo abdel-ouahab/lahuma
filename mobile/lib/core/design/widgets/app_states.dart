@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 import '../app_colors.dart';
+import '../app_layout.dart';
 import '../app_motion.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
@@ -220,7 +221,8 @@ class AppEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
-    return Center(
+    // Scrolls when it can't fit: a phone in landscape, large text.
+    return AppScrollableCenter(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(

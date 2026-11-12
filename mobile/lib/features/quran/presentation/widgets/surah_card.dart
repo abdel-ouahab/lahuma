@@ -37,68 +37,80 @@ class SurahListItem extends StatelessWidget {
         ),
       ],
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: Row(
-        children: [
-          // ── Number badge (geometric octagon shape) ─────────────────────
-          _SurahNumberBadge(number: surah.number),
-          const SizedBox(width: AppSpacing.md),
-          // ── Name & metadata ─────────────────────────────────────────────
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  surah.englishName,
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textDark : AppColors.textLight,
+      child: LayoutBuilder(
+        builder: (context, box) => Row(
+          children: [
+            // ── Number badge (geometric octagon shape) ─────────────────────
+            _SurahNumberBadge(number: surah.number),
+            const SizedBox(width: AppSpacing.md),
+            // ── Name & metadata ─────────────────────────────────────────────
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    surah.englishName,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? AppColors.textDark : AppColors.textLight,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Row(
-                  children: [
-                    Text(
-                      surah.revelationTypeArabic,
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w500,
+                  const SizedBox(height: 2),
+                  // Wraps under large text instead of running off the card.
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        surah.revelationTypeArabic,
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
-                    Text(
-                      ' • ',
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color:
-                            isDark ? AppColors.mutedDark : AppColors.mutedLight,
+                      Text(
+                        ' • ',
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: isDark
+                              ? AppColors.mutedDark
+                              : AppColors.mutedLight,
+                        ),
                       ),
-                    ),
-                    Text(
-                      context.tr(
-                          '${surah.ayahCount} آية', '${surah.ayahCount} ayahs'),
-                      style: GoogleFonts.cairo(
-                        fontSize: 11,
-                        color: isDark
-                            ? AppColors.subtextDark
-                            : AppColors.subtextLight,
+                      Text(
+                        context.tr('${surah.ayahCount} آية',
+                            '${surah.ayahCount} ayahs'),
+                        style: GoogleFonts.cairo(
+                          fontSize: 11,
+                          color: isDark
+                              ? AppColors.subtextDark
+                              : AppColors.subtextLight,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          // ── Arabic name ─────────────────────────────────────────────────
-          Text(
-            surah.arabicName,
-            style: GoogleFonts.scheherazadeNew(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textDark : AppColors.inkDark,
+            const SizedBox(width: AppSpacing.sm),
+            // ── Arabic name ─────────────────────────────────────────────────
+            // Its natural width, up to a little under half the row: past that
+            // (a long name at a large text size) it wraps onto a second line.
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: box.maxWidth * 0.45),
+              child: Text(
+                surah.arabicName,
+                textAlign: TextAlign.end,
+                style: GoogleFonts.scheherazadeNew(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? AppColors.textDark : AppColors.inkDark,
+                ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
