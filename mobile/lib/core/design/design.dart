@@ -4,6 +4,7 @@ library;
 export 'package:flutter/cupertino.dart';
 
 export 'app_colors.dart';
+export 'app_layout.dart';
 export 'app_motion.dart';
 export 'app_spacing.dart';
 export 'app_typography.dart';

@@ -47,113 +47,120 @@ class Mp3QuranRecitersList extends ConsumerWidget {
     final lahuma = playableReciters(
         ref.watch(reciterListProvider).valueOrNull ?? const [], query);
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
-          child: AppSearchField(
-            placeholder: context.tr('ابحث عن قارئ', 'Search reciters'),
-            onChanged: (v) =>
-                ref.read(mp3RecitersSearchProvider.notifier).state = v,
-          ),
-        ),
-        Expanded(
-          child: async.when(
-            loading: () => const AppSkeletonList(circleLeading: true),
-            error: (e, _) => ErrorRetry(
-              error: e,
-              onRetry: () => ref.invalidate(mp3RecitersProvider),
+    // With little height (landscape with the keyboard up) the search field
+    // and the list scroll together rather than the list being crushed.
+    return AppMinHeight(
+      minHeight: 160,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.sm),
+            child: AppSearchField(
+              placeholder: context.tr('ابحث عن قارئ', 'Search reciters'),
+              onChanged: (v) =>
+                  ref.read(mp3RecitersSearchProvider.notifier).state = v,
             ),
-            data: (all) {
-              final list = filterReciters(all, query);
-              final starred =
-                  list.where((r) => favorites.contains(r.id)).toList();
-              final rest =
-                  list.where((r) => !favorites.contains(r.id)).toList();
+          ),
+          Expanded(
+            child: async.when(
+              loading: () => const AppSkeletonList(circleLeading: true),
+              error: (e, _) => ErrorRetry(
+                error: e,
+                onRetry: () => ref.invalidate(mp3RecitersProvider),
+              ),
+              data: (all) {
+                final list = filterReciters(all, query);
+                final starred =
+                    list.where((r) => favorites.contains(r.id)).toList();
+                final rest =
+                    list.where((r) => !favorites.contains(r.id)).toList();
 
-              Widget tile(Mp3Reciter r) => _ReciterTile(
-                    reciter: r,
-                    photoUrl: photos?.urlFor(r.name),
-                    favorite: favorites.contains(r.id),
-                    onToggleFavorite: () =>
-                        ref.read(reciterFavoritesProvider.notifier).toggle(r),
-                  );
+                Widget tile(Mp3Reciter r) => _ReciterTile(
+                      reciter: r,
+                      photoUrl: photos?.urlFor(r.name),
+                      favorite: favorites.contains(r.id),
+                      onToggleFavorite: () =>
+                          ref.read(reciterFavoritesProvider.notifier).toggle(r),
+                    );
 
-              final items = <Widget>[
-                if (lahuma.isNotEmpty) LahumaRecitersSection(reciters: lahuma),
-                if (starred.isNotEmpty) ...[
-                  _SectionLabel(context.tr('المفضلة', 'Favorites')),
-                  for (final r in starred) tile(r),
-                ],
-                if (rest.isNotEmpty) ...[
-                  _SectionLabel(
-                    starred.isEmpty && lahuma.isEmpty
-                        ? context.tr('القرّاء', 'Reciters')
-                        : context.tr('جميع القرّاء', 'All reciters'),
-                    count: rest.length,
-                  ),
-                  for (final r in rest) tile(r),
-                ],
-              ];
+                final items = <Widget>[
+                  if (lahuma.isNotEmpty)
+                    LahumaRecitersSection(reciters: lahuma),
+                  if (starred.isNotEmpty) ...[
+                    _SectionLabel(context.tr('المفضلة', 'Favorites')),
+                    for (final r in starred) tile(r),
+                  ],
+                  if (rest.isNotEmpty) ...[
+                    _SectionLabel(
+                      starred.isEmpty && lahuma.isEmpty
+                          ? context.tr('القرّاء', 'Reciters')
+                          : context.tr('جميع القرّاء', 'All reciters'),
+                      count: rest.length,
+                    ),
+                    for (final r in rest) tile(r),
+                  ],
+                ];
 
-              return RefreshIndicator(
-                color: c.accent,
-                onRefresh: () async {
-                  ref.invalidate(mp3RecitersProvider);
-                  ref.invalidate(reciterListProvider);
-                  ref.invalidate(reciterPhotosProvider);
-                  try {
-                    await ref.read(mp3RecitersProvider.future);
-                  } catch (_) {}
-                },
-                child: items.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          SizedBox(
-                            height: 240,
-                            child: Center(
-                              child: Text(
-                                all.isEmpty
-                                    ? context.tr('لا يوجد قرّاء متاحون',
-                                        'No reciters available')
-                                    : context.tr('لا يوجد قارئ بهذا الاسم',
-                                        'No reciter by that name'),
-                                style: AppTypography.subheadline
-                                    .copyWith(color: c.secondaryLabel),
+                return RefreshIndicator(
+                  color: c.accent,
+                  onRefresh: () async {
+                    ref.invalidate(mp3RecitersProvider);
+                    ref.invalidate(reciterListProvider);
+                    ref.invalidate(reciterPhotosProvider);
+                    try {
+                      await ref.read(mp3RecitersProvider.future);
+                    } catch (_) {}
+                  },
+                  child: items.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: [
+                            SizedBox(
+                              height: 240,
+                              child: Center(
+                                child: Text(
+                                  all.isEmpty
+                                      ? context.tr('لا يوجد قرّاء متاحون',
+                                          'No reciters available')
+                                      : context.tr('لا يوجد قارئ بهذا الاسم',
+                                          'No reciter by that name'),
+                                  style: AppTypography.subheadline
+                                      .copyWith(color: c.secondaryLabel),
+                                ),
                               ),
                             ),
+                          ],
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(
+                              parent: BouncingScrollPhysics()),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.xs,
+                            AppSpacing.lg,
+                            MediaQuery.paddingOf(context).bottom +
+                                AppSpacing.md,
                           ),
-                        ],
-                      )
-                    : ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(
-                            parent: BouncingScrollPhysics()),
-                        keyboardDismissBehavior:
-                            ScrollViewKeyboardDismissBehavior.onDrag,
-                        padding: EdgeInsets.fromLTRB(
-                          AppSpacing.lg,
-                          AppSpacing.xs,
-                          AppSpacing.lg,
-                          MediaQuery.paddingOf(context).bottom + AppSpacing.md,
-                        ),
-                        itemCount: items.length,
-                        itemBuilder: (_, i) => Padding(
-                          padding: EdgeInsets.only(
-                            top: items[i] is _SectionLabel && i > 0
-                                ? AppSpacing.md
-                                : 0,
-                            bottom: AppSpacing.sm,
+                          itemCount: items.length,
+                          itemBuilder: (_, i) => Padding(
+                            padding: EdgeInsets.only(
+                              top: items[i] is _SectionLabel && i > 0
+                                  ? AppSpacing.md
+                                  : 0,
+                              bottom: AppSpacing.sm,
+                            ),
+                            child: items[i].listEntrance(i),
                           ),
-                          child: items[i].listEntrance(i),
                         ),
-                      ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

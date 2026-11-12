@@ -53,8 +53,10 @@ class MushafOverlay extends StatelessWidget {
               child: Padding(
                 padding: EdgeInsetsDirectional.fromSTEB(
                     AppSpacing.xs, media.padding.top, AppSpacing.xs, 0),
-                child: SizedBox(
-                  height: 52,
+                // 52 tall, taller when large text needs the room for the
+                // surah and juz' lines.
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 52),
                   child: Row(
                     children: [
                       AppIconButton(

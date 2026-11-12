@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/design/app_layout.dart';
 import '../../../../core/design/widgets/app_entrance.dart';
 import '../../../../core/design/widgets/app_inputs.dart' show AppSearchField;
 import '../../../../core/localization/tr.dart';
@@ -75,155 +76,165 @@ class _SurahListScreenState extends ConsumerState<SurahListScreen>
       // The lists scroll under the tab bar; they pad for it themselves.
       body: SafeArea(
         bottom: false,
-        child: Column(
-          children: [
-            // ── Header ──────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
-              child: Row(
-                children: [
-                  Text(
-                    context.tr('القرآن الكريم', 'The Holy Quran'),
-                    style: GoogleFonts.cairo(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: isDark ? AppColors.textDark : AppColors.textLight,
+        // Below its designed height (a phone in landscape, the keyboard up)
+        // the header scrolls away with the page instead of crushing the
+        // lists.
+        child: AppMinHeight(
+          child: Column(
+            children: [
+              // ── Header ──────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.tr('القرآن الكريم', 'The Holy Quran'),
+                        style: GoogleFonts.cairo(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color:
+                              isDark ? AppColors.textDark : AppColors.textLight,
+                        ),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  LahumaIconButton(
-                    icon: Icons.search_rounded,
-                    tooltip: context.tr('بحث عن سورة', 'Search surahs'),
-                    onTap: _focusSearch,
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Mushaf ──────────────────────────────────────────────────────
-            const Padding(
-              padding: EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-              child: MushafEntryCard(),
-            ),
-
-            // ── Tab Bar ─────────────────────────────────────────────────────
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
-              child: Container(
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? AppColors.surfaceElevatedDark
-                      : AppColors.surfaceElevatedLight,
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelColor: Colors.white,
-                  unselectedLabelColor:
-                      isDark ? AppColors.subtextDark : AppColors.subtextLight,
-                  labelStyle: GoogleFonts.cairo(
-                      fontSize: 14, fontWeight: FontWeight.w600),
-                  unselectedLabelStyle: GoogleFonts.cairo(
-                      fontSize: 14, fontWeight: FontWeight.w400),
-                  tabs: [
-                    Tab(text: context.tr('السور', 'Surahs')),
-                    Tab(text: context.tr('الأجزاء', 'Juz\'')),
-                    Tab(text: context.tr('القرّاء', 'Reciters')),
+                    LahumaIconButton(
+                      icon: Icons.search_rounded,
+                      tooltip: context.tr('بحث عن سورة', 'Search surahs'),
+                      onTap: _focusSearch,
+                    ),
                   ],
                 ),
               ),
-            ),
 
-            // ── Search (surahs tab only) ────────────────────────────────────
-            AnimatedBuilder(
-              animation: _tabController,
-              builder: (context, child) =>
-                  _tabController.index == 0 ? child! : const SizedBox.shrink(),
-              child: Padding(
+              // ── Mushaf ──────────────────────────────────────────────────────
+              const Padding(
+                padding: EdgeInsets.fromLTRB(
+                    AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                child: MushafEntryCard(),
+              ),
+
+              // ── Tab Bar ─────────────────────────────────────────────────────
+              Padding(
                 padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
-                child: AppSearchField(
-                  focusNode: _searchFocus,
-                  placeholder: context.tr(
-                      'ابحث بالاسم أو الرقم', 'Search by name or number'),
-                  onChanged: (value) =>
-                      ref.read(surahSearchQueryProvider.notifier).state = value,
+                    AppSpacing.lg, AppSpacing.lg, AppSpacing.lg, 0),
+                child: Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? AppColors.surfaceElevatedDark
+                        : AppColors.surfaceElevatedLight,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: Colors.white,
+                    unselectedLabelColor:
+                        isDark ? AppColors.subtextDark : AppColors.subtextLight,
+                    labelStyle: GoogleFonts.cairo(
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                    unselectedLabelStyle: GoogleFonts.cairo(
+                        fontSize: 14, fontWeight: FontWeight.w400),
+                    tabs: [
+                      Tab(text: context.tr('السور', 'Surahs')),
+                      Tab(text: context.tr('الأجزاء', 'Juz\'')),
+                      Tab(text: context.tr('القرّاء', 'Reciters')),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: AppSpacing.md),
+              // ── Search (surahs tab only) ────────────────────────────────────
+              AnimatedBuilder(
+                animation: _tabController,
+                builder: (context, child) => _tabController.index == 0
+                    ? child!
+                    : const SizedBox.shrink(),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                  child: AppSearchField(
+                    focusNode: _searchFocus,
+                    placeholder: context.tr(
+                        'ابحث بالاسم أو الرقم', 'Search by name or number'),
+                    onChanged: (value) => ref
+                        .read(surahSearchQueryProvider.notifier)
+                        .state = value,
+                  ),
+                ),
+              ),
 
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  // ── Surahs ────────────────────────────────────────────────
-                  surahListAsync.when(
-                    data: (surahs) {
-                      final filtered = filterSurahs(surahs, query);
-                      if (filtered.isEmpty) {
-                        return Center(
-                          child: Text(
-                            context.tr('لا توجد نتائج', 'No results'),
-                            style: GoogleFonts.cairo(
-                              fontSize: 14,
-                              color: isDark
-                                  ? AppColors.mutedDark
-                                  : AppColors.mutedLight,
+              const SizedBox(height: AppSpacing.md),
+
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // ── Surahs ────────────────────────────────────────────────
+                    surahListAsync.when(
+                      data: (surahs) {
+                        final filtered = filterSurahs(surahs, query);
+                        if (filtered.isEmpty) {
+                          return Center(
+                            child: Text(
+                              context.tr('لا توجد نتائج', 'No results'),
+                              style: GoogleFonts.cairo(
+                                fontSize: 14,
+                                color: isDark
+                                    ? AppColors.mutedDark
+                                    : AppColors.mutedLight,
+                              ),
                             ),
-                          ),
+                          );
+                        }
+                        return ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          keyboardDismissBehavior:
+                              ScrollViewKeyboardDismissBehavior.onDrag,
+                          padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
+                              AppSpacing.lg, _listBottom(context)),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: AppSpacing.sm),
+                          itemBuilder: (context, index) {
+                            final surah = filtered[index];
+                            return SurahListItem(
+                              surah: surah,
+                              onTap: () =>
+                                  context.push('/quran/${surah.number}'),
+                            ).listEntrance(index);
+                          },
                         );
-                      }
-                      return ListView.separated(
-                        physics: const BouncingScrollPhysics(),
-                        keyboardDismissBehavior:
-                            ScrollViewKeyboardDismissBehavior.onDrag,
+                      },
+                      loading: () => AppSkeletonList(
+                        itemCount: 10,
                         padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
                             AppSpacing.lg, _listBottom(context)),
-                        itemCount: filtered.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(height: AppSpacing.sm),
-                        itemBuilder: (context, index) {
-                          final surah = filtered[index];
-                          return SurahListItem(
-                            surah: surah,
-                            onTap: () => context.push('/quran/${surah.number}'),
-                          ).listEntrance(index);
-                        },
-                      );
-                    },
-                    loading: () => AppSkeletonList(
-                      itemCount: 10,
-                      padding: EdgeInsets.fromLTRB(AppSpacing.lg, 0,
-                          AppSpacing.lg, _listBottom(context)),
-                      spacing: AppSpacing.sm,
+                        spacing: AppSpacing.sm,
+                      ),
+                      error: (e, _) => ErrorRetry(
+                        error: e,
+                        onRetry: () => ref.invalidate(surahListProvider),
+                      ),
                     ),
-                    error: (e, _) => ErrorRetry(
-                      error: e,
-                      onRetry: () => ref.invalidate(surahListProvider),
-                    ),
-                  ),
 
-                  // ── Juz' ──────────────────────────────────────────────────
-                  _JuzList(surahs: surahListAsync.valueOrNull),
+                    // ── Juz' ──────────────────────────────────────────────────
+                    _JuzList(surahs: surahListAsync.valueOrNull),
 
-                  // ── Reciters ──────────────────────────────────────────────
-                  const Mp3QuranRecitersList(),
-                ],
+                    // ── Reciters ──────────────────────────────────────────────
+                    const Mp3QuranRecitersList(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

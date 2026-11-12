@@ -75,7 +75,9 @@ class _AdhanPlayerScreenState extends ConsumerState<AdhanPlayerScreen> {
         ),
       ),
       child: SafeArea(
-        child: Padding(
+        // Spread out as designed when it fits; scrolls in landscape and
+        // with large text.
+        child: AppFillScroll(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Column(
             children: [

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../../core/audio/audio_focus.dart';
 import '../../../core/utils/arabic_text.dart';
+import '../../../core/design/app_layout.dart';
 import '../../../core/design/widgets/app_entrance.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/theme/app_colors.dart';
@@ -213,84 +214,88 @@ class _PlayerBody extends ConsumerWidget {
           children: [
             SafeArea(
               bottom: false,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, 0),
-                    child: IconButton(
-                      onPressed: () => Navigator.of(context).maybePop(),
-                      tooltip: context.tr('رجوع', 'Back'),
-                      icon: Icon(Icons.chevron_left_rounded,
-                          size: 30, color: pal.ink),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: _LibraryHeader(
-                      pal: pal,
-                      reciter: reciter,
-                      moshaf: moshaf,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.lg),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: _ActionRow(
-                      pal: pal,
-                      controller: controller,
-                      state: state,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                    child: _DownloadsBar(pal: pal, moshaf: moshaf),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  if (state.status == Mp3PlaybackStatus.error)
+              // Below its designed height (landscape) the header scrolls
+              // away with the page instead of crushing the track list.
+              child: AppMinHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
-                      child: Text(
-                        state.error == 'unavailable'
-                            ? context.tr('هذه السورة غير متوفرة لهذه التلاوة',
-                                'This surah is not available for this recitation')
-                            : context.tr(
-                                'تعذّر تشغيل التلاوة. تحقق من الاتصال، أو نزّل السورة لتسمعها دون إنترنت.',
-                                'Could not play this recitation. Check your connection, or download the surah to listen offline.'),
-                        style: _inter(12, FontWeight.w500, AppColors.error),
+                          AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, 0),
+                      child: IconButton(
+                        onPressed: () => Navigator.of(context).maybePop(),
+                        tooltip: context.tr('رجوع', 'Back'),
+                        icon: Icon(Icons.chevron_left_rounded,
+                            size: 30, color: pal.ink),
                       ),
                     ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.fromLTRB(
-                          AppSpacing.md, 0, AppSpacing.md, listBottom),
-                      itemCount: moshaf.surahNumbers.length,
-                      itemBuilder: (_, i) {
-                        final n = moshaf.surahNumbers[i];
-                        return _TrackTile(
-                          pal: pal,
-                          index: i + 1,
-                          title: nameOf(n),
-                          subtitle: reciter.name,
-                          active: state.surah == n,
-                          onTap: () => controller.playSurah(n),
-                          trailing: _DownloadButton(
-                            pal: pal,
-                            moshaf: moshaf,
-                            surah: n,
-                            title: nameOf(n),
-                          ),
-                        ).listEntrance(i);
-                      },
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      child: _LibraryHeader(
+                        pal: pal,
+                        reciter: reciter,
+                        moshaf: moshaf,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: AppSpacing.lg),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      child: _ActionRow(
+                        pal: pal,
+                        controller: controller,
+                        state: state,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                      child: _DownloadsBar(pal: pal, moshaf: moshaf),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    if (state.status == Mp3PlaybackStatus.error)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+                        child: Text(
+                          state.error == 'unavailable'
+                              ? context.tr('هذه السورة غير متوفرة لهذه التلاوة',
+                                  'This surah is not available for this recitation')
+                              : context.tr(
+                                  'تعذّر تشغيل التلاوة. تحقق من الاتصال، أو نزّل السورة لتسمعها دون إنترنت.',
+                                  'Could not play this recitation. Check your connection, or download the surah to listen offline.'),
+                          style: _inter(12, FontWeight.w500, AppColors.error),
+                        ),
+                      ),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.fromLTRB(
+                            AppSpacing.md, 0, AppSpacing.md, listBottom),
+                        itemCount: moshaf.surahNumbers.length,
+                        itemBuilder: (_, i) {
+                          final n = moshaf.surahNumbers[i];
+                          return _TrackTile(
+                            pal: pal,
+                            index: i + 1,
+                            title: nameOf(n),
+                            subtitle: reciter.name,
+                            active: state.surah == n,
+                            onTap: () => controller.playSurah(n),
+                            trailing: _DownloadButton(
+                              pal: pal,
+                              moshaf: moshaf,
+                              surah: n,
+                              title: nameOf(n),
+                            ),
+                          ).listEntrance(i);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -1031,7 +1036,9 @@ class _NowPlayingScreenState extends ConsumerState<_NowPlayingScreen>
                   }
                   _springBack();
                 },
-                child: Padding(
+                // Spread out as designed when it fits; scrolls on a phone in
+                // landscape and with large text.
+                child: AppFillScroll(
                   padding: const EdgeInsets.symmetric(horizontal: 28),
                   child: Column(
                     children: [
@@ -1214,12 +1221,11 @@ class _SleepTimerButton extends StatelessWidget {
       builder: (context, _) {
         final remaining = timer.remaining;
         final label = remaining != null
-            ? context.tr(
-                'مؤقت الإيقاف: ${formatSleepRemaining(remaining)}',
+            ? context.tr('مؤقت الإيقاف: ${formatSleepRemaining(remaining)}',
                 'Sleep timer: ${formatSleepRemaining(remaining)} left')
             : timer.endOfTrack
-                ? context.tr('مؤقت الإيقاف: نهاية السورة',
-                    'Sleep timer: end of surah')
+                ? context.tr(
+                    'مؤقت الإيقاف: نهاية السورة', 'Sleep timer: end of surah')
                 : context.tr('مؤقت الإيقاف', 'Sleep timer');
         return IconButton(
           tooltip: label,
@@ -1357,15 +1363,18 @@ class _ProgressBarState extends State<_ProgressBar> {
                 Semantics(
                   label: 'Seek bar',
                   slider: true,
-                  child: LayoutBuilder(
-                    builder: (_, box) => GestureDetector(
+                  // The bar's own width, read when touched (a LayoutBuilder
+                  // here would stop the screen sizing to its content).
+                  child: Builder(
+                    builder: (bar) => GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTapDown: (d) => scrub(d.localPosition.dx, box.maxWidth),
+                      onTapDown: (d) =>
+                          scrub(d.localPosition.dx, bar.size!.width),
                       onTapUp: (_) => commit(),
                       onHorizontalDragStart: (d) =>
-                          scrub(d.localPosition.dx, box.maxWidth),
+                          scrub(d.localPosition.dx, bar.size!.width),
                       onHorizontalDragUpdate: (d) =>
-                          scrub(d.localPosition.dx, box.maxWidth),
+                          scrub(d.localPosition.dx, bar.size!.width),
                       onHorizontalDragEnd: (_) => commit(),
                       onHorizontalDragCancel: () =>
                           setState(() => _drag = null),
@@ -1501,6 +1510,12 @@ class _SurahSheet extends ConsumerStatefulWidget {
 
   static const double _rowHeight = 68;
 
+  /// A row's height at the current text size: the two lines of text grow
+  /// with it (the list uses a fixed extent so it can open on the playing
+  /// surah).
+  static double rowExtent(BuildContext context) =>
+      _rowHeight * max(1.0, MediaQuery.textScalerOf(context).scale(1));
+
   static Future<void> show(
       BuildContext context, Mp3Reciter reciter, Mp3Moshaf moshaf) {
     return showModalBottomSheet<void>(
@@ -1578,7 +1593,7 @@ class _SurahSheetState extends ConsumerState<_SurahSheet> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final sc = widget.scroll;
         if (!sc.hasClients) return;
-        final target = ((current - 1) * _SurahSheet._rowHeight - 80)
+        final target = ((current - 1) * _SurahSheet.rowExtent(context) - 80)
             .clamp(0.0, sc.position.maxScrollExtent);
         sc.jumpTo(target);
       });
@@ -1591,105 +1606,110 @@ class _SurahSheetState extends ConsumerState<_SurahSheet> {
       ),
       padding:
           EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: pal.mute,
-              borderRadius: BorderRadius.circular(2),
+      // With the keyboard up in landscape, the title and search scroll with
+      // the list rather than leaving it no room.
+      child: AppMinHeight(
+        minHeight: 200,
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: pal.mute,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.tr('السور', 'Surahs'),
-                    style: _inter(20, FontWeight.w800, pal.ink,
-                        letterSpacing: -0.3),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      context.tr('السور', 'Surahs'),
+                      style: _inter(20, FontWeight.w800, pal.ink,
+                          letterSpacing: -0.3),
+                    ),
                   ),
-                ),
-                Text('114', style: _inter(13, FontWeight.w600, pal.sub)),
-              ],
+                  Text('114', style: _inter(13, FontWeight.w600, pal.sub)),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
-            child: TextField(
-              controller: _search,
-              onChanged: (v) => setState(() => _query = v),
-              textInputAction: TextInputAction.search,
-              style: _inter(15, FontWeight.w500, pal.ink),
-              cursorColor: pal.ink,
-              decoration: InputDecoration(
-                hintText: context.tr(
-                    'ابحث بالاسم أو الرقم', 'Search by name or number'),
-                hintStyle: _inter(15, FontWeight.w500, pal.mute),
-                prefixIcon: Icon(Icons.search_rounded, color: pal.sub),
-                suffixIcon: _query.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: context.tr('مسح', 'Clear'),
-                        icon: Icon(Icons.close_rounded, color: pal.sub),
-                        onPressed: () {
-                          _search.clear();
-                          setState(() => _query = '');
-                        },
-                      ),
-                filled: true,
-                fillColor: pal.chip,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
+              child: TextField(
+                controller: _search,
+                onChanged: (v) => setState(() => _query = v),
+                textInputAction: TextInputAction.search,
+                style: _inter(15, FontWeight.w500, pal.ink),
+                cursorColor: pal.ink,
+                decoration: InputDecoration(
+                  hintText: context.tr(
+                      'ابحث بالاسم أو الرقم', 'Search by name or number'),
+                  hintStyle: _inter(15, FontWeight.w500, pal.mute),
+                  prefixIcon: Icon(Icons.search_rounded, color: pal.sub),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: context.tr('مسح', 'Clear'),
+                          icon: Icon(Icons.close_rounded, color: pal.sub),
+                          onPressed: () {
+                            _search.clear();
+                            setState(() => _query = '');
+                          },
+                        ),
+                  filled: true,
+                  fillColor: pal.chip,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: items.isEmpty
-                ? Center(
-                    child: Text(
-                      context.tr('لا توجد نتائج', 'No surahs found'),
-                      style: _inter(14, FontWeight.w500, pal.sub),
+            Expanded(
+              child: items.isEmpty
+                  ? Center(
+                      child: Text(
+                        context.tr('لا توجد نتائج', 'No surahs found'),
+                        style: _inter(14, FontWeight.w500, pal.sub),
+                      ),
+                    )
+                  : ListView.builder(
+                      controller: widget.scroll,
+                      itemExtent: _SurahSheet.rowExtent(context),
+                      padding: EdgeInsets.fromLTRB(
+                        AppSpacing.md,
+                        0,
+                        AppSpacing.md,
+                        MediaQuery.of(context).padding.bottom + AppSpacing.md,
+                      ),
+                      itemCount: items.length,
+                      itemBuilder: (_, i) {
+                        final e = items[i];
+                        final active = state.surah == e.number;
+                        return _SurahRow(
+                          pal: pal,
+                          entry: e,
+                          active: active,
+                          loading: active &&
+                              state.status == Mp3PlaybackStatus.loading,
+                          onTap: !e.available
+                              ? null
+                              : () {
+                                  controller.playSurah(e.number);
+                                  Navigator.of(context).pop();
+                                },
+                        ).listEntrance(i);
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    controller: widget.scroll,
-                    itemExtent: _SurahSheet._rowHeight,
-                    padding: EdgeInsets.fromLTRB(
-                      AppSpacing.md,
-                      0,
-                      AppSpacing.md,
-                      MediaQuery.of(context).padding.bottom + AppSpacing.md,
-                    ),
-                    itemCount: items.length,
-                    itemBuilder: (_, i) {
-                      final e = items[i];
-                      final active = state.surah == e.number;
-                      return _SurahRow(
-                        pal: pal,
-                        entry: e,
-                        active: active,
-                        loading:
-                            active && state.status == Mp3PlaybackStatus.loading,
-                        onTap: !e.available
-                            ? null
-                            : () {
-                                controller.playSurah(e.number);
-                                Navigator.of(context).pop();
-                              },
-                      ).listEntrance(i);
-                    },
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

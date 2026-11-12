@@ -5,9 +5,11 @@ import 'package:flutter/material.dart' show Material, MaterialType;
 import 'package:flutter/services.dart';
 import '../../localization/tr.dart';
 import '../app_colors.dart';
+import '../app_layout.dart';
 import '../app_motion.dart';
 import '../app_spacing.dart';
 import '../app_typography.dart';
+import 'app_button.dart';
 
 // Cupertino dialogs and action sheets hard-code the SF family. On platforms
 // without SF that falls back to the platform font, so carry over ours.
@@ -80,10 +82,34 @@ Future<String?> showAppTextInputDialog(
 }) async {
   final controller = TextEditingController(text: initialValue);
   try {
+    // A phone in landscape: with the keyboard up an alert has no room left
+    // for its field (it keeps ~90 pt of margins), so the same prompt comes
+    // up as a compact sheet, which sits right on the keyboard.
+    if (MediaQuery.sizeOf(context).height < AppBreakpoints.minLayoutHeight) {
+      return await showAppBottomSheet<String>(
+        context,
+        title: title,
+        builder: (ctx) => _TextInputForm(
+          controller: controller,
+          message: message,
+          placeholder: placeholder,
+          confirmLabel: confirmLabel ?? ctx.tr('حفظ', 'Save'),
+          maxLines: maxLines,
+          maxLength: maxLength,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+        ),
+      );
+    }
     return await showCupertinoDialog<String>(
       context: context,
       builder: (ctx) {
         final c = ctx.palette;
+        // Starts at one line when little room is left above the keyboard
+        // (large text), so the field still shows; grows as it's typed in.
+        final roomy = MediaQuery.sizeOf(ctx).height -
+                MediaQuery.viewInsetsOf(ctx).bottom >=
+            _roomForTallField;
         return CupertinoAlertDialog(
           title: Text(title, style: _family(AppTypography.headline)),
           content: Column(
@@ -98,7 +124,7 @@ Future<String?> showAppTextInputDialog(
                 controller: controller,
                 autofocus: true,
                 placeholder: placeholder,
-                minLines: maxLines > 1 ? 3 : 1,
+                minLines: maxLines > 1 && roomy ? 3 : 1,
                 maxLines: maxLines,
                 maxLength: maxLength,
                 keyboardType: keyboardType,
@@ -138,6 +164,84 @@ Future<String?> showAppTextInputDialog(
   } finally {
     // The route's exit animation still reads the controller for a frame.
     WidgetsBinding.instance.addPostFrameCallback((_) => controller.dispose());
+  }
+}
+
+/// Height above the keyboard below which [showAppTextInputDialog]'s
+/// multi-line field starts at one line.
+const double _roomForTallField = 420;
+
+/// [showAppTextInputDialog] as a sheet: the message, the field and a save
+/// button (the sheet's close button cancels).
+class _TextInputForm extends StatelessWidget {
+  const _TextInputForm({
+    required this.controller,
+    required this.confirmLabel,
+    required this.maxLines,
+    this.message,
+    this.placeholder,
+    this.maxLength,
+    this.keyboardType,
+    this.inputFormatters,
+  });
+
+  final TextEditingController controller;
+  final String confirmLabel;
+  final int maxLines;
+  final String? message;
+  final String? placeholder;
+  final int? maxLength;
+  final TextInputType? keyboardType;
+  final List<TextInputFormatter>? inputFormatters;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.palette;
+    void save() {
+      HapticFeedback.lightImpact();
+      Navigator.of(context).pop(controller.text);
+    }
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.md, 0, AppSpacing.md, AppSpacing.sm),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (message != null) ...[
+            Text(message!,
+                style:
+                    AppTypography.footnote.copyWith(color: c.secondaryLabel)),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+          CupertinoTextField(
+            controller: controller,
+            autofocus: true,
+            placeholder: placeholder,
+            maxLines: maxLines,
+            maxLength: maxLength,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            textInputAction:
+                maxLines == 1 ? TextInputAction.done : TextInputAction.newline,
+            onSubmitted: maxLines == 1 ? (_) => save() : null,
+            style: AppTypography.subheadline.copyWith(color: c.label),
+            placeholderStyle:
+                AppTypography.subheadline.copyWith(color: c.placeholder),
+            cursorColor: c.accent,
+            decoration: BoxDecoration(
+              color: c.secondaryGroupedBackground,
+              borderRadius: BorderRadius.circular(AppRadius.small),
+              border:
+                  Border.all(color: c.separator, width: AppSpacing.hairline),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppButton.filled(label: confirmLabel, expand: true, onPressed: save),
+        ],
+      ),
+    );
   }
 }
 
@@ -307,6 +411,9 @@ class AppBottomSheetFrame extends StatelessWidget {
   final String? title;
   final Widget child;
 
+  /// Below this much height above the keyboard, the title scrolls away.
+  static const double _pinnedTitleMinRoom = 240;
+
   @override
   Widget build(BuildContext context) {
     final c = context.palette;
@@ -314,11 +421,52 @@ class AppBottomSheetFrame extends StatelessWidget {
     final bottom = media.viewInsets.bottom > 0
         ? media.viewInsets.bottom
         : media.viewPadding.bottom;
+    final maxHeight = media.size.height * 0.9;
+    // With little room left (a phone in landscape with the keyboard up) the
+    // title row scrolls with the content, so a focused field can still come
+    // into view; otherwise it stays put above it.
+    final titleScrolls = maxHeight - bottom < _pinnedTitleMinRoom;
+
+    final header = ColoredBox(
+      color: c.groupedBackground,
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.xs,
+          AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title ?? '',
+                style: AppTypography.headline.copyWith(color: c.label),
+              ),
+            ),
+            Semantics(
+              button: true,
+              label: context.tr('إغلاق', 'Close'),
+              child: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minimumSize: const Size.square(AppSpacing.minTouchTarget),
+                onPressed: () => Navigator.of(context).pop(),
+                child: Icon(
+                  CupertinoIcons.xmark_circle_fill,
+                  size: 28,
+                  color: c.tertiaryLabel,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
 
     return Align(
       alignment: Alignment.bottomCenter,
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxHeight: media.size.height * 0.9),
+        constraints: BoxConstraints(maxHeight: maxHeight),
         child: DecoratedBox(
           decoration: ShapeDecoration(
             color: c.groupedBackground,
@@ -331,45 +479,16 @@ class AppBottomSheetFrame extends StatelessWidget {
             type: MaterialType.transparency,
             child: Padding(
               padding: EdgeInsets.only(bottom: bottom + AppSpacing.sm),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(
-                      AppSpacing.md,
-                      AppSpacing.sm,
-                      AppSpacing.xs,
-                      AppSpacing.xs,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title ?? '',
-                            style:
-                                AppTypography.headline.copyWith(color: c.label),
-                          ),
-                        ),
-                        Semantics(
-                          button: true,
-                          label: context.tr('إغلاق', 'Close'),
-                          child: CupertinoButton(
-                            padding: EdgeInsets.zero,
-                            minimumSize:
-                                const Size.square(AppSpacing.minTouchTarget),
-                            onPressed: () => Navigator.of(context).pop(),
-                            child: Icon(
-                              CupertinoIcons.xmark_circle_fill,
-                              size: 28,
-                              color: c.tertiaryLabel,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Flexible(child: SingleChildScrollView(child: child)),
+              child: CustomScrollView(
+                shrinkWrap: true,
+                slivers: [
+                  // Same position and the content's sliver after it either
+                  // way, so switching keeps the form's state and focus.
+                  if (titleScrolls)
+                    SliverToBoxAdapter(child: header)
+                  else
+                    PinnedHeaderSliver(child: header),
+                  SliverToBoxAdapter(child: child),
                 ],
               ),
             ),

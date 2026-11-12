@@ -43,8 +43,7 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(authProvider);
     final prayer = ref.watch(fajrCallProvider.select((s) => s.prayer));
     final adhan = ref.watch(adhanProvider.select((s) => s.settings));
-    final reminders =
-        ref.watch(reminderProvider.select((s) => s.frequency));
+    final reminders = ref.watch(reminderProvider.select((s) => s.frequency));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final background =
         isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
@@ -128,8 +127,12 @@ class SettingsScreen extends ConsumerWidget {
                       const Icon(Icons.text_fields_rounded,
                           size: 18, color: AppColors.primary),
                       const SizedBox(width: AppSpacing.md),
-                      Text(context.tr('حجم خط المصحف', 'Quran text size'),
-                          style: GoogleFonts.cairo(fontSize: 14, color: text)),
+                      Expanded(
+                        child: Text(
+                            context.tr('حجم خط المصحف', 'Quran text size'),
+                            style:
+                                GoogleFonts.cairo(fontSize: 14, color: text)),
+                      ),
                     ],
                   ),
                 ),
@@ -233,8 +236,8 @@ class SettingsScreen extends ConsumerWidget {
                 if (ref.read(prayerBannerProvider.notifier).supported) ...[
                   _Divider(isDark: isDark),
                   SwitchListTile(
-                    value: ref.watch(
-                        prayerBannerProvider.select((s) => s.enabled)),
+                    value: ref
+                        .watch(prayerBannerProvider.select((s) => s.enabled)),
                     onChanged: (v) =>
                         ref.read(prayerBannerProvider.notifier).setEnabled(v),
                     secondary: const Icon(Icons.push_pin_outlined,
@@ -252,8 +255,7 @@ class SettingsScreen extends ConsumerWidget {
                           ? context.tr(
                               'على شاشة القفل. يتجدّد عند فتح التطبيق.',
                               'On the lock screen. Refreshes when you open the app.')
-                          : context.tr(
-                              'إشعار ثابت بالصلاة القادمة وما بقي لها',
+                          : context.tr('إشعار ثابت بالصلاة القادمة وما بقي لها',
                               'A fixed notification with the next prayer and the time left'),
                       style: GoogleFonts.cairo(
                           fontSize: 12,

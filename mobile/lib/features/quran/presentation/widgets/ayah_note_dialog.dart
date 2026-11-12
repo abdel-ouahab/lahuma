@@ -13,6 +13,9 @@ Future<String?> showAyahNoteDialog(
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
+      // Title and field scroll when the keyboard leaves little room (a phone
+      // in landscape, large text).
+      scrollable: true,
       title: Text(
           '$surahName · ${ctx.tr('الآية $ayahNumber', 'Ayah $ayahNumber')}'),
       content: TextField(

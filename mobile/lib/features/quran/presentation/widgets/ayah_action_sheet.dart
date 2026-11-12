@@ -136,71 +136,87 @@ class AyahActionSheet extends StatelessWidget {
           top: Radius.circular(AppRadius.xxl),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.md),
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.25),
-                borderRadius: BorderRadius.circular(AppRadius.full),
+      // Scrolls when it can't fit (a phone in landscape, large text).
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.md),
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(AppRadius.full),
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
-            child: Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      surahName,
-                      style: GoogleFonts.scheherazadeNew(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: textColor,
-                      ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.sm),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          surahName,
+                          style: GoogleFonts.scheherazadeNew(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: textColor,
+                          ),
+                        ),
+                        Text(
+                          context.tr('الآية $ayahNumber', 'Ayah $ayahNumber'),
+                          style: GoogleFonts.cairo(
+                              fontSize: 12, color: subtextColor),
+                        ),
+                      ],
                     ),
-                    Text(
-                      context.tr('الآية $ayahNumber', 'Ayah $ayahNumber'),
-                      style:
-                          GoogleFonts.cairo(fontSize: 12, color: subtextColor),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  tooltip: context.tr('إغلاق', 'Close'),
-                  icon: Icon(Icons.close_rounded, size: 18, color: textColor),
-                ),
-              ],
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: context.tr('إغلاق', 'Close'),
+                    icon: Icon(Icons.close_rounded, size: 18, color: textColor),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Divider(
-            height: 1,
-            color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
-            indent: AppSpacing.lg,
-            endIndent: AppSpacing.lg,
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: actions
-                  .map((action) => _ActionTile(item: action, isDark: isDark))
-                  .toList(),
+            Divider(
+              height: 1,
+              color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+              indent: AppSpacing.lg,
+              endIndent: AppSpacing.lg,
             ),
-          ),
-          SizedBox(
-              height: MediaQuery.of(context).padding.bottom + AppSpacing.sm),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              // Three tiles a row on a phone, more where the sheet is wider
+              // (landscape, tablets), sized from the sheet, not the screen.
+              child: LayoutBuilder(
+                builder: (context, box) {
+                  final columns = (box.maxWidth / _tileMinWidth)
+                      .floor()
+                      .clamp(3, actions.length);
+                  final width =
+                      (box.maxWidth - AppSpacing.sm * (columns - 1)) / columns;
+                  return Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      for (final action in actions)
+                        _ActionTile(item: action, isDark: isDark, width: width),
+                    ],
+                  );
+                },
+              ),
+            ),
+            SizedBox(
+                height: MediaQuery.of(context).padding.bottom + AppSpacing.sm),
+          ],
+        ),
       ),
     );
   }
@@ -219,19 +235,19 @@ class _ActionItem {
   final VoidCallback? onTap;
 }
 
+/// Narrowest an action tile gets before the grid drops a column.
+const double _tileMinWidth = 120;
+
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.item, required this.isDark});
+  const _ActionTile(
+      {required this.item, required this.isDark, required this.width});
 
   final _ActionItem item;
   final bool isDark;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
-    final w = (MediaQuery.of(context).size.width -
-            AppSpacing.lg * 2 -
-            AppSpacing.sm * 2) /
-        3;
-
     return Semantics(
       button: true,
       label: item.label,
@@ -241,8 +257,9 @@ class _ActionTile extends StatelessWidget {
           item.onTap?.call();
         },
         child: Container(
-          width: w,
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          width: width,
+          padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.md, horizontal: AppSpacing.xs),
           decoration: BoxDecoration(
             color: item.color.withValues(alpha: isDark ? 0.15 : 0.08),
             borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -255,7 +272,8 @@ class _ActionTile extends StatelessWidget {
               Text(
                 item.label,
                 textAlign: TextAlign.center,
-                maxLines: 1,
+                // Two lines under large text rather than "إزالة…".
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.cairo(
                   fontSize: 11,

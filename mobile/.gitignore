@@ -7,3 +7,7 @@ build/
 *.iml
 *.g.dart
 *.freezed.dart
+
+# Responsive layout suite output (test/responsive/harness.dart)
+test/responsive/_screenshots/
+test/responsive/_report/
