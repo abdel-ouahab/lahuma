@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon for every notification: the app's hilal (white; Android tints it). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M13.5,2.5A9.5,9.5 0,1 0,21.5 16.2A7.6,7.6 0,1 1,13.5 2.5Z"/>
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M17,5.2l0.9,1.9l2.1,0.3l-1.5,1.5l0.4,2.1l-1.9,-1l-1.9,1l0.4,-2.1l-1.5,-1.5l2.1,-0.3z"/>
+</vector>

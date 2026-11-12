@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -19,8 +20,37 @@ val hasReleaseKey = !keystoreProperties.isEmpty
 // builds (see docs/fajr-call.md).
 val fajrCallLog = (project.findProperty("fajrCallLog") as String?)?.toBoolean() ?: false
 
-if (!hasReleaseKey && gradle.startParameter.taskNames.any { it.contains("Release") }) {
+val releaseTasks = gradle.startParameter.taskNames.filter { it.contains("Release") }
+if (!hasReleaseKey && releaseTasks.isNotEmpty()) {
+    // An app bundle is only ever made to upload to Play, and one signed with
+    // the debug key can never be published (nor updated later): stop here.
+    if (releaseTasks.any { it.contains("bundle", ignoreCase = true) }) {
+        throw GradleException("android/key.properties not found: create the upload key first (see key.properties.example).")
+    }
     logger.warn("android/key.properties not found: the release build is signed with the debug key and cannot be published.")
+}
+
+// The Dart defines of this build (`--dart-define`), which Flutter hands to
+// Gradle base64-encoded. A release build without API_BASE_URL would talk to
+// the emulator's dev server (http://10.0.2.2), and release builds block
+// plain http:// anyway, so accounts, muezzins and reciters would all fail.
+val dartDefines: Map<String, String> = (project.findProperty("dart-defines") as String?)
+    .orEmpty()
+    .split(",")
+    .filter { it.isNotBlank() }
+    .mapNotNull {
+        val pair = String(Base64.getDecoder().decode(it)).split("=", limit = 2)
+        if (pair.size == 2) pair[0] to pair[1] else null
+    }
+    .toMap()
+if (releaseTasks.isNotEmpty()) {
+    val apiBaseUrl = dartDefines["API_BASE_URL"]
+    if (apiBaseUrl == null || !apiBaseUrl.startsWith("https://")) {
+        throw GradleException(
+            "Release builds need the production API: add --dart-define=API_BASE_URL=https://<DOMAIN>/api " +
+                "(found: ${apiBaseUrl ?: "none"})."
+        )
+    }
 }
 
 android {

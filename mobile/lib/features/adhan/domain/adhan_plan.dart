@@ -37,11 +37,13 @@ class AdhanSlot {
 class AdhanPlanner {
   const AdhanPlanner._();
 
-  /// iOS keeps 64 pending notifications per app. The adhan takes 45: a week
-  /// of five adhans (35) plus reminders for the next [iosReminderDays] days
-  /// (10). The khatma takes 4 (`KhatmaReminderPlan.iosBudget`) and Fajr Call
-  /// the other 15 (`FajrNotifications.maxPending`).
-  static const int iosBudget = 45;
+  /// iOS keeps 64 pending notifications per app. The adhan takes 38, the
+  /// earliest of a week of five adhans (35) plus reminders for the next
+  /// [iosReminderDays] days (10): about six days ahead. The adhkar and
+  /// surah reminders take 7 (`ReminderPlanner.iosBudget`, repeating), the
+  /// khatma 4 (`KhatmaReminderPlan.iosBudget`) and Fajr Call the other 15
+  /// (`FajrNotifications.maxPending`).
+  static const int iosBudget = 38;
   static const int iosReminderDays = 2;
 
   /// Days planned ahead, today included (5 × 7 = 35 adhans). More days may

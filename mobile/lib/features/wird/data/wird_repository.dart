@@ -1,14 +1,18 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/storage_keys.dart';
 
 /// The reader's daily wird: how many ayahs they read today against a goal,
-/// and how many days in a row they have met it.
+/// how many days in a row they have met it, and what they read on the
+/// days just before.
 class WirdState {
   const WirdState({
     required this.date,
     required this.ayahsToday,
     required this.goal,
     required this.streak,
+    this.history = const {},
   });
 
   /// `yyyy-MM-dd` of the day [ayahsToday] belongs to.
@@ -17,14 +21,32 @@ class WirdState {
   final int goal;
   final int streak;
 
+  /// Ayahs read on earlier days, keyed by `yyyy-MM-dd` (today is
+  /// [ayahsToday]). Only the last [WirdRepository.historyDays] are kept.
+  final Map<String, int> history;
+
   double get fraction => goal <= 0 ? 0 : (ayahsToday / goal).clamp(0.0, 1.0);
   bool get goalReached => ayahsToday >= goal;
+  int get remaining => (goal - ayahsToday).clamp(0, goal);
 
-  WirdState copyWith({int? ayahsToday, int? goal, int? streak}) => WirdState(
+  /// Ayahs read on [day]: today's tally for today, the history otherwise.
+  int countOn(DateTime day) {
+    final key = WirdRepository.dateKey(day);
+    return key == date ? ayahsToday : (history[key] ?? 0);
+  }
+
+  WirdState copyWith({
+    int? ayahsToday,
+    int? goal,
+    int? streak,
+    Map<String, int>? history,
+  }) =>
+      WirdState(
         date: date,
         ayahsToday: ayahsToday ?? this.ayahsToday,
         goal: goal ?? this.goal,
         streak: streak ?? this.streak,
+        history: history ?? this.history,
       );
 }
 
@@ -33,6 +55,9 @@ class WirdRepository {
 
   static const int defaultGoal = 20;
   static const List<int> goalOptions = [5, 10, 20, 50, 100];
+
+  /// Past days kept for the week strip (a week plus a margin).
+  static const int historyDays = 14;
 
   final DateTime Function() _now;
 
@@ -52,12 +77,23 @@ class WirdRepository {
     // A streak is broken once a full day passes without meeting the goal.
     if (lastGoalDate != _today && lastGoalDate != _yesterday) streak = 0;
 
-    final sameDay = prefs.getString(StorageKeys.dailyDate) == _today;
+    final storedDate = prefs.getString(StorageKeys.dailyDate);
+    final storedCount = prefs.getInt(StorageKeys.dailyCount) ?? 0;
+    final sameDay = storedDate == _today;
+
+    // The last day's tally moves into the history once the date rolls over
+    // (this also back-fills installs that predate the history).
+    final history = _readHistory(prefs);
+    if (!sameDay && storedDate != null && storedCount > 0) {
+      history[storedDate] = storedCount;
+    }
+
     return WirdState(
       date: _today,
-      ayahsToday: sameDay ? (prefs.getInt(StorageKeys.dailyCount) ?? 0) : 0,
+      ayahsToday: sameDay ? storedCount : 0,
       goal: goal,
       streak: streak,
+      history: _prune(history),
     );
   }
 
@@ -67,6 +103,8 @@ class WirdRepository {
     await prefs.setInt(StorageKeys.dailyCount, state.ayahsToday);
     await prefs.setInt(StorageKeys.dailyGoal, state.goal);
     await prefs.setInt(StorageKeys.dailyStreak, state.streak);
+    await prefs.setString(
+        StorageKeys.dailyHistory, jsonEncode(_prune({...state.history})));
   }
 
   /// Adds [count] ayahs to today's tally and updates the streak the first
@@ -80,6 +118,11 @@ class WirdRepository {
             ayahsToday: 0,
             goal: current.goal,
             streak: current.streak,
+            history: {
+              ...current.history,
+              if (current.date.isNotEmpty && current.ayahsToday > 0)
+                current.date: current.ayahsToday,
+            },
           );
 
     final wasReached = state.goalReached;
@@ -100,5 +143,30 @@ class WirdRepository {
     final state = current.copyWith(goal: goal);
     await save(state);
     return state;
+  }
+
+  static Map<String, int> _readHistory(SharedPreferences prefs) {
+    final raw = prefs.getString(StorageKeys.dailyHistory);
+    if (raw == null) return {};
+    try {
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      return {
+        for (final e in decoded.entries)
+          if (e.value is int) e.key: e.value as int,
+      };
+    } catch (_) {
+      return {};
+    }
+  }
+
+  /// Keeps only the [historyDays] days before today.
+  Map<String, int> _prune(Map<String, int> history) {
+    final today = _now();
+    final keep = {
+      for (var i = 1; i <= historyDays; i++)
+        dateKey(DateTime(today.year, today.month, today.day - i)),
+    };
+    return Map.unmodifiable(
+        {for (final e in history.entries) if (keep.contains(e.key)) e.key: e.value});
   }
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prayer-times banner on a light notification shade. -->
+<resources>
+    <!-- Deep gold: the app's gold is too pale to read on white. -->
+    <color name="prayer_banner_gold">#9A7424</color>
+    <color name="prayer_banner_muted">#8A000000</color>
+    <color name="prayer_banner_rule">#1F000000</color>
+</resources>

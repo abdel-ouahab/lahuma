@@ -9,6 +9,7 @@ import 'package:lahuma/features/khatma/domain/khatma.dart';
 import 'package:lahuma/features/khatma/domain/khatma_planner.dart';
 import 'package:lahuma/features/khatma/domain/khatma_reminders.dart';
 import 'package:lahuma/features/khatma/domain/khatma_text.dart';
+import 'package:lahuma/features/reminders/domain/reminder_plan.dart';
 import 'package:lahuma/features/khatma/domain/quran_pages.dart';
 import 'package:lahuma/features/khatma/presentation/khatma_providers.dart';
 import 'package:lahuma/features/quran/mushaf/domain/mushaf_meta.dart';
@@ -260,11 +261,13 @@ void main() {
       eveningEnabled: true,
     );
 
-    test('iOS budgets of adhan, Fajr Call and khatma fill 64 exactly', () {
+    test('iOS budgets of adhan, reminders, Fajr Call and khatma fill 64',
+        () {
       debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
       addTearDown(() => debugDefaultTargetPlatformOverride = null);
       expect(
           AdhanPlanner.iosBudget +
+              ReminderPlanner.iosBudget +
               FajrNotifications.maxPending +
               KhatmaReminderPlan.iosBudget,
           64);

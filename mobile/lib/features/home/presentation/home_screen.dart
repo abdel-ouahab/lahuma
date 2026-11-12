@@ -5,15 +5,13 @@ import '../../../core/constants/features.dart';
 import '../../../core/design/design.dart';
 import '../../../core/localization/tr.dart';
 import '../../../core/widgets/continue_reading_card.dart';
-import '../../../core/widgets/progress_card.dart';
-import '../../../core/widgets/sadaqah_card.dart';
 import '../../../core/widgets/section_title.dart';
 import '../../../core/widgets/segment_bar.dart';
 import '../../../core/widgets/shortcut_tile.dart';
 import '../../adhkar/domain/dhikr.dart';
 import '../../adhkar/presentation/adhkar_providers.dart';
-import '../../dedication/presentation/dedication_providers.dart';
-import '../../dedication/presentation/dedication_sheet.dart';
+import '../../adhkar/presentation/screens/adhkar_category_screen.dart';
+import '../../bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
 import '../../khatma/presentation/widgets/khatma_home_card.dart';
@@ -27,6 +25,7 @@ import '../../tasbih/presentation/screens/tasbih_screen.dart';
 import '../../tasbih/presentation/tasbih_providers.dart';
 import '../../tasbih/presentation/widgets/tasbih_labels.dart';
 import '../../wird/presentation/goal_sheet.dart';
+import '../../wird/presentation/wird_card.dart';
 import '../../wird/presentation/wird_providers.dart';
 import 'home_sidebar.dart';
 
@@ -37,7 +36,6 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsync = ref.watch(readingProgressProvider);
     final wird = ref.watch(wirdProvider);
-    final dedication = ref.watch(dedicationProvider);
     final tasbihToday = ref.watch(tasbihTodayProvider);
     final mushafPage = ref.watch(mushafProvider.select((m) => m.lastPage));
     final c = context.palette;
@@ -57,6 +55,7 @@ class HomeScreen extends ConsumerWidget {
       required String title,
       required IconData icon,
       required Color color,
+      required TileScene scene,
     }) {
       final today = ref.watch(adhkarTodayProvider(period));
       final String caption;
@@ -77,14 +76,16 @@ class HomeScreen extends ConsumerWidget {
         icon: icon,
         color: color,
         caption: caption,
+        scene: scene,
         footer: today == null
             ? null
             : SegmentBar(
                 filled: today.done,
                 total: today.total,
-                color: c.resolve(color),
+                color: ShortcutTile.onScene,
               ),
-        onTap: () => context.go('/home/adhkar?tab=${period.name}'),
+        onTap: () =>
+            context.go(AdhkarCategoryScreen.pathFor(period.categoryId)),
       );
     }
 
@@ -194,6 +195,7 @@ class HomeScreen extends ConsumerWidget {
                                       'صفحة $mushafPage', 'Page $mushafPage')
                                   : context.tr(
                                       'مصحف المدينة', 'Madinah Mushaf'),
+                              scene: TileScene.mushaf,
                               onTap: () => context.push(MushafScreen.path),
                             ),
                           ),
@@ -204,6 +206,7 @@ class HomeScreen extends ConsumerWidget {
                               icon: CupertinoIcons.headphones,
                               color: AppColors.tilePurple,
                               caption: context.tr('تلاوات القرّاء', 'Reciters'),
+                              scene: TileScene.listen,
                               onTap: () => context.go('/quran?tab=2'),
                             ),
                           ),
@@ -220,6 +223,7 @@ class HomeScreen extends ConsumerWidget {
                   icon: CupertinoIcons.book_fill,
                   color: AppColors.tileTeal,
                   caption: context.tr('السور والأجزاء', 'Surahs and juz\''),
+                  scene: TileScene.arcade,
                   onTap: () => context.go('/quran'),
                 ),
                 ShortcutTile(
@@ -227,13 +231,15 @@ class HomeScreen extends ConsumerWidget {
                   icon: CupertinoIcons.bookmark_fill,
                   color: AppColors.tileBlue,
                   caption: context.tr('آياتك المحفوظة', 'Saved ayahs'),
-                  onTap: () => context.go('/bookmarks'),
+                  scene: TileScene.ribbons,
+                  onTap: () => context.go(BookmarksScreen.path),
                 ),
                 ShortcutTile(
                   title: context.tr('الهدف اليومي', 'Daily goal'),
                   icon: CupertinoIcons.flag_fill,
                   color: AppColors.tilePink,
                   caption: context.tr('${wird.goal} آية', '${wird.goal} ayahs'),
+                  scene: TileScene.summit,
                   onTap: () => GoalSheet.show(context),
                 ),
               ]),
@@ -245,6 +251,7 @@ class HomeScreen extends ConsumerWidget {
                 caption: context.tr('أيقظ والديك ومن تحب للصلاة',
                     'Wake your parents and loved ones for prayer'),
                 wide: true,
+                scene: TileScene.minaret,
                 onTap: () => context.go(FajrCallListsScreen.path),
               ),
             ],
@@ -262,12 +269,14 @@ class HomeScreen extends ConsumerWidget {
               title: context.tr('أذكار الصباح', 'Morning adhkar'),
               icon: CupertinoIcons.sun_max_fill,
               color: AppColors.tileYellow,
+              scene: TileScene.sunrise,
             ),
             adhkarTile(
               AdhkarPeriod.evening,
               title: context.tr('أذكار المساء', 'Evening adhkar'),
               icon: CupertinoIcons.moon_fill,
               color: AppColors.tileIndigo,
+              scene: TileScene.dusk,
             ),
           ]),
           top: 0,
@@ -282,6 +291,7 @@ class HomeScreen extends ConsumerWidget {
                 : context.tr(
                     'مسبحة لعدّ أذكارك', 'Prayer beads for your dhikr'),
             wide: true,
+            scene: TileScene.beads,
             onTap: () => context.push(TasbihScreen.path),
           ),
           top: AppSpacing.ms,
@@ -291,24 +301,22 @@ class HomeScreen extends ConsumerWidget {
         box(SectionTitle(title: context.tr('وردك اليوم', 'Today\'s wird')),
             top: AppSpacing.xl),
         box(
-          ProgressCard(
+          WirdCard(
             wird: wird,
-            onTap: () => GoalSheet.show(context),
+            today: DateTime.now(),
+            onChangeGoal: () => GoalSheet.show(context),
+            onRead: () {
+              final progress = progressAsync.valueOrNull;
+              context.push(
+                progress != null
+                    ? '/quran/${progress.surahId}?ayah=${progress.ayahNumber}'
+                    : '/quran/1',
+              );
+            },
           ),
           top: 0,
         ),
         box(const FajrCallStatusCard(), top: AppSpacing.ms),
-
-        // ── Dedication ──────────────────────────────────────────────────────
-        box(SectionTitle(title: context.tr('نية القراءة', 'Your intention')),
-            top: AppSpacing.xl),
-        box(
-          SadaqahCard(
-            dedication: dedication,
-            onTap: () => DedicationSheet.show(context),
-          ),
-          top: 0,
-        ),
       ],
     );
   }

@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           isLoading: false,
         });
         return;
-      } catch (e) {
+      } catch {
         // failed parse
       }
     }
@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password: pass || 'password' }),
+        body: JSON.stringify({ email, password: pass ?? '' }),
       });
 
       if (res.ok) {
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         return 'ok';
       }
-    } catch (e) {
+    } catch {
       // Backend unreachable: treated as a failed login
     }
 

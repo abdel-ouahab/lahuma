@@ -192,9 +192,11 @@ void main() {
         now: DateTime(2026, 10, 29, 1),
         ios: true,
       );
-      expect(slots.where((s) => !s.reminder).length, 35);
+      // The earliest 38: both days' reminders, then the adhans of the
+      // first five and a half days.
       expect(slots.where((s) => s.reminder).length, 10);
-      expect(slots.length, lessThanOrEqualTo(AdhanPlanner.iosBudget));
+      expect(slots.where((s) => !s.reminder).length, 28);
+      expect(slots.length, AdhanPlanner.iosBudget);
       expect(
           slots
               .where((s) => s.reminder)
@@ -525,16 +527,13 @@ void main() {
     expect(slots.length, 34);
   });
 
-  test('the "adhans were cancelled" notice waits 3 days between showings', () {
-    final now = DateTime(2026, 11, 4, 16);
-    expect(shouldShowAdhanClearedNotice(null, now), isTrue);
-    expect(
-        shouldShowAdhanClearedNotice(
-            now.subtract(const Duration(days: 2, hours: 23)), now),
-        isFalse);
-    expect(
-        shouldShowAdhanClearedNotice(
-            now.subtract(const Duration(days: 3)), now),
-        isTrue);
+  test('the "adhan was stopped" notice offers hiding until it is on', () {
+    expect(adhanClearedChoices(hidden: false), [
+      AdhanClearedChoice.hideFromRecents,
+      AdhanClearedChoice.steps,
+      AdhanClearedChoice.ok,
+    ]);
+    expect(adhanClearedChoices(hidden: true),
+        [AdhanClearedChoice.steps, AdhanClearedChoice.ok]);
   });
 }

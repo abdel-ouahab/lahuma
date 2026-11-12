@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { UserPlus, Search, Users as UsersIcon } from 'lucide-react';
+import { UserPlus, Search, Users as UsersIcon, AlertCircle } from 'lucide-react';
 import { getUsers, createUser } from '../services/api';
-import type { User, UserRole, UserStatus } from '../types';
+import type { User, UserRole } from '../types';
 import { StatusBadge } from '../components/StatusBadge';
 import { PageHeader } from '../components/PageHeader';
 import { EmptyState } from '../components/EmptyState';
@@ -21,17 +21,20 @@ export const UsersPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [formError, setFormError] = useState<string>('');
 
   // Form State
   const [newEmail, setNewEmail] = useState<string>('');
   const [newName, setNewName] = useState<string>('');
+  const [newPassword, setNewPassword] = useState<string>('');
   const [newRole, setNewRole] = useState<UserRole>('USER');
 
   useEffect(() => {
-    getUsers().then((data) => {
-      setUsers(data);
-      setLoading(false);
-    });
+    getUsers()
+      .then(setUsers)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load users.'))
+      .finally(() => setLoading(false));
   }, []);
 
   const filteredUsers = users.filter((u) => {
@@ -44,43 +47,35 @@ export const UsersPage: React.FC = () => {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEmail || !newName || isSubmitting) return;
+    if (!newEmail || !newName || !newPassword || isSubmitting) return;
 
     setIsSubmitting(true);
+    setFormError('');
     try {
       const created = await createUser({
         email: newEmail,
         name: newName,
+        password: newPassword,
         role: newRole,
       });
 
       setUsers((prev) => [created, ...prev]);
       setNewEmail('');
       setNewName('');
+      setNewPassword('');
       setShowAddModal(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not create the user.');
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleToggleStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === id) {
-          const nextStatus: UserStatus =
-            u.status === 'ACTIVE' ? 'INACTIVE' : u.status === 'INACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-          return { ...u, status: nextStatus };
-        }
-        return u;
-      })
-    );
   };
 
   return (
     <div className="page">
       <PageHeader
         title="Users"
-        subtitle="Accounts, roles and status."
+        subtitle="Accounts and roles."
         actions={
           <button type="button" onClick={() => setShowAddModal(true)} className="btn btn-primary">
             <UserPlus size={15} />
@@ -88,6 +83,13 @@ export const UsersPage: React.FC = () => {
           </button>
         }
       />
+
+      {error && (
+        <div className="alert alert-danger" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
 
       <div className="toolbar">
         <div className="input-icon">
@@ -123,9 +125,7 @@ export const UsersPage: React.FC = () => {
               <tr>
                 <th>User</th>
                 <th>Role</th>
-                <th>Status</th>
                 <th>Created</th>
-                <th>Last active</th>
               </tr>
             </thead>
             <tbody>
@@ -134,14 +134,12 @@ export const UsersPage: React.FC = () => {
                   <tr key={i}>
                     <td><span className="skeleton" style={{ height: 32, width: 200 }} /></td>
                     <td><span className="skeleton" style={{ height: 18, width: 60 }} /></td>
-                    <td><span className="skeleton" style={{ height: 18, width: 70 }} /></td>
-                    <td><span className="skeleton" style={{ height: 14, width: 70 }} /></td>
                     <td><span className="skeleton" style={{ height: 14, width: 70 }} /></td>
                   </tr>
                 ))
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5}>
+                  <td colSpan={3}>
                     <EmptyState
                       icon={UsersIcon}
                       title="No users found"
@@ -162,22 +160,7 @@ export const UsersPage: React.FC = () => {
                       </div>
                     </td>
                     <td><StatusBadge type="role" value={user.role} /></td>
-                    <td>
-                      <button
-                        type="button"
-                        className="status-toggle"
-                        onClick={() => handleToggleStatus(user.id)}
-                        title="Click to change status"
-                        aria-label={`Status ${user.status.toLowerCase()}. Click to change.`}
-                        style={{ padding: 0 }}
-                      >
-                        <StatusBadge type="status" value={user.status} />
-                      </button>
-                    </td>
                     <td className="muted tabular">{new Date(user.createdAt).toLocaleDateString()}</td>
-                    <td className="muted tabular">
-                      {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleTimeString() : 'Never'}
-                    </td>
                   </tr>
                 ))
               )}
@@ -198,6 +181,12 @@ export const UsersPage: React.FC = () => {
           onClose={() => setShowAddModal(false)}
         >
           <form onSubmit={handleAddUser}>
+            {formError && (
+              <div className="alert alert-danger" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+                <AlertCircle size={16} />
+                <span>{formError}</span>
+              </div>
+            )}
             <div className="field">
               <label className="label" htmlFor="new-name">Full name</label>
               <input
@@ -222,6 +211,22 @@ export const UsersPage: React.FC = () => {
                 onChange={(e) => setNewEmail(e.target.value)}
                 className="input"
               />
+            </div>
+
+            <div className="field">
+              <label className="label" htmlFor="new-password">Password</label>
+              <input
+                id="new-password"
+                type="password"
+                required
+                minLength={8}
+                maxLength={72}
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="input"
+              />
+              <span className="hint">At least 8 characters. Share it with the person privately.</span>
             </div>
 
             <div className="field">

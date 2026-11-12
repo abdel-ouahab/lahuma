@@ -295,11 +295,16 @@ void main() {
     final semantics = tester.ensureSemantics();
     seed(sessions: true);
     await pump(tester, '/home/fajr-call/l1/log', locale: 'en');
-    expect(find.bySemanticsLabel('Woke up: 0'), findsOneWidget);
+    expect(find.bySemanticsLabel('Woke up: 0 of 2'), findsOneWidget);
     expect(find.bySemanticsLabel('Calls: 3'), findsOneWidget);
+    expect(find.text('Awake?'), findsNWidgets(2));
+    // One call only "ended", so the log explains what that means.
+    expect(find.textContaining('picked up or declined'), findsOneWidget);
+    expect(find.textContaining('0/2 awake'), findsOneWidget);
     await tester.tap(find.bySemanticsLabel('أبي is awake'));
     await settle(tester);
-    expect(find.bySemanticsLabel('Woke up: 1'), findsOneWidget);
+    expect(find.bySemanticsLabel('Woke up: 1 of 2'), findsOneWidget);
+    expect(find.textContaining('1/2 awake'), findsOneWidget);
     semantics.dispose();
   });
 

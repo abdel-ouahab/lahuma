@@ -20,9 +20,9 @@ import '../../features/auth/presentation/account_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_player_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_reliability_screen.dart';
 import '../../features/adhan/presentation/screens/adhan_settings_screen.dart';
-import '../../features/adhkar/domain/dhikr.dart';
+import '../../features/reminders/presentation/reminders_settings_screen.dart';
 import '../../features/prayer_times/domain/prayer_times.dart';
-import '../../features/adhkar/presentation/screens/adhkar_reader_screen.dart';
+import '../../features/adhkar/presentation/screens/adhkar_category_screen.dart';
 import '../../features/adhkar/presentation/screens/adhkar_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_edit_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dart';
@@ -115,18 +115,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
 
-      // ── Adhkar reader (outside shell — counter needs the full screen) ───
-      GoRoute(
-        path: '/adhkar/:period(morning|evening)',
-        pageBuilder: (context, state) => _page(
-          state,
-          AdhkarReaderScreen(
-            period: AdhkarPeriod.tryParse(state.pathParameters['period'])!,
-            initialIndex:
-                int.tryParse(state.uri.queryParameters['index'] ?? '') ?? 0,
-          ),
-        ),
-      ),
+      // Old addresses: Bookmarks used to be a tab, adhkar lived under Home.
+      GoRoute(path: '/bookmarks', redirect: (_, __) => BookmarksScreen.path),
+      GoRoute(path: '/home/adhkar', redirect: (_, __) => AdhkarScreen.path),
 
       // ── Tasbih (outside shell — the beads need the full screen) ─────────
       GoRoute(
@@ -222,15 +213,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                 pageBuilder: (context, state) =>
                     _page(state, const HomeScreen()),
                 routes: [
+                  // Bookmarks (moved off the tab bar for Adhkar).
                   GoRoute(
-                    path: 'adhkar',
-                    pageBuilder: (context, state) => _page(
-                      state,
-                      AdhkarScreen(
-                        initialTab:
-                            AdhkarTab.parse(state.uri.queryParameters['tab']),
-                      ),
-                    ),
+                    path: 'bookmarks',
+                    pageBuilder: (context, state) =>
+                        _page(state, const BookmarksScreen()),
                   ),
                   GoRoute(
                     path: 'fajr-call',
@@ -325,13 +312,23 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 2 — Bookmarks
+          // Branch 2 — Adhkar & duas
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/bookmarks',
+                path: AdhkarScreen.path,
                 pageBuilder: (context, state) =>
-                    _page(state, const BookmarksScreen()),
+                    _page(state, const AdhkarScreen()),
+                routes: [
+                  GoRoute(
+                    path: ':category',
+                    pageBuilder: (context, state) => _page(
+                      state,
+                      AdhkarCategoryScreen(
+                          categoryId: state.pathParameters['category']!),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -354,6 +351,11 @@ final routerProvider = Provider<GoRouter>((ref) {
                             _page(state, const AdhanReliabilityScreen()),
                       ),
                     ],
+                  ),
+                  GoRoute(
+                    path: 'reminders',
+                    pageBuilder: (context, state) =>
+                        _page(state, const RemindersSettingsScreen()),
                   ),
                 ],
               ),

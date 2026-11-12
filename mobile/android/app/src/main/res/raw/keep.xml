@@ -3,4 +3,4 @@
      (RawResourceAndroidNotificationSound), so R8's resource shrinking
      would otherwise strip them from release builds. -->
 <resources xmlns:tools="http://schemas.android.com/tools"
-    tools:keep="@raw/*" />
+    tools:keep="@raw/*,@drawable/ic_stat_ihsan" />

@@ -16,11 +16,20 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
         if (intent.action != AdhanAlarms.ACTION_FIRE) return
         val slot = AdhanAlarmSlot.fromIntent(intent) ?: return
         AdhanAlarms.forgetTest(context, slot.id)
+        // On time even where the banner's own tick is held back.
+        PrayerBanner.refresh(context)
         val late = System.currentTimeMillis() - slot.at
-        if (late > AdhanAlarms.MAX_LATE_MS) {
-            // The phone was off, or an inexact alarm came far too late: an
-            // adhan long after its time would only confuse.
+        if (late > AdhanAlarms.MAX_NOTIFY_LATE_MS) {
+            // The phone was off: by now the prayer's time is long past.
             Log.i(TAG, "Skipping ${slot.prayer} adhan, ${late / 60000} min late")
+            return
+        }
+        if (late > AdhanAlarms.MAX_LATE_MS) {
+            // An inexact alarm (no "Alarms & reminders" permission) or a
+            // battery saver held it back. Too late to sound the adhan, but
+            // the prayer's notification still comes.
+            Log.i(TAG, "${slot.prayer} adhan ${late / 60000} min late: notification only")
+            AdhanNotify.fallback(context, slot)
             return
         }
         try {
@@ -56,6 +65,7 @@ class AdhanBootReceiver : BroadcastReceiver() {
             Intent.ACTION_TIMEZONE_CHANGED,
             AlarmManager.ACTION_SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED -> {
                 AdhanAlarms.rescheduleAll(context)
+                PrayerBanner.refresh(context)
                 AdhanWork.runNow(context)
                 AdhanWork.ensureDaily(context)
             }

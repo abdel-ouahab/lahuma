@@ -11,6 +11,7 @@ class KhatmaRing extends StatelessWidget {
     required this.lastPageRead,
     this.size = 156,
     this.center,
+    this.onScene = false,
   });
 
   final int lastPageRead;
@@ -19,6 +20,10 @@ class KhatmaRing extends StatelessWidget {
   /// Replaces the percentage and page count inside the ring (for small
   /// rings).
   final Widget? center;
+
+  /// Drawn over a painted scene (dark in both themes): light track, gold
+  /// arc.
+  final bool onScene;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +44,11 @@ class KhatmaRing extends StatelessWidget {
           builder: (context, value, _) => CustomPaint(
             painter: _RingPainter(
               value: value,
-              track: c.gold.withValues(alpha: 0.25),
-              start: c.accent,
-              end: c.gold,
+              track: onScene
+                  ? CupertinoColors.white.withValues(alpha: 0.22)
+                  : c.gold.withValues(alpha: 0.25),
+              start: onScene ? AppColors.lanternFlame : c.accent,
+              end: onScene ? AppColors.gold.color : c.gold,
               stroke: (size * 0.07).clamp(4.0, 10.0),
             ),
             child: Center(

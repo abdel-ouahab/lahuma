@@ -10,6 +10,7 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.lahuma.app.MainActivity
+import com.lahuma.app.R
 import com.lahuma.app.fajrcall.FajrNotify
 
 /**
@@ -22,6 +23,9 @@ object AdhanNotify {
     const val PLAYING_ID = 0xad4a
     private const val CHANNEL_PLAYING = "adhan_playing"
     private const val CHANNEL_ALERT = "adhan_alert"
+
+    /** Mosque green, the glyph and app-name tint (Dart: LocalNotifications.accent). */
+    private const val ACCENT = 0xFF0F5A4A.toInt()
 
     fun ensureChannels(context: Context, strings: AdhanStrings) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -51,7 +55,8 @@ object AdhanNotify {
     fun playing(context: Context, slot: AdhanAlarmSlot, strings: AdhanStrings, stop: PendingIntent): Notification {
         ensureChannels(context, strings)
         return NotificationCompat.Builder(context, CHANNEL_PLAYING)
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setSmallIcon(R.drawable.ic_stat_ihsan)
+            .setColor(ACCENT)
             .setContentTitle(slot.title)
             .setContentText(slot.body)
             .setOngoing(true)
@@ -66,17 +71,31 @@ object AdhanNotify {
             .build()
     }
 
-    /** The player could not start: tapping opens the in-app adhan. */
-    fun fallback(context: Context, slot: AdhanAlarmSlot) {
+    /**
+     * The prayer's notification without the player: it could not start, the
+     * alarm came too late to play it, or (with [quiet]) it has finished and
+     * this stays behind. A tap opens the in-app adhan.
+     */
+    fun fallback(context: Context, slot: AdhanAlarmSlot, quiet: Boolean = false) {
         val strings = AdhanAlarmStore(context).strings
         ensureChannels(context, strings)
+        // slot.body is the player's line ("the adhan is playing", or the
+        // muezzin): not true here. Fajr's "prayer is better than sleep" stays.
+        val body = if (slot.prayer == "fajr") slot.body else strings.tapToListen
         val n = NotificationCompat.Builder(context, CHANNEL_ALERT)
-            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setSmallIcon(R.drawable.ic_stat_ihsan)
+            .setColor(ACCENT)
             .setContentTitle(slot.title)
-            .setContentText(slot.body)
+            .setContentText(body)
+            .setSubText(strings.fallbackChannel)
+            .setWhen(slot.at)
+            .setShowWhen(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setAutoCancel(true)
+            // After the adhan: no second sound or pop-up.
+            .setSilent(quiet)
             .setContentIntent(FajrNotify.openApp(context, "/adhan/play?prayer=${slot.prayer}", slot.id))
             .build()
         try {

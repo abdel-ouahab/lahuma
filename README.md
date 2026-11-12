@@ -172,7 +172,17 @@ To make an admin, register in the app, then run:
 docker compose -f docker-compose.prod.yml exec backend node dist/scripts/makeAdmin.js you@example.com
 ```
 
-Build the mobile app against the server with `--dart-define=API_BASE_URL=https://<DOMAIN>/api`.
+### Mobile release builds
+
+Release builds must name the production API. Android refuses to build a release without an `https://` `API_BASE_URL`, and refuses an app bundle (`appbundle`, the Play upload) without the upload key in `android/key.properties` (see `android/key.properties.example`; keep the keystore and its passwords safe, a lost key means you can never update the app).
+
+```bash
+cd mobile
+flutter build appbundle --release --dart-define=API_BASE_URL=https://<DOMAIN>/api --obfuscate --split-debug-info=build/symbols
+flutter build ipa --release --dart-define=API_BASE_URL=https://<DOMAIN>/api --obfuscate --split-debug-info=build/symbols
+```
+
+Keep `build/symbols` for each release: it is what turns obfuscated crash stack traces back into readable ones. Bump `version:` in `pubspec.yaml` (the `+N` build number must grow with every upload). On iOS nothing checks `API_BASE_URL` for you, so always pass it.
 
 ## Running Tests
 

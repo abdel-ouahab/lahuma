@@ -16,5 +16,9 @@ import UserNotifications
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // The prayer-times Live Activity (PrayerBannerChannel.swift).
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PrayerBannerChannel") {
+      PrayerBannerChannel.register(with: registrar.messenger())
+    }
   }
 }

@@ -1,5 +1,5 @@
-/// A muezzin from the backend (`GET /muezzins`). Audio lives in object
-/// storage; only URLs come down. [version] changes whenever a file does.
+/// A muezzin from the bundled catalogue (MuezzinRepository). Its files are
+/// downloaded from their URLs; [version] changes whenever a file does.
 class Muezzin {
   const Muezzin({
     required this.id,

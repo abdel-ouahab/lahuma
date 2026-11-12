@@ -5,7 +5,7 @@ import '../domain/dhikr.dart';
 
 final adhkarServiceProvider = Provider((ref) => AdhkarService());
 
-/// Morning + evening adhkar (cache first, then network). Invalidate to retry.
+/// Every category, read once from the bundled dataset.
 final adhkarProvider = FutureProvider<AdhkarCollection>((ref) async {
   return ref.watch(adhkarServiceProvider).load();
 });
@@ -62,11 +62,11 @@ final adhkarProgressProvider =
   return AdhkarProgressNotifier(ref.watch(adhkarProgressRepositoryProvider));
 });
 
-/// Today's progress through [period]'s adhkar: how many are finished out of
-/// how many, or null while the adhkar are still loading.
-final adhkarTodayProvider =
-    Provider.family<({int done, int total})?, AdhkarPeriod>((ref, period) {
-  final adhkar = ref.watch(adhkarProvider).valueOrNull?.of(period);
+/// Today's progress through a category: how many of its adhkar are
+/// finished out of how many, or null while loading or if it is unknown.
+final adhkarCategoryTodayProvider =
+    Provider.family<({int done, int total})?, String>((ref, id) {
+  final adhkar = ref.watch(adhkarProvider).valueOrNull?.category(id)?.items;
   if (adhkar == null || adhkar.isEmpty) return null;
   final progress = ref.watch(adhkarProgressProvider);
   final today = ref.watch(adhkarProgressRepositoryProvider).today;
@@ -74,6 +74,50 @@ final adhkarTodayProvider =
       ? 0
       : adhkar.where((d) => progress.countOf(d.id) >= d.count).length;
   return (done: done, total: adhkar.length);
+});
+
+/// [adhkarCategoryTodayProvider] for the morning / evening collection.
+final adhkarTodayProvider =
+    Provider.family<({int done, int total})?, AdhkarPeriod>((ref, period) {
+  return ref.watch(adhkarCategoryTodayProvider(period.categoryId));
+});
+
+/// Size of the dhikr text, kept between launches.
+class AdhkarFontSizeNotifier extends StateNotifier<double> {
+  AdhkarFontSizeNotifier(this._repository)
+      : super(AdhkarProgressRepository.defaultFontSize) {
+    _load();
+  }
+
+  final AdhkarProgressRepository _repository;
+  bool _changed = false;
+
+  static const double step = 2;
+
+  Future<void> _load() async {
+    final saved = await _repository.loadFontSize();
+    if (mounted && !_changed) state = saved;
+  }
+
+  bool get canGrow => state < AdhkarProgressRepository.maxFontSize;
+  bool get canShrink => state > AdhkarProgressRepository.minFontSize;
+
+  void grow() => _set(state + step);
+  void shrink() => _set(state - step);
+
+  void _set(double size) {
+    _changed = true;
+    state = size
+        .clamp(AdhkarProgressRepository.minFontSize,
+            AdhkarProgressRepository.maxFontSize)
+        .toDouble();
+    _repository.saveFontSize(state);
+  }
+}
+
+final adhkarFontSizeProvider =
+    StateNotifierProvider<AdhkarFontSizeNotifier, double>((ref) {
+  return AdhkarFontSizeNotifier(ref.watch(adhkarProgressRepositoryProvider));
 });
 
 class AdhkarFavoritesNotifier extends StateNotifier<Set<String>> {

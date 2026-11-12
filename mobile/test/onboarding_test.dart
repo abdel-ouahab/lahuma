@@ -24,7 +24,7 @@ const _flag = 'onboarding_completed_v1';
 Future<void> _launch(WidgetTester tester) async {
   await tester.pumpWidget(ProviderScope(overrides: [
     // Home reads today's adhkar progress; none are loaded in tests.
-    adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+    adhkarProvider.overrideWith((ref) async => const AdhkarCollection([])),
   ], child: const LahumaApp()));
 }
 
@@ -222,6 +222,9 @@ void main() {
     final row = find.text('عرض المقدمة مرة أخرى');
     await tester.scrollUntilVisible(row, 300,
         scrollable: find.byType(Scrollable).first);
+    // Clear of the floating tab bar.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    await _wait(tester);
     await tester.tap(row);
     await _wait(tester);
     expect(find.byType(OnboardingScreen), findsOneWidget);

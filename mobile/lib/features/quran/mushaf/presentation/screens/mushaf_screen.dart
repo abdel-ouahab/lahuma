@@ -12,6 +12,7 @@ import '../mushaf_providers.dart';
 import '../widgets/ayah_sheet.dart';
 import '../widgets/mushaf_overlay.dart';
 import '../widgets/mushaf_page.dart';
+import '../widgets/mushaf_themes.dart';
 
 /// The Madinah Mushaf, page by page, drawn with the KFGQPC QCF page fonts.
 ///
@@ -33,12 +34,6 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
   // setup); [_scales] reproduces ScreenUtil's `sp` and `h` from it.
   static const Size _designSize = Size(392.72727272727275, 800.7272727272727);
 
-  // Built once: MushafPage only rebuilds its text when the theme changes.
-  static const QcfThemeData _whiteTheme = QcfThemeData();
-  static final QcfThemeData _sepiaTheme = QcfThemeData.sepia();
-  static final QcfThemeData _darkTheme = QcfThemeData.dark();
-  static const Color _lightHighlight = Color(0x4DC8A15A);
-  static const Color _darkHighlight = Color(0x40FFB74D);
 
   PageController? _controller;
   final ValueNotifier<int> _page = ValueNotifier(1);
@@ -184,11 +179,13 @@ class _MushafScreenState extends ConsumerState<MushafScreen> {
       MushafTheme.white || MushafTheme.sepia => false,
     };
     final theme = switch (mushaf.theme) {
-      MushafTheme.white => _whiteTheme,
-      MushafTheme.sepia => _sepiaTheme,
-      _ => isDark ? _darkTheme : _sepiaTheme,
+      MushafTheme.white => MushafThemes.white,
+      MushafTheme.sepia => MushafThemes.paper,
+      _ => isDark ? MushafThemes.night : MushafThemes.paper,
     };
-    final highlight = isDark ? _darkHighlight : _lightHighlight;
+    final highlight = isDark
+        ? AppColors.mushafNightHighlight
+        : AppColors.mushafLightHighlight;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,

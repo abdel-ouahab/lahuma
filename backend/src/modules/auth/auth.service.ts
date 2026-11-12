@@ -17,8 +17,14 @@ function toPublicUser(user: { id: string; email: string; name: string; role: Rol
   return { id: user.id, email: user.email, name: user.name, role: user.role, createdAt: user.createdAt };
 }
 
+// Emails arrive lower-cased (auth.schema.ts). Accounts created before that
+// may hold capitals, so look them up without regard to case.
+function findByEmail(email: string) {
+  return prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
+}
+
 export async function registerUser(input: RegisterInput) {
-  const existing = await prisma.user.findUnique({ where: { email: input.email } });
+  const existing = await findByEmail(input.email);
   if (existing) {
     throw new AppError("An account with this email already exists.", 409);
   }
@@ -32,7 +38,7 @@ export async function registerUser(input: RegisterInput) {
 }
 
 export async function loginUser(input: LoginInput) {
-  const user = await prisma.user.findUnique({ where: { email: input.email } });
+  const user = await findByEmail(input.email);
   if (!user) {
     throw new AppError("Invalid email or password.", 401);
   }

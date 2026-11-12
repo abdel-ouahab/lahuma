@@ -2,196 +2,99 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/design/design.dart';
 import '../../../../core/localization/tr.dart';
+import '../../../../core/widgets/segment_bar.dart';
+import '../../../../core/widgets/shortcut_tile.dart';
 import '../../domain/dhikr.dart';
 import '../adhkar_providers.dart';
 import '../widgets/adhkar_widgets.dart';
+import 'adhkar_category_screen.dart';
 
-/// Which list the screen shows.
-enum AdhkarTab {
-  morning,
-  evening,
-  favorites;
+/// The Adhkar tab: the collection for this time of day as a hero, then
+/// every category grouped by when it is said.
+class AdhkarScreen extends ConsumerWidget {
+  const AdhkarScreen({super.key, this.now});
 
-  AdhkarPeriod? get period => switch (this) {
-        AdhkarTab.morning => AdhkarPeriod.morning,
-        AdhkarTab.evening => AdhkarPeriod.evening,
-        AdhkarTab.favorites => null,
-      };
+  static const String path = '/adhkar';
 
-  static AdhkarTab parse(String? name, {DateTime? now}) {
-    for (final t in values) {
-      if (t.name == name) return t;
-    }
-    // Rough default: morning adhkar before noon, evening adhkar after.
-    return (now ?? DateTime.now()).hour < 12
-        ? AdhkarTab.morning
-        : AdhkarTab.evening;
-  }
-}
+  /// Clock for the hero's morning / evening choice; tests pin it.
+  final DateTime Function()? now;
 
-/// Morning / evening adhkar and the user's favourites, with today's progress.
-/// Tapping a dhikr opens it in [AdhkarReaderScreen] to count repetitions.
-class AdhkarScreen extends ConsumerStatefulWidget {
-  const AdhkarScreen({super.key, this.initialTab});
-
-  final AdhkarTab? initialTab;
+  /// Morning adhkar before noon, evening adhkar after, as Home does.
+  static AdhkarPeriod periodAt(DateTime time) =>
+      time.hour < 12 ? AdhkarPeriod.morning : AdhkarPeriod.evening;
 
   @override
-  ConsumerState<AdhkarScreen> createState() => _AdhkarScreenState();
-}
-
-class _AdhkarScreenState extends ConsumerState<AdhkarScreen> {
-  late AdhkarTab _tab = widget.initialTab ?? AdhkarTab.parse(null);
-
-  void _open(Dhikr dhikr) =>
-      context.push('/adhkar/${dhikr.period.name}?index=${dhikr.index}');
-
-  Future<void> _confirmReset(List<Dhikr> adhkar, AdhkarPeriod period) async {
-    final ok = await showAppDialog<bool>(
-      context,
-      title: context.tr('إعادة العدّ؟', 'Reset counters?'),
-      message: context.tr('سيُصفَّر عدّ ${period.title(context)} لهذا اليوم.',
-          'Today\'s counts for ${period.title(context).toLowerCase()} will be cleared.'),
-      actions: [
-        AppDialogAction(label: context.tr('إلغاء', 'Cancel'), value: false),
-        AppDialogAction(
-            label: context.tr('إعادة', 'Reset'),
-            value: true,
-            isDestructive: true),
-      ],
-    );
-    if (ok == true) {
-      ref.read(adhkarProgressProvider.notifier).resetAll(adhkar);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final adhkarAsync = ref.watch(adhkarProvider);
-    final progress = ref.watch(adhkarProgressProvider);
-    final favorites = ref.watch(adhkarFavoritesProvider);
-    final period = _tab.period;
-
-    final List<Dhikr> items = adhkarAsync.valueOrNull == null
-        ? const []
-        : period != null
-            ? adhkarAsync.value!.of(period)
-            : [
-                for (final p in AdhkarPeriod.values)
-                  ...adhkarAsync.value!
-                      .of(p)
-                      .where((d) => favorites.contains(d.id)),
-              ];
-
     const margin = AppSpacing.screenMargin;
 
     return AppScaffold.largeTitle(
-      title: context.tr('الأذكار', 'Adhkar'),
-      trailing: period == null || items.isEmpty
-          ? null
-          : AppIconButton(
-              icon: CupertinoIcons.arrow_counterclockwise,
-              label: context.tr('إعادة العدّ', 'Reset counters'),
-              onPressed: () => _confirmReset(items, period),
-            ),
-      bottom: AppNavBarBottom(
-        child: AppSegmentedControl<AdhkarTab>(
-          segments: {
-            AdhkarTab.morning: context.tr('الصباح', 'Morning'),
-            AdhkarTab.evening: context.tr('المساء', 'Evening'),
-            AdhkarTab.favorites: context.tr('المفضلة', 'Favorites'),
-          },
-          value: _tab,
-          onChanged: (t) => setState(() => _tab = t),
-        ),
-      ),
+      title: context.tr('الأذكار والأدعية', 'Adhkar & duas'),
       slivers: adhkarAsync.when(
         loading: () => const [
           SliverToBoxAdapter(
-            child: AppSkeletonList(
-              itemCount: 5,
-              lines: 4,
-              leadingSize: null,
-              spacing: AppSpacing.lg,
-            ),
+            child: AppSkeletonList(itemCount: 6, lines: 2),
           ),
         ],
-        error: (error, _) => [
+        error: (_, __) => [
           SliverFillRemaining(
             hasScrollBody: false,
-            child: AdhkarErrorView(
-              error: error,
-              onRetry: () => ref.invalidate(adhkarProvider),
-            ),
+            child:
+                AdhkarErrorView(onRetry: () => ref.invalidate(adhkarProvider)),
           ),
         ],
-        data: (_) {
-          if (items.isEmpty) {
-            return [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: period == null
-                    ? AppEmptyState(
-                        icon: CupertinoIcons.bookmark,
-                        title: context.tr(
-                            'لا توجد أذكار مفضلة', 'No favorites yet'),
-                        message: context.tr(
-                            'اضغط على علامة الحفظ في أي ذكر لتجده هنا.',
-                            'Tap the bookmark on any dhikr to keep it here.'),
-                      )
-                    : AppEmptyState(
-                        icon: CupertinoIcons.tray,
-                        title: context.tr('لا توجد أذكار', 'No adhkar found'),
-                      ),
-              ),
-            ];
-          }
-
-          final completed =
-              items.where((d) => progress.countOf(d.id) >= d.count).length;
+        data: (collection) {
+          final period = periodAt((now ?? DateTime.now)());
+          final favorites = ref.watch(adhkarFavoritesProvider);
+          final favoriteCount =
+              favorites.where((id) => collection.byId(id) != null).length;
 
           return [
-            if (period != null)
-              SliverPadding(
-                padding: const EdgeInsetsDirectional.fromSTEB(
-                    margin, AppSpacing.md, margin, 0),
-                sliver: SliverToBoxAdapter(
-                  child: _SummaryCard(
-                    completed: completed,
-                    total: items.length,
-                    onStart: () {
-                      final next = items.firstWhere(
-                          (d) => progress.countOf(d.id) < d.count,
-                          orElse: () => items.first);
-                      _open(next);
-                    },
-                  ),
-                ),
-              ),
             SliverPadding(
               padding: const EdgeInsetsDirectional.fromSTEB(
-                  margin, AppSpacing.md, margin, 0),
-              sliver: SliverList.separated(
-                itemCount: items.length,
-                separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppSpacing.ms),
-                itemBuilder: (context, i) {
-                  final d = items[i];
-                  return _DhikrCard(
-                    dhikr: d,
-                    showPeriod: period == null,
-                    done: progress.countOf(d.id),
-                    favorite: favorites.contains(d.id),
-                    onTap: () => _open(d),
-                    onToggleFavorite: () =>
-                        ref.read(adhkarFavoritesProvider.notifier).toggle(d),
-                  ).listEntrance(i);
-                },
+                  margin, AppSpacing.sm, margin, 0),
+              sliver: SliverToBoxAdapter(
+                child: _NowCard(
+                  period: period,
+                  category: collection.category(period.categoryId),
+                ),
+              ),
+            ),
+            for (final group in AdhkarGroup.values)
+              if (collection.categories.where((c) => c.group == group)
+                  case final categories when categories.isNotEmpty)
+                SliverPadding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(
+                      margin, AppSpacing.xl, margin, 0),
+                  sliver: SliverToBoxAdapter(
+                    child: _Group(
+                      title: group.title(context),
+                      categories: categories.toList(),
+                    ),
+                  ),
+                ),
+            SliverPadding(
+              padding: const EdgeInsetsDirectional.fromSTEB(
+                  margin, AppSpacing.xl, margin, 0),
+              sliver: SliverToBoxAdapter(
+                child: ShortcutTile(
+                  title: context.tr('أذكاري المفضلة', 'My favourites'),
+                  icon: CupertinoIcons.bookmark_fill,
+                  color: AppColors.tileBlue,
+                  caption: favoriteCount == 0
+                      ? context.tr('احفظ أي ذكر لتجده هنا',
+                          'Save any dhikr to find it here')
+                      : adhkarCountLabel(context, favoriteCount),
+                  wide: true,
+                  scene: TileScene.ribbons,
+                  onTap: () => context.push(AdhkarCategoryScreen.pathFor(
+                      AdhkarCategoryScreen.favorites)),
+                ),
               ),
             ),
             const SliverPadding(
               padding: EdgeInsetsDirectional.fromSTEB(
-                  margin, AppSpacing.lg, margin, 0),
+                  margin, AppSpacing.lg, margin, AppSpacing.lg),
               sliver: SliverToBoxAdapter(child: AdhkarSourceNote()),
             ),
           ];
@@ -201,57 +104,106 @@ class _AdhkarScreenState extends ConsumerState<AdhkarScreen> {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.completed,
-    required this.total,
-    required this.onStart,
-  });
+/// The collection for this time of day: green and gilded like Home's
+/// Continue reading card, with one segment per dhikr.
+class _NowCard extends ConsumerWidget {
+  const _NowCard({required this.period, required this.category});
 
-  final int completed;
-  final int total;
-  final VoidCallback onStart;
+  final AdhkarPeriod period;
+  final AdhkarCategory? category;
 
   @override
-  Widget build(BuildContext context) {
-    final c = context.palette;
-    final allDone = completed >= total;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(adhkarTodayProvider(period));
+    const onHero = AppColors.onAccent;
+    final onHeroDim = onHero.withValues(alpha: 0.78);
+    final gold = context.palette.gold;
+    final done = today?.done ?? 0;
+    final total = today?.total ?? 0;
+    final allDone = total > 0 && done >= total;
+
+    final String status;
+    if (allDone) {
+      status = context.tr('أتممتها اليوم، تقبّل الله منك',
+          'Done for today. May Allah accept it from you');
+    } else if (done == 0) {
+      status = context.tr('لم تبدأ بعد اليوم', 'Not started today');
+    } else {
+      status = context.tr(
+          'قرأت ${ltr('$done')} من ${ltr('$total')}', 'Read $done of $total');
+    }
+
+    final rtl = Directionality.of(context) == TextDirection.rtl;
     return AppCard(
+      onTap: category == null
+          ? null
+          : () => context.push(AdhkarCategoryScreen.pathFor(category!.id)),
+      semanticLabel: '${period.title(context)}، $status',
+      padding: const EdgeInsetsDirectional.all(AppSpacing.ml),
+      gradient: const LinearGradient(
+        colors: AppColors.heroGradient,
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      borderColor: gold.withValues(alpha: 0.7),
+      ornament: CrescentCornersPainter(
+        gold.withValues(alpha: 0.3),
+        corners: [rtl ? Alignment.topLeft : Alignment.topRight],
+        scale: 1.5,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  allDone
-                      ? context.tr('أتممت أذكار اليوم', 'All done for today')
-                      : context.tr('تقدّمك اليوم', 'Today\'s progress'),
-                  style: AppTypography.headline.copyWith(color: c.label),
-                ),
-              ),
-              LtrText(
-                '$completed / $total',
-                style: AppTypography.tabular(AppTypography.subheadline)
-                    .copyWith(color: c.secondaryLabel),
-              ),
-            ],
+          Text(
+            period == AdhkarPeriod.morning
+                ? context.tr('وقت أذكار الصباح', 'Time for the morning adhkar')
+                : context.tr('وقت أذكار المساء', 'Time for the evening adhkar'),
+            style: AppTypography.footnote
+                .weight(FontWeight.w600)
+                .copyWith(color: onHeroDim),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          AppProgressBar(
-            value: total == 0 ? 0 : completed / total,
-            color: allDone ? c.success : null,
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            period.title(context),
+            style: AppTypography.quran(
+                    size: 32, weight: FontWeight.w700, height: 1.35)
+                .copyWith(color: onHero),
           ),
-          const SizedBox(height: AppSpacing.ms),
-          AppButton.filled(
-            label: allDone
-                ? context.tr('القراءة من البداية', 'Read from the start')
-                : completed == 0
-                    ? context.tr('ابدأ', 'Start')
-                    : context.tr('تابع', 'Continue'),
-            icon: CupertinoIcons.play_fill,
-            expand: true,
-            onPressed: onStart,
+          Text(status,
+              style: AppTypography.subheadline.copyWith(color: onHeroDim)),
+          if (total > 0) ...[
+            const SizedBox(height: AppSpacing.md),
+            SegmentBar(filled: done, total: total, color: onHero, height: 5),
+          ],
+          const SizedBox(height: AppSpacing.md),
+          // The card is the tap target; the capsule says what it does.
+          DecoratedBox(
+            decoration: const ShapeDecoration(
+              shape: StadiumBorder(),
+              color: onHero,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(CupertinoIcons.play_fill,
+                      size: 14, color: AppColors.heroGradient.last),
+                  const SizedBox(width: AppSpacing.xs + 2),
+                  Text(
+                    allDone
+                        ? context.tr('اقرأها مرة أخرى', 'Read them again')
+                        : done == 0
+                            ? context.tr('ابدأ', 'Start')
+                            : context.tr('تابع', 'Continue'),
+                    style: AppTypography.subheadline
+                        .weight(FontWeight.w600)
+                        .copyWith(color: AppColors.heroGradient.last),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -259,91 +211,81 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-class _DhikrCard extends StatelessWidget {
-  const _DhikrCard({
-    required this.dhikr,
-    required this.showPeriod,
-    required this.done,
-    required this.favorite,
-    required this.onTap,
-    required this.onToggleFavorite,
-  });
+/// A titled group of category tiles, two to a row; an odd last tile spans
+/// the row.
+class _Group extends StatelessWidget {
+  const _Group({required this.title, required this.categories});
 
-  final Dhikr dhikr;
-  final bool showPeriod;
-  final int done;
-  final bool favorite;
-  final VoidCallback onTap;
-  final VoidCallback onToggleFavorite;
+  final String title;
+  final List<AdhkarCategory> categories;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.palette;
-    final complete = done >= dhikr.count;
-    final meta = AppTypography.footnote.copyWith(color: c.secondaryLabel);
+    final rows = <Widget>[];
+    for (var i = 0; i < categories.length; i += 2) {
+      final pair = categories.skip(i).take(2).toList();
+      if (rows.isNotEmpty) rows.add(const SizedBox(height: AppSpacing.ms));
+      rows.add(pair.length == 1
+          ? _CategoryTile(category: pair.first, wide: true)
+          : IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: _CategoryTile(category: pair[0])),
+                  const SizedBox(width: AppSpacing.ms),
+                  Expanded(child: _CategoryTile(category: pair[1])),
+                ],
+              ),
+            ));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(
+            title,
+            style: AppTypography.title3
+                .weight(FontWeight.w700)
+                .copyWith(color: context.palette.label),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.ms),
+        ...rows,
+      ],
+    );
+  }
+}
 
-    return AppCard(
-      onTap: onTap,
-      semanticLabel: context.tr('افتح الذكر للعدّ', 'Open to count'),
-      padding: const EdgeInsetsDirectional.fromSTEB(
-          AppSpacing.md, AppSpacing.xs, AppSpacing.xs, AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  [
-                    if (showPeriod) dhikr.period.title(context),
-                    repetitionLabel(context, dhikr.count),
-                  ].join(' · '),
-                  style: meta,
-                ),
-              ),
-              AppIconButton(
-                icon: favorite
-                    ? CupertinoIcons.bookmark_fill
-                    : CupertinoIcons.bookmark,
-                label: favorite
-                    ? context.tr('إزالة من المفضلة', 'Remove from favorites')
-                    : context.tr('إضافة إلى المفضلة', 'Add to favorites'),
-                onPressed: onToggleFavorite,
-              ),
-            ],
-          ),
-          Padding(
-            padding: const EdgeInsetsDirectional.only(end: AppSpacing.ms),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DhikrText(dhikr.text, size: 21),
-                DhikrNotes(dhikr: dhikr),
-                const SizedBox(height: AppSpacing.ms),
-                Row(
-                  children: [
-                    Expanded(
-                      child: AppProgressBar(
-                        value: done / dhikr.count,
-                        color: complete ? c.success : null,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    if (complete)
-                      Icon(CupertinoIcons.checkmark_circle_fill,
-                          size: 18, color: c.success)
-                    else
-                      LtrText(
-                        '$done / ${dhikr.count}',
-                        style: AppTypography.tabular(meta),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+class _CategoryTile extends ConsumerWidget {
+  const _CategoryTile({required this.category, this.wide = false});
+
+  final AdhkarCategory category;
+  final bool wide;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = ref.watch(adhkarCategoryTodayProvider(category.id));
+    final tone = adhkarTone(category.tone);
+    final total = category.items.length;
+    final done = today?.done ?? 0;
+    final caption = done == 0
+        ? adhkarCountLabel(context, total)
+        : done >= total
+            ? context.tr('أتممتها اليوم', 'Done today')
+            : context.tr('${ltr('$done')} من ${ltr('$total')} اليوم',
+                '$done of $total today');
+    return ShortcutTile(
+      title: category.label(context),
+      icon: adhkarIcon(category.icon),
+      color: tone,
+      caption: caption,
+      wide: wide,
+      scene: adhkarScene(category.icon),
+      footer: done == 0 || wide
+          ? null
+          : SegmentBar(filled: done, total: total, color: ShortcutTile.onScene),
+      onTap: () => context.push(AdhkarCategoryScreen.pathFor(category.id)),
     );
   }
 }

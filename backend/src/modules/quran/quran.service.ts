@@ -5,21 +5,33 @@
 import { AppError } from "../../utils/AppError";
 
 const BASE_URL = "https://api.alquran.cloud/v1";
+// A slow upstream must not hold API requests (and their sockets) open.
+const TIMEOUT_MS = 10_000;
+
+async function get(url: string, failure: string) {
+  try {
+    return await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
+  } catch {
+    throw new AppError(failure, 502);
+  }
+}
 
 interface QuranApiResponse<T> {
   data: T;
 }
 
 export async function fetchSurahList() {
-  const res = await fetch(`${BASE_URL}/surah`);
-  if (!res.ok) throw new AppError("Unable to load Surah list right now.", 502);
+  const failure = "Unable to load Surah list right now.";
+  const res = await get(`${BASE_URL}/surah`, failure);
+  if (!res.ok) throw new AppError(failure, 502);
   const body = (await res.json()) as QuranApiResponse<unknown>;
   return body.data;
 }
 
 export async function fetchSurah(surahNumber: number) {
-  const res = await fetch(`${BASE_URL}/surah/${surahNumber}/quran-uthmani`);
-  if (!res.ok) throw new AppError("Unable to load this Surah right now.", 502);
+  const failure = "Unable to load this Surah right now.";
+  const res = await get(`${BASE_URL}/surah/${surahNumber}/quran-uthmani`, failure);
+  if (!res.ok) throw new AppError(failure, 502);
   const body = (await res.json()) as QuranApiResponse<unknown>;
   return body.data;
 }

@@ -124,19 +124,47 @@ class MushafOverlay extends StatelessWidget {
                 padding: EdgeInsets.only(
                     top: AppSpacing.sm,
                     bottom: media.padding.bottom + AppSpacing.sm),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: Text(
-                    context.tr('صفحة $page من ${MushafMeta.pageCount}',
-                        'Page $page of ${MushafMeta.pageCount}'),
-                    textAlign: TextAlign.center,
-                    style: AppTypography.tabular(AppTypography.footnote)
-                        .copyWith(color: ink),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _Rhombus(color: theme.verseNumberColor),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      context.tr('صفحة $page من ${MushafMeta.pageCount}',
+                          'Page $page of ${MushafMeta.pageCount}'),
+                      textAlign: TextAlign.center,
+                      style: AppTypography.tabular(AppTypography.footnote)
+                          .copyWith(color: ink),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _Rhombus(color: theme.verseNumberColor),
+                  ],
                 ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A small gilded rhombus either side of the page number, as printed
+/// Mushafs mark their folios.
+class _Rhombus extends StatelessWidget {
+  const _Rhombus({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return ExcludeSemantics(
+      child: Transform.rotate(
+        angle: 0.785398, // 45°
+        child: Container(
+          width: 5,
+          height: 5,
+          color: color,
         ),
       ),
     );

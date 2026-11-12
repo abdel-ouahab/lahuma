@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, BookOpen, Bookmark, Activity, RefreshCw, ArrowUpRight } from 'lucide-react';
+import { Users, ShieldCheck, Mic2, Activity, RefreshCw, ArrowUpRight, AlertCircle } from 'lucide-react';
 import { StatCard } from '../components/StatCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { PageHeader } from '../components/PageHeader';
-import { EmptyState } from '../components/EmptyState';
-import { getDashboardMetrics, getUsers, getActivityLogs } from '../services/api';
-import type { DashboardMetrics, User, ActivityLog } from '../types';
+import { getDashboardMetrics, getUsers } from '../services/api';
+import type { DashboardMetrics, User } from '../types';
 
 export const DashboardPage: React.FC = () => {
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   const loadData = async () => {
     setLoading(true);
-    const [m, u, l] = await Promise.all([getDashboardMetrics(), getUsers(), getActivityLogs()]);
-    setMetrics(m);
-    setUsers(u);
-    setLogs(l);
-    setLoading(false);
+    setError('');
+    try {
+      const [m, u] = await Promise.all([getDashboardMetrics(), getUsers()]);
+      setMetrics(m);
+      setUsers(u);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not load the dashboard.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -31,7 +35,7 @@ export const DashboardPage: React.FC = () => {
     <div className="page">
       <PageHeader
         title="Overview"
-        subtitle="Platform activity, accounts and services at a glance."
+        subtitle="Accounts, reciters and services at a glance."
         actions={
           <button type="button" onClick={loadData} className="btn btn-secondary" disabled={loading}>
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
@@ -40,38 +44,45 @@ export const DashboardPage: React.FC = () => {
         }
       />
 
+      {error && (
+        <div className="alert alert-danger" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
+          <AlertCircle size={16} />
+          <span>{error}</span>
+        </div>
+      )}
+
       <div className="grid-stats">
         <StatCard
           title="Registered users"
           color="green"
-          value={metrics?.totalUsers ?? null}
+          value={metrics?.totalUsers ?? (error ? '—' : null)}
           icon={Users}
-          subtitle="Registered accounts"
+          subtitle="Accounts in the database"
         />
         <StatCard
-          title="Active readers today"
+          title="Administrators"
           color="orange"
-          value={metrics?.activeToday ?? null}
-          icon={Activity}
-          subtitle="Guest and signed-in readers"
+          value={metrics?.totalAdmins ?? (error ? '—' : null)}
+          icon={ShieldCheck}
+          subtitle="Accounts with admin access"
         />
         <StatCard
-          title="Bookmarks"
+          title="Reciters"
           color="red"
-          value={metrics?.totalBookmarks.toLocaleString() ?? null}
-          icon={Bookmark}
-          subtitle="Saved locally and synced"
+          value={metrics?.totalReciters ?? (error ? '—' : null)}
+          icon={Mic2}
+          subtitle={metrics ? `${metrics.uploadedSurahs} Surah recordings uploaded` : 'Surah recordings'}
         />
         <StatCard
-          title="Quran catalog"
+          title="API"
           color="blue"
-          value={metrics ? `${metrics.totalSurahs} Surahs` : null}
-          icon={BookOpen}
-          subtitle="Full dataset available"
+          value={metrics ? (metrics.apiStatus === 'healthy' ? 'Online' : 'Offline') : error ? 'Offline' : null}
+          icon={Activity}
+          subtitle="Backend health check"
         />
       </div>
 
-      <div className="grid-2">
+      <div>
         <section className="card card-flush" aria-labelledby="recent-users">
           <div className="card-header">
             <h2 className="card-title" id="recent-users">Recent users</h2>
@@ -86,7 +97,7 @@ export const DashboardPage: React.FC = () => {
                 <tr>
                   <th>User</th>
                   <th>Role</th>
-                  <th>Status</th>
+                  <th>Joined</th>
                 </tr>
               </thead>
               <tbody>
@@ -110,7 +121,7 @@ export const DashboardPage: React.FC = () => {
                           </div>
                         </td>
                         <td><StatusBadge type="role" value={user.role} /></td>
-                        <td><StatusBadge type="status" value={user.status} /></td>
+                        <td className="muted tabular">{new Date(user.createdAt).toLocaleDateString()}</td>
                       </tr>
                     ))}
               </tbody>
@@ -118,34 +129,6 @@ export const DashboardPage: React.FC = () => {
           </div>
         </section>
 
-        <section className="card card-flush" aria-labelledby="activity">
-          <div className="card-header">
-            <h2 className="card-title" id="activity">Activity</h2>
-          </div>
-
-          {!loading && logs.length === 0 ? (
-            <EmptyState icon={Activity} title="No activity yet" message="System events will show up here." />
-          ) : (
-            <ul className="activity">
-              {loading
-                ? Array.from({ length: 4 }, (_, i) => (
-                    <li key={i}><span className="skeleton" style={{ height: 34, width: '100%' }} /></li>
-                  ))
-                : logs.map((log) => (
-                    <li key={log.id}>
-                      <span className={`dot ${log.type}`} aria-hidden="true" />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 500 }}>{log.action}</div>
-                        <div className="row-between cell-sub">
-                          <span>{log.user}</span>
-                          <span>{log.timestamp}</span>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-            </ul>
-          )}
-        </section>
       </div>
     </div>
   );

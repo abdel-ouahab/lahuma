@@ -19,3 +19,4 @@ export 'widgets/app_overlays.dart';
 export 'widgets/app_scaffold.dart';
 export 'widgets/app_states.dart';
 export 'widgets/app_surface.dart';
+export 'widgets/tile_scenes.dart';

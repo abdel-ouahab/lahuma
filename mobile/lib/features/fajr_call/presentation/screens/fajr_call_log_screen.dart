@@ -44,6 +44,9 @@ class FajrCallLogScreen extends ConsumerWidget {
 
     final total = sessions.fold<int>(0, (n, s) => n + s.total);
     final awake = sessions.fold<int>(0, (n, s) => n + s.awake);
+    // Woke up is counted in people, so it is shown against the people
+    // reached, not against Calls (which counts every retry).
+    final people = sessions.fold<int>(0, (n, s) => n + s.contacts.length);
     // Calls that ended before the ring timeout (picked up or declined),
     // plus any the call log confirmed as answered.
     final ended = sessions.fold<int>(0, (n, s) => n + s.ended + s.answered);
@@ -77,6 +80,7 @@ class FajrCallLogScreen extends ConsumerWidget {
                   child: _Stats(
                     total: total,
                     awake: awake,
+                    people: people,
                     ended: ended,
                     noAnswer: noAnswer,
                     failed: failed,
@@ -95,6 +99,7 @@ class _Stats extends StatelessWidget {
   const _Stats({
     required this.total,
     required this.awake,
+    required this.people,
     required this.ended,
     required this.noAnswer,
     required this.failed,
@@ -102,6 +107,7 @@ class _Stats extends StatelessWidget {
 
   final int total;
   final int awake;
+  final int people;
   final int ended;
   final int noAnswer;
   final int failed;
@@ -130,6 +136,7 @@ class _Stats extends StatelessWidget {
           _StatTile(
               label: context.tr('استيقظوا', 'Woke up'),
               value: awake,
+              of: people,
               icon: CupertinoIcons.checkmark_circle_fill,
               color: AppColors.success),
         ]),
@@ -162,10 +169,14 @@ class _StatTile extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
+    this.of,
   });
 
   final String label;
   final int value;
+
+  /// Shows the value as "value/of" (e.g. 1/2 people awake).
+  final int? of;
   final IconData icon;
   final Color color;
 
@@ -174,7 +185,9 @@ class _StatTile extends StatelessWidget {
     final c = context.palette;
     return Semantics(
       container: true,
-      label: '$label: $value',
+      label: of == null
+          ? '$label: $value'
+          : context.tr('$label: $value من $of', '$label: $value of $of'),
       excludeSemantics: true,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.ms),
@@ -187,9 +200,19 @@ class _StatTile extends StatelessWidget {
           children: [
             Icon(icon, size: 20, color: c.resolve(color)),
             const SizedBox(height: AppSpacing.xs + 2),
-            LtrText('$value',
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Text.rich(
+                TextSpan(children: [
+                  TextSpan(text: '$value'),
+                  if (of != null)
+                    TextSpan(
+                        text: '/$of', style: TextStyle(color: c.tertiaryLabel)),
+                ]),
                 style: AppTypography.tabular(AppTypography.title2)
-                    .copyWith(color: c.label)),
+                    .copyWith(color: c.label),
+              ),
+            ),
             Text(label,
                 style:
                     AppTypography.footnote.copyWith(color: c.secondaryLabel)),
@@ -209,16 +232,34 @@ class _SessionSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final awakeIds = session.awakeContactIds;
+    final contacts = session.contacts;
     final header = [
       formatFire(context, session.firedAt, now),
+      context.tr('استيقظ ${ltr('${awakeIds.length}/${contacts.length}')}',
+          '${awakeIds.length}/${contacts.length} awake'),
       if (session.mode == FajrCallMode.manual) context.tr('يدوي', 'Manual'),
       if (session.stoppedByUser) context.tr('أُوقف', 'Stopped'),
     ].join(' · ');
+    // "Call ended" can mean picked up or declined: without the call log the
+    // app can't tell, so say so where it still matters (nobody ticked yet).
+    final unsure = contacts.any((p) {
+      if (awakeIds.contains(p.id)) return false;
+      CallStatus? last;
+      for (final a in session.attempts) {
+        if (a.contact.id == p.id && a.status.isCall) last = a.status;
+      }
+      return last == CallStatus.called;
+    });
     return AppListSection(
       header: header,
+      footer: unsure
+          ? context.tr(
+              '«انتهت المكالمة» تعني أنه ردّ أو رفض قبل انتهاء الرنين. اضغط «استيقظ؟» إن تأكّدت أنه استيقظ.',
+              '"Call ended" means they picked up or declined before the ring timeout. Tap "Awake?" once you know they are up.')
+          : null,
       hasLeading: true,
       children: [
-        for (final contact in session.contacts)
+        for (final contact in contacts)
           _ContactResult(
             contact: contact,
             attempts: [
@@ -308,8 +349,12 @@ class _ContactResult extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: AppSpacing.sm),
           AwakeToggle(
-              value: awake, onChanged: onToggleAwake, name: contact.name),
+              value: awake,
+              onChanged: onToggleAwake,
+              name: contact.name,
+              showLabel: true),
         ],
       ),
     );

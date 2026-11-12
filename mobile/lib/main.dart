@@ -1,3 +1,6 @@
+import 'dart:ui' show PlatformDispatcher;
+
+import 'core/audio/now_playing.dart';
 import 'package:animated_theme_switcher/animated_theme_switcher.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,6 +12,8 @@ import 'core/notifications/local_notifications.dart';
 import 'core/notifications/notification_providers.dart';
 import 'core/router/app_router.dart';
 import 'core/design/app_theme.dart';
+import 'features/reminders/presentation/reminder_providers.dart';
+import 'features/prayer_banner/presentation/prayer_banner_providers.dart';
 import 'features/adhan/background/adhan_background.dart';
 import 'features/adhan/data/adhan_scheduler.dart';
 import 'features/adhan/presentation/adhan_foreground.dart';
@@ -30,9 +35,20 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppTheme.applySystemChrome();
 
+  // An async error nothing caught (a fire-and-forget future) is logged and
+  // the app carries on. Framework errors already go to FlutterError.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught error: $error\n$stack');
+    return true;
+  };
+
   await Hive.initFlutter();
-  await Hive.openBox<String>(StorageKeys.bookmarksBox);
-  await Hive.openBox<String>(StorageKeys.quranCacheBox);
+  await _openBoxSafely(StorageKeys.bookmarksBox);
+  await _openBoxSafely(StorageKeys.quranCacheBox);
+
+  // Lock-screen / notification controls for recitations; set up alongside
+  // the rest so launch doesn't wait on it alone.
+  final nowPlaying = initNowPlaying();
 
   // Timezone + notification plugin; permissions are asked later, in context.
   final notifications = LocalNotifications();
@@ -45,9 +61,26 @@ Future<void> main() async {
   await precacheSplashWordmark();
 
   runApp(ProviderScope(
-    overrides: [localNotificationsProvider.overrideWithValue(notifications)],
+    overrides: [
+      localNotificationsProvider.overrideWithValue(notifications),
+      nowPlayingProvider.overrideWithValue(await nowPlaying),
+    ],
     child: const LahumaApp(),
   ));
+}
+
+/// Opens a Hive box; a file damaged beyond Hive's own recovery (a full disk,
+/// a kill mid-write) is deleted and recreated empty, so the app still starts
+/// instead of hanging on the launch screen. The quran cache refills itself;
+/// bookmarks are lost only in that rare case.
+Future<void> _openBoxSafely(String name) async {
+  try {
+    await Hive.openBox<String>(name);
+  } catch (e) {
+    debugPrint('Hive box $name could not be opened ($e); recreating it.');
+    await Hive.deleteBoxFromDisk(name);
+    await Hive.openBox<String>(name);
+  }
 }
 
 class LahumaApp extends ConsumerStatefulWidget {
@@ -70,6 +103,10 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     ref.read(adhanProvider);
     // Loads the khatma, fixes today's portion and replans its reminders.
     ref.read(khatmaProvider);
+    // Loads the reminder frequency and tops up the adhkar and surah week.
+    ref.read(reminderProvider);
+    // Puts up (or refreshes) the prayer-times banner.
+    ref.read(prayerBannerProvider);
     // The adhan plays in the app at prayer time, only while it is open.
     ref.read(adhanForegroundProvider).setActive(true);
     ref.read(fajrCallPlatformProvider).setHandlers(
@@ -95,7 +132,10 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
       // A new day, or progress changed elsewhere: today's portion and the
       // reminder texts follow.
       ref.read(khatmaProvider.notifier).refresh();
+      ref.read(reminderProvider.notifier).reschedule();
+      ref.read(prayerBannerProvider.notifier).refresh();
       // A new day: Home's adhkar progress starts again from nothing.
+      ref.invalidate(adhkarCategoryTodayProvider);
       ref.invalidate(adhkarTodayProvider);
       ref.invalidate(adhanPermissionsProvider);
     }

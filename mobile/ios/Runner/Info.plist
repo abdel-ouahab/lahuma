@@ -33,6 +33,10 @@
 	<string>Ihsan reads how you tilt your phone so the lanterns on the prayer-times card swing. The motion data stays on your phone.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Ihsan uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.</string>
+	<!-- Only standard HTTPS: exempt from export documentation, so App Store
+	     Connect stops asking at every upload. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tel</string>
@@ -81,5 +85,12 @@
 	</array>
 	<key>UIStatusBarHidden</key>
 	<false/>
+	<!-- The prayer-times Live Activity (ios/PrayerBanner). -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 </dict>
 </plist>

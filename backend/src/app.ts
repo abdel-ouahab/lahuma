@@ -15,6 +15,7 @@ const ADHAN_TYPES: Record<string, string> = {
 
 export function createApp({ adhanDir = path.join(PUBLIC_DIR, "adhan") } = {}) {
   const app = express();
+  app.disable("x-powered-by");
   if (env.trustProxy > 0) app.set("trust proxy", env.trustProxy);
 
   app.use(cors({ origin: env.corsOrigin }));

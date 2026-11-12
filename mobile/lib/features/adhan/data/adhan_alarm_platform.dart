@@ -40,20 +40,31 @@ class AdhanNativeStrings {
     required this.stop,
     required this.channel,
     required this.fallbackChannel,
+    required this.tapToListen,
   });
 
   factory AdhanNativeStrings.of({required bool arabic}) => AdhanNativeStrings(
         stop: arabic ? 'إيقاف' : 'Stop',
         channel: arabic ? 'الأذان' : 'Adhan',
         fallbackChannel: arabic ? 'وقت الصلاة' : 'Prayer time',
+        tapToListen:
+            arabic ? 'اضغط للاستماع إلى الأذان' : 'Tap to listen to the adhan',
       );
 
   final String stop;
   final String channel;
   final String fallbackChannel;
 
-  Map<String, String> toMap() =>
-      {'stop': stop, 'channel': channel, 'fallbackChannel': fallbackChannel};
+  /// The prayer's notification when the adhan couldn't play (too late, or
+  /// the player wasn't allowed to start).
+  final String tapToListen;
+
+  Map<String, String> toMap() => {
+        'stop': stop,
+        'channel': channel,
+        'fallbackChannel': fallbackChannel,
+        'tapToListen': tapToListen,
+      };
 }
 
 /// The phone makers whose battery savers need a manual step.
@@ -67,6 +78,8 @@ class AdhanReliability {
     this.maker = PhoneMaker.other,
     this.manufacturer = '',
     this.sdk = 0,
+    this.hiddenFromRecents = false,
+    this.seenCleared = false,
   });
 
   final bool exactAlarms;
@@ -76,6 +89,19 @@ class AdhanReliability {
   /// `Build.MANUFACTURER`, as the phone reports it.
   final String manufacturer;
   final int sdk;
+
+  /// The user chose to keep Ihsan out of Recents, where a swipe force-stops
+  /// it on ColorOS and cancels every adhan. Recents opened from inside
+  /// Ihsan still lists it, so this doesn't cover a swipe from there.
+  final bool hiddenFromRecents;
+
+  /// A launch has found the adhans cancelled by a force-stop at least once.
+  final bool seenCleared;
+
+  /// Whether to offer hiding from Recents: phones known to force-stop on a
+  /// swipe, any phone where it happened, or to let it be turned off.
+  bool get offerHideFromRecents =>
+      maker == PhoneMaker.oppo || seenCleared || hiddenFromRecents;
 
   static PhoneMaker makerOf(String manufacturer) {
     final m = manufacturer.toLowerCase();
@@ -98,6 +124,8 @@ class AdhanReliability {
       maker: makerOf(manufacturer),
       manufacturer: manufacturer,
       sdk: (m['sdk'] as num?)?.toInt() ?? 0,
+      hiddenFromRecents: m['hiddenFromRecents'] == true,
+      seenCleared: m['seenCleared'] == true,
     );
   }
 }
@@ -145,6 +173,17 @@ class AdhanAlarmPlatform {
       }) ??
       false;
 
+  /// The prayer-times banner (`PrayerBanner.kt`): [days] are each day's
+  /// five prayer times (epoch ms, Fajr to Isha).
+  Future<bool> bannerSync({
+    required bool enabled,
+    required List<List<int>> days,
+    required Map<String, Object> strings,
+  }) async =>
+      await _invoke<bool>('bannerSync',
+          {'enabled': enabled, 'days': days, 'strings': strings}) ??
+      false;
+
   /// Arms one test alarm (kept apart from [sync]'s).
   Future<bool> test(AdhanAlarm alarm, AdhanNativeStrings strings) async =>
       await _invoke<bool>(
@@ -178,6 +217,11 @@ class AdhanAlarmPlatform {
       await _invoke<bool>('openMakerSettings', {'maker': maker.name}) ?? false;
 
   Future<void> openAppSettings() => _invoke<void>('openAppSettings');
+
+  /// Keeps Ihsan out of Recents (or shows it again). Applies to the open
+  /// task now and to every later one.
+  Future<void> setHiddenFromRecents(bool hidden) =>
+      _invoke<void>('setHiddenFromRecents', {'hidden': hidden});
 
   /// Background engine only: the reschedule finished.
   Future<void> backgroundDone() => _invoke<void>('done');

@@ -44,6 +44,7 @@ class KhatmaNotifications {
         route: route,
         title: arabic ? 'ورد الختمة' : 'Khatma reading',
         body: body(r, arabic: arabic),
+        category: arabic ? 'الختمة' : 'Khatma',
       );
     }
   }

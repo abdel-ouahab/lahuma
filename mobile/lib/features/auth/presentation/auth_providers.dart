@@ -53,9 +53,17 @@ class AuthNotifier extends StateNotifier<AuthUser?> {
     final token = prefs.getString(StorageKeys.authToken);
     final raw = prefs.getString(StorageKeys.authUser);
     if (token == null || raw == null) return;
+    final AuthUser saved;
+    try {
+      saved = AuthUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (_) {
+      // A damaged saved session: start as a guest rather than fail.
+      await logout();
+      return;
+    }
     _token = token;
     _client.setAuthToken(token);
-    state = AuthUser.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    state = saved;
     await _verify(token);
   }
 

@@ -11,7 +11,7 @@ import 'package:lahuma/core/design/app_theme.dart';
 import 'package:lahuma/features/quran/mushaf/presentation/mushaf_providers.dart';
 import 'package:lahuma/features/quran/mushaf/presentation/screens/mushaf_index_screen.dart';
 import 'package:lahuma/features/quran/mushaf/presentation/screens/mushaf_screen.dart';
-import 'package:qcf_quran/qcf_quran.dart' show QcfThemeData;
+import 'package:lahuma/features/quran/mushaf/presentation/widgets/mushaf_themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -175,13 +175,13 @@ void main() {
                 of: find.byType(PageView), matching: find.byType(Material))
             .first)
         .color!;
-    expect(paper(), QcfThemeData.sepia().pageBackgroundColor);
+    expect(paper(), MushafThemes.paper.pageBackgroundColor);
 
     await tester.tap(find.bySemanticsLabel('مظهر المصحف'));
     await settle(tester);
     await tester.tap(find.text('داكن'));
     await settle(tester);
-    expect(paper(), QcfThemeData.dark().pageBackgroundColor);
+    expect(paper(), MushafThemes.night.pageBackgroundColor);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getString(StorageKeys.mushafTheme), 'dark');
 
@@ -189,7 +189,7 @@ void main() {
     await settle(tester);
     await tester.tap(find.text('أبيض'));
     await settle(tester);
-    expect(paper(), const QcfThemeData().pageBackgroundColor);
+    expect(paper(), MushafThemes.white.pageBackgroundColor);
   });
 
   testWidgets('go to page accepts Arabic-Indic digits', (tester) async {

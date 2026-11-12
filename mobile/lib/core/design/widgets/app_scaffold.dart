@@ -115,7 +115,13 @@ class AppScaffold extends StatelessWidget {
             )
           else
             CupertinoSliverNavigationBar(
-              largeTitle: Text(title!),
+              // Long titles (e.g. adhkar category names) shrink to fit the
+              // width instead of being cut off with an ellipsis.
+              largeTitle: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: AlignmentDirectional.bottomStart,
+                child: Text(title!, maxLines: 1, softWrap: false),
+              ),
               leading: leading,
               trailing: trailing,
               bottom: bottom,
