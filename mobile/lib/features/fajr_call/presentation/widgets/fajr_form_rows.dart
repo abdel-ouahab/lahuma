@@ -17,9 +17,13 @@ class AppSliderRow extends StatelessWidget {
     required this.label,
     required this.onChanged,
     this.step = 1,
+    this.subtitle,
   });
 
   final String title;
+
+  /// What the setting does, under the title.
+  final String? subtitle;
   final int value;
   final int min;
   final int max;
@@ -47,8 +51,16 @@ class AppSliderRow extends StatelessWidget {
                       .copyWith(color: c.secondaryLabel)),
             ],
           ),
+          if (subtitle != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(subtitle!,
+                  style:
+                      AppTypography.footnote.copyWith(color: c.secondaryLabel)),
+            ),
           Semantics(
             label: title,
+            hint: subtitle,
             value: label(value),
             child: CupertinoSlider(
               value: value.toDouble(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart' show Icons;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../audio/now_playing_sync.dart';
 import '../design/design.dart';
 import '../localization/tr.dart';
 import '../../features/mp3quran/presentation/mp3quran_player_screen.dart';
@@ -49,9 +50,9 @@ class MainShell extends ConsumerWidget {
           label: context.tr('المصحف', 'Mushaf'),
         ),
         AppTabItem(
-          icon: CupertinoIcons.bookmark,
-          activeIcon: CupertinoIcons.bookmark_fill,
-          label: context.tr('العلامات', 'Bookmarks'),
+          icon: CupertinoIcons.moon_stars,
+          activeIcon: CupertinoIcons.moon_stars_fill,
+          label: context.tr('الأذكار', 'Adhkar'),
         ),
         AppTabItem(
           icon: CupertinoIcons.ellipsis_circle,
@@ -82,7 +83,13 @@ class MainShell extends ConsumerWidget {
                 : null;
 
     return AppTabScaffold(
-      body: navigationShell,
+      body: Stack(
+        children: [
+          navigationShell,
+          // Mirrors the mini player on the lock screen and in notifications.
+          const NowPlayingSync(),
+        ],
+      ),
       accessory: miniPlayer,
       accessoryHeight: AppMiniPlayerBar.reservedHeight,
       tabBar: AppTabBar(

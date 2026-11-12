@@ -24,7 +24,7 @@ void main() {
       (WidgetTester tester) async {
     // Home reads today's adhkar progress; none are loaded in tests.
     await tester.pumpWidget(ProviderScope(overrides: [
-      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection([])),
     ], child: const LahumaApp()));
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -47,7 +47,7 @@ void main() {
       (WidgetTester tester) async {
     // Home reads today's adhkar progress; none are loaded in tests.
     await tester.pumpWidget(ProviderScope(overrides: [
-      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection([])),
     ], child: const LahumaApp()));
     await tester.pump(const Duration(seconds: 2));
     await tester.pump(const Duration(milliseconds: 500));

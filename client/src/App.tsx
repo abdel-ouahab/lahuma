@@ -9,7 +9,6 @@ import { UsersPage } from './pages/UsersPage';
 import { QuranPage } from './pages/QuranPage';
 import { RecitersPage } from './pages/RecitersPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { PlayerConceptPage } from './pages/PlayerConceptPage';
 import { LoginPage } from './pages/LoginPage';
 
 const ProtectedLayout: React.FC = () => {
@@ -46,7 +45,6 @@ const ProtectedLayout: React.FC = () => {
             <Route path="/users" element={<UsersPage />} />
             <Route path="/quran" element={<QuranPage />} />
             <Route path="/reciters" element={<RecitersPage />} />
-            <Route path="/player-concept" element={<PlayerConceptPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

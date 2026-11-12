@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Prayer-times banner on a dark notification shade. -->
+<resources>
+    <color name="prayer_banner_gold">#D9B45A</color>
+    <color name="prayer_banner_muted">#B3FFFFFF</color>
+    <color name="prayer_banner_rule">#26FFFFFF</color>
+</resources>

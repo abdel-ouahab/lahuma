@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoNavigationBarBackButton;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,8 +11,12 @@ import '../../domain/bookmark.dart';
 import '../bookmark_card.dart';
 import '../bookmarks_providers.dart';
 
+/// Saved ayahs. Opened from Home, the side menu and More (it was a tab
+/// until Adhkar took its place).
 class BookmarksScreen extends ConsumerWidget {
   const BookmarksScreen({super.key});
+
+  static const String path = '/home/bookmarks';
 
   void _delete(BuildContext context, WidgetRef ref, Bookmark bookmark) {
     final notifier = ref.read(bookmarksProvider.notifier);
@@ -47,6 +52,13 @@ class BookmarksScreen extends ConsumerWidget {
                   AppSpacing.lg, AppSpacing.md, AppSpacing.lg, AppSpacing.lg),
               child: Row(
                 children: [
+                  if (context.canPop()) ...[
+                    CupertinoNavigationBarBackButton(
+                      color: AppColors.primary,
+                      onPressed: () => context.pop(),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                  ],
                   Text(
                     context.tr('العلامات المرجعية', 'Bookmarks'),
                     style: GoogleFonts.cairo(

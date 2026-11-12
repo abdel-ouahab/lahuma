@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:just_audio/just_audio.dart';
 import '../../../core/audio/audio_focus.dart';
+import '../../../core/audio/sleep_timer.dart';
 import '../../../core/utils/arabic_text.dart';
 import '../data/mp3quran_api.dart';
 import '../data/player_backdrop_repository.dart';
@@ -359,8 +360,11 @@ class Mp3PlaybackState {
 class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
   Mp3PlaybackController(this._moshaf, {this.beforePlay, this.localFile})
       : super(const Mp3PlaybackState()) {
+    sleepTimer = SleepTimer(onFade: _applyFade, onExpire: _sleep);
     _completeSub = player.processingStateStream.listen((s) {
       if (s != ProcessingState.completed) return;
+      // "End of this surah" timer: stay stopped on the finished surah.
+      if (sleepTimer.takeEndOfTrack()) return;
       final current = state.surah;
       if (repeat.value && current != null) {
         unawaited(playSurah(current));
@@ -390,6 +394,25 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
   /// Play-order toggles surfaced by the Now Playing screen.
   final ValueNotifier<bool> shuffle = ValueNotifier(false);
   final ValueNotifier<bool> repeat = ValueNotifier(false);
+
+  /// Pauses playback after a chosen time or at the end of the surah. Lives
+  /// with the controller, so it keeps running from the mini player.
+  late final SleepTimer sleepTimer;
+
+  /// The volume the listener set. The player's own volume is this times the
+  /// sleep timer's fade, so the slider holds still while the timer fades.
+  final ValueNotifier<double> volume = ValueNotifier(1);
+  double _fade = 1;
+
+  void _applyFade(double factor) {
+    _fade = factor;
+    unawaited(player.setVolume(volume.value * factor));
+  }
+
+  Future<void> _sleep() async {
+    await player.pause();
+    _applyFade(1);
+  }
 
   List<int> get available => _moshaf.surahNumbers;
 
@@ -465,6 +488,7 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
   Future<void> stop() async {
     if (!mounted) return;
     _token++;
+    sleepTimer.cancel();
     state = const Mp3PlaybackState();
     await player.stop();
   }
@@ -475,14 +499,15 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
 
   /// Takes effect immediately and never interrupts playback. The player is
   /// reused for every surah, so the level carries over when switching.
-  Future<void> setVolume(double volume) {
-    final v = volume.clamp(0.0, 1.0);
+  Future<void> setVolume(double level) {
+    final v = level.clamp(0.0, 1.0);
     if (v > 0) _volumeBeforeMute = v;
-    return player.setVolume(v);
+    volume.value = v;
+    return player.setVolume(v * _fade);
   }
 
   Future<void> toggleMute() =>
-      setVolume(player.volume > 0 ? 0 : _volumeBeforeMute);
+      setVolume(volume.value > 0 ? 0 : _volumeBeforeMute);
 
   Future<void> next() async {
     final n = _neighbour(1);
@@ -498,8 +523,10 @@ class Mp3PlaybackController extends StateNotifier<Mp3PlaybackState> {
   void dispose() {
     _token++;
     _completeSub.cancel();
+    sleepTimer.dispose();
     shuffle.dispose();
     repeat.dispose();
+    volume.dispose();
     player.dispose();
     super.dispose();
   }

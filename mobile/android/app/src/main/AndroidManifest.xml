@@ -59,6 +59,24 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!-- Recitation media session (audio_service): the lock-screen and
+             notification controls while a surah plays. -->
+        <service
+            android:name="com.ryanheise.audioservice.AudioService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService"/>
+            </intent-filter>
+        </service>
+        <receiver
+            android:name="com.ryanheise.audioservice.MediaButtonReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+            </intent-filter>
+        </receiver>
+
         <!-- Fajr Call engine: runs the call loop with the app killed. -->
         <service
             android:name=".fajrcall.FajrCallService"
@@ -88,6 +106,9 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback"/>
         <receiver android:name=".adhan.AdhanAlarmReceiver" android:exported="false"/>
+        <!-- Prayer-times banner: moves to the next prayer, and comes back
+             when swiped away while it is on. -->
+        <receiver android:name=".adhan.PrayerBannerReceiver" android:exported="false"/>
         <receiver android:name=".adhan.AdhanBootReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>

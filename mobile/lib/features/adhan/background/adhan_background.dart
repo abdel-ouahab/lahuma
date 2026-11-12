@@ -4,7 +4,10 @@ import 'package:flutter/widgets.dart';
 import '../../../core/constants/app_settings_enum.dart';
 import '../../../core/notifications/local_notifications.dart';
 import '../../prayer_times/data/prayer_days_source.dart';
+import '../../prayer_banner/data/prayer_banner_platform.dart';
 import '../../prayer_times/domain/prayer_times.dart';
+import '../../reminders/data/reminder_notifications.dart';
+import '../../reminders/domain/reminder_plan.dart';
 import '../../settings/data/settings_repository.dart';
 import '../data/adhan_alarm_platform.dart';
 import '../data/adhan_audio_store.dart';
@@ -84,6 +87,45 @@ Future<void> runAdhanBackground() async {
     debugPrint('Adhan: background reschedule, ${slots?.length} slots');
   } catch (e, st) {
     debugPrint('Adhan: background reschedule failed: $e\n$st');
+  }
+  // The prayer-times banner gets the days ahead, so it keeps moving on.
+  try {
+    final now = DateTime.now();
+    final enabled = await PrayerBannerSettingsRepository().load();
+    final days = enabled
+        ? await PrayerDaysSource().upcoming(now)
+        : const <DayPrayerTimes>[];
+    if (!enabled || days.isNotEmpty) {
+      await const PrayerBannerPlatform(android: native).sync(
+        enabled: enabled,
+        days: days,
+        arabic: await SettingsRepository().getLocaleOption() ==
+            AppLocaleOption.arabic,
+        now: now,
+      );
+    }
+  } catch (e, st) {
+    debugPrint('Prayer banner: background sync failed: $e\n$st');
+  }
+  // The adhkar and surah reminders ride on the same daily worker.
+  try {
+    final notifications = LocalNotifications();
+    await notifications.init();
+    final now = DateTime.now();
+    final frequency = await ReminderSettingsRepository().load();
+    final days = frequency == ReminderFrequency.off
+        ? const <DayPrayerTimes>[]
+        : await PrayerDaysSource().upcoming(now);
+    if (frequency == ReminderFrequency.off || days.isNotEmpty) {
+      await ReminderNotifications(notifications).sync(
+        ReminderPlanner.plan(
+            days: days, frequency: frequency, now: now, ios: false),
+        arabic: await SettingsRepository().getLocaleOption() ==
+            AppLocaleOption.arabic,
+      );
+    }
+  } catch (e, st) {
+    debugPrint('Reminders: background reschedule failed: $e\n$st');
   } finally {
     await native.backgroundDone();
   }

@@ -11,7 +11,7 @@ async function main() {
     return;
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } } });
   if (!user) {
     console.error(`No account with the email ${email}. Register it first.`);
     process.exitCode = 1;

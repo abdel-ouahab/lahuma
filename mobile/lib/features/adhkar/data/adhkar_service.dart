@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import '../../../core/constants/storage_keys.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import '../../quran/mushaf/domain/mushaf_meta.dart';
 import '../domain/dhikr.dart';
 
-/// Why adhkar could not be loaded. The UI maps each kind to localized text.
-enum AdhkarFailure { offline, malformed, empty, generic }
+/// Why the adhkar could not be read. The data ships with the app, so this
+/// only happens with a broken build.
+enum AdhkarFailure { malformed, empty }
 
 class AdhkarException implements Exception {
   const AdhkarException(this.failure, [this.detail]);
@@ -19,228 +19,113 @@ class AdhkarException implements Exception {
   String toString() => 'AdhkarException(${failure.name}: $detail)';
 }
 
-/// Where the raw dataset is kept after the first successful fetch.
-abstract class AdhkarCache {
-  Future<String?> read();
-  Future<void> write(String raw);
-  Future<void> clear();
-}
-
-/// [AdhkarCache] in its own Hive box, opened on first use.
-class HiveAdhkarCache implements AdhkarCache {
-  static const String _key = 'dataset';
-
-  Future<Box<String>> _box() async {
-    if (Hive.isBoxOpen(StorageKeys.adhkarCacheBox)) {
-      return Hive.box<String>(StorageKeys.adhkarCacheBox);
-    }
-    return Hive.openBox<String>(StorageKeys.adhkarCacheBox);
-  }
-
-  @override
-  Future<String?> read() async => (await _box()).get(_key);
-
-  @override
-  Future<void> write(String raw) async => (await _box()).put(_key, raw);
-
-  @override
-  Future<void> clear() async => (await _box()).delete(_key);
-}
-
-/// Loads morning and evening adhkar from the open-source dataset of
-/// github.com/nawafalqari/ayah (`src/data/adkar.json`), which credits
-/// islambook.com as its source.
+/// Reads the adhkar bundled in `assets/data/adhkar.json`, so they work
+/// offline from the first launch.
 ///
-/// The URL is pinned to one commit, so the text shown is exactly the text
-/// that was reviewed; moving to a newer commit means reviewing it again.
-///
-/// Offline-first: once a valid copy is cached, it is used without touching
-/// the network. Only data that parses is ever cached.
+/// The file is generated from Hisn al-Muslim by `tools/generate_adhkar`
+/// (texts from hisnmuslim.com, the book's footnotes for references); edit
+/// that script, not the JSON, to change the content. Quranic duas are stored
+/// as verse ranges and their text is read from the Mushaf data.
 class AdhkarService {
-  AdhkarService({Dio? dio, AdhkarCache? cache})
-      : _dio = dio ??
-            Dio(BaseOptions(
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 15),
-            )),
-        _cache = cache ?? HiveAdhkarCache();
+  AdhkarService({
+    Future<String> Function()? load,
+    String Function(int surah, int ayah)? verse,
+  })  : _load = load ?? (() => rootBundle.loadString(asset)),
+        _verse = verse ?? MushafMeta.ayahText;
 
-  static const String sourceCommit = 'f2b2071f815f3bbe940570a681bc6e68a2ebcf13';
-  static const String sourceUrl =
-      'https://raw.githubusercontent.com/nawafalqari/ayah/$sourceCommit/src/data/adkar.json';
+  static const String asset = 'assets/data/adhkar.json';
 
-  final Dio _dio;
-  final AdhkarCache _cache;
+  final Future<String> Function() _load;
+  final String Function(int surah, int ayah) _verse;
 
-  /// Returns the cached adhkar, fetching them when there is no usable copy.
-  /// With [refresh], the network is tried first and the cache is the
-  /// fallback.
-  Future<AdhkarCollection> load({bool refresh = false}) async {
-    if (!refresh) {
-      final cached = await _fromCache();
-      if (cached != null) return cached;
-    }
-    try {
-      return await _fetch();
-    } on AdhkarException {
-      final cached = await _fromCache();
-      if (cached != null) return cached;
-      rethrow;
-    }
-  }
+  Future<AdhkarCollection> load() async => parse(await _load(), verse: _verse);
 
-  Future<AdhkarCollection?> _fromCache() async {
-    final String? raw;
-    try {
-      raw = await _cache.read();
-    } catch (_) {
-      return null;
-    }
-    if (raw == null) return null;
-    try {
-      return parse(raw);
-    } on AdhkarException {
-      // A corrupt copy must not block a fresh download.
-      await _cache.clear();
-      return null;
-    }
-  }
-
-  Future<AdhkarCollection> _fetch() async {
-    final String raw;
-    try {
-      // raw.githubusercontent.com answers `text/plain`; decode it ourselves.
-      final response = await _dio.get<String>(
-        sourceUrl,
-        options: Options(responseType: ResponseType.plain),
-      );
-      raw = response.data ?? '';
-    } on DioException catch (e) {
-      throw AdhkarException(_failureOf(e), e.message);
-    } catch (e) {
-      throw AdhkarException(AdhkarFailure.generic, '$e');
-    }
-
-    final collection = parse(raw);
-    await _cache.write(raw);
-    return collection;
-  }
-
-  static AdhkarFailure _failureOf(DioException e) => switch (e.type) {
-        DioExceptionType.connectionError ||
-        DioExceptionType.connectionTimeout ||
-        DioExceptionType.receiveTimeout ||
-        DioExceptionType.sendTimeout =>
-          AdhkarFailure.offline,
-        _ => AdhkarFailure.generic,
-      };
-
-  /// Parses the dataset: a JSON object whose keys are category names
-  /// ("أذكار الصباح", "أذكار المساء", …), each a list of
-  /// `{category, count, description, reference, content}` with every value
-  /// a string (`count` is zero-padded, e.g. "03").
-  ///
-  /// Throws [AdhkarFailure.malformed] when the shape is wrong and
-  /// [AdhkarFailure.empty] when neither period has a usable entry. Single
-  /// entries without text are skipped.
-  static AdhkarCollection parse(String raw) {
+  /// Parses the dataset: `{categories: [{id, group, title, titleEn, icon,
+  /// tone, items: [{text | quran: {surah, from, to}, count, fadl?,
+  /// reference?, occasion?}]}]}`. Items without text are skipped.
+  static AdhkarCollection parse(
+    String raw, {
+    required String Function(int surah, int ayah) verse,
+  }) {
     final Object? json;
     try {
       json = jsonDecode(raw);
     } on FormatException catch (e) {
       throw AdhkarException(AdhkarFailure.malformed, e.message);
     }
-    if (json is! Map<String, dynamic>) {
+    final list = json is Map ? json['categories'] : null;
+    if (list is! List) {
       throw const AdhkarException(
-          AdhkarFailure.malformed, 'top level is not an object');
+          AdhkarFailure.malformed, '"categories" is not a list');
     }
 
-    final byPeriod = <AdhkarPeriod, List<Dhikr>>{};
-    for (final period in AdhkarPeriod.values) {
-      final list = json[period.sourceKey];
-      if (list == null) {
-        throw AdhkarException(
-            AdhkarFailure.malformed, 'missing "${period.sourceKey}"');
+    final categories = <AdhkarCategory>[];
+    for (final c in list) {
+      if (c is! Map || c['id'] is! String) continue;
+      final id = c['id'] as String;
+      final rawItems = c['items'] is List ? c['items'] as List : const [];
+      final items = <Dhikr>[];
+      for (final item in rawItems) {
+        if (item is! Map) continue;
+        final dhikr = _item(id, items.length, item, verse);
+        if (dhikr != null) items.add(dhikr);
       }
-      if (list is! List) {
-        throw AdhkarException(
-            AdhkarFailure.malformed, '"${period.sourceKey}" is not a list');
-      }
-      byPeriod[period] = [
-        for (final (i, item) in list.indexed)
-          if (_entry(period, i, item) case final dhikr?) dhikr,
-      ];
+      categories.add(AdhkarCategory(
+        id: id,
+        group: AdhkarGroup.parse(c['group'] as String?),
+        title: _string(c['title']) ?? id,
+        titleEn: _string(c['titleEn']) ?? id,
+        icon: _string(c['icon']) ?? '',
+        tone: _string(c['tone']) ?? '',
+        items: items,
+      ));
     }
 
-    final collection = AdhkarCollection(byPeriod);
-    if (collection.isEmpty) {
-      throw const AdhkarException(AdhkarFailure.empty);
-    }
+    final collection = AdhkarCollection(categories);
+    if (collection.isEmpty) throw const AdhkarException(AdhkarFailure.empty);
     return collection;
   }
 
-  static Dhikr? _entry(AdhkarPeriod period, int index, Object? item) {
-    if (item is! Map) return null;
-    final text = cleanText(_string(item['content']));
+  static Dhikr? _item(String categoryId, int index, Map item,
+      String Function(int surah, int ayah) verse) {
+    final quran = item['quran'];
+    final String text;
+    if (quran is Map) {
+      final surah = quran['surah'], from = quran['from'], to = quran['to'];
+      if (surah is! int || from is! int || to is! int || to < from) {
+        return null;
+      }
+      text = [
+        for (var a = from; a <= to; a++)
+          '${verse(surah, a).trim()} ﴿${arabicDigits(a)}﴾',
+      ].join(' ');
+    } else {
+      text = _string(item['text']) ?? '';
+    }
     if (text.isEmpty) return null;
 
-    final count = int.tryParse(_string(item['count']).trim()) ?? 1;
-    var virtue = cleanText(_string(item['description']));
-    if (_withheldVirtues.contains((skeleton(text), skeleton(virtue)))) {
-      virtue = '';
-    }
-
-    // References in this dataset start with ". " left over from the
-    // sentence they were cut from: ". [البقرة - 201]."
-    final reference = cleanText(_string(item['reference']))
-        .replaceFirst(RegExp(r'^[.\s]+'), '');
-
+    final count = item['count'];
     return Dhikr(
-      period: period,
+      categoryId: categoryId,
       index: index,
       text: text,
-      count: count < 1 ? 1 : count,
-      virtue: virtue.isEmpty ? null : virtue,
-      reference: reference.isEmpty ? null : reference,
+      count: count is int && count > 0 ? count : 1,
+      virtue: _string(item['fadl']),
+      reference: _string(item['reference']),
+      occasion: _string(item['occasion']),
+      quran: quran is Map,
     );
   }
 
-  static String _string(Object? value) => value is String
-      ? value
-      : value is num
-          ? '$value'
-          : '';
+  static String? _string(Object? value) {
+    if (value is! String) return null;
+    final s = value.trim();
+    return s.isEmpty ? null : s;
+  }
 
-  /// Whitespace-only clean-up; letters and diacritics are never changed.
-  /// Drops a harakah stranded after a space (e.g. "وَأَنَّ ُ مُحَمّـداً" in the
-  /// source), which no letter carries and which would render as a dotted
-  /// circle.
-  static String cleanText(String value) => value
-      .replaceAll(RegExp(r'\s+[\u064B-\u0652]+(?=\s)'), '')
-      .replaceAll(RegExp(r'\s+'), ' ')
-      .trim();
-
-  /// [value] reduced to its letters: no spaces, harakat or tatweel. Compares
-  /// Arabic text regardless of how its diacritics were typed or ordered.
-  static String skeleton(String value) =>
-      value.replaceAll(RegExp(r'[\s\u064B-\u0652\u0640.،]'), '');
-
-  /// Virtues the source attaches to the wrong dhikr or quotes inaccurately,
-  /// as (dhikr, virtue) letter skeletons. They are hidden rather than
-  /// rewritten, so the app never shows a religious claim it did not take
-  /// verbatim from the source.
-  static const Set<(String, String)> _withheldVirtues = {
-    // The virtue of «لا إله إلا الله وحده لا شريك له…» said 100 times
-    // (al-Bukhari 3293, Muslim 2691), attached here to the istighfar.
-    (
-      'أستغفراللهوأتوبإليه',
-      'مائةحسنةومحيتعنهمائةسيئةوكانتلهحرزامنالشيطانحتىيمسى',
-    ),
-    // The hadith (Abu Dawud 5088, al-Tirmidhi 3388) says «لم يضره شيء»;
-    // "من الله" is not in it.
-    (
-      'بسماللهالذيلايضرمعاسمهشيءفيالأرضولافيالسماءوهوالسميعالعليم',
-      'لميضرهمناللهشيء',
-    ),
-  };
+  /// 19 → ١٩, for ayah numbers.
+  static String arabicDigits(int n) => '$n'
+      .split('')
+      .map((d) => String.fromCharCode(0x0660 + int.parse(d)))
+      .join();
 }

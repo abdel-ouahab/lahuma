@@ -424,25 +424,113 @@ Future<DateTime?> showAppDatePicker(
   String? title,
 }) {
   var value = initial;
+  final words = CupertinoLocalizations.of(context);
   return showCupertinoModalPopup<DateTime>(
     context: context,
     builder: (ctx) => _PickerFrame(
       title: title,
       onDone: () => Navigator.of(ctx).pop(value),
-      child: CupertinoDatePicker(
-        mode: mode,
-        initialDateTime: initial,
-        minimumDate: minimum,
-        maximumDate: maximum,
-        onDateTimeChanged: (d) {
-          value = d;
-          if (defaultTargetPlatform != TargetPlatform.iOS) {
-            HapticFeedback.selectionClick();
-          }
-        },
+      // The app shows times in Western digits everywhere ("9:47 م"), so the
+      // wheel does too: Arabic words, 0-9 digits.
+      child: Localizations.override(
+        context: ctx,
+        delegates: [_WesternDigitsCupertino.delegate(words)],
+        child: CupertinoDatePicker(
+          mode: mode,
+          initialDateTime: initial,
+          minimumDate: minimum,
+          maximumDate: maximum,
+          onDateTimeChanged: (d) {
+            value = d;
+            if (defaultTargetPlatform != TargetPlatform.iOS) {
+              HapticFeedback.selectionClick();
+            }
+          },
+        ),
       ),
     ),
   );
+}
+
+/// The picker's strings from [_base] (Arabic month names, ص / م, column
+/// order) with Arabic-Indic digits swapped for 0-9.
+class _WesternDigitsCupertino extends DefaultCupertinoLocalizations {
+  const _WesternDigitsCupertino(this._base);
+
+  final CupertinoLocalizations _base;
+
+  static LocalizationsDelegate<CupertinoLocalizations> delegate(
+          CupertinoLocalizations base) =>
+      _Delegate(base);
+
+  static String _w(String s) {
+    final out = StringBuffer();
+    for (final r in s.runes) {
+      // ٠-٩ (U+0660) and ۰-۹ (U+06F0) → 0-9.
+      if (r >= 0x0660 && r <= 0x0669) {
+        out.writeCharCode(0x30 + r - 0x0660);
+      } else if (r >= 0x06F0 && r <= 0x06F9) {
+        out.writeCharCode(0x30 + r - 0x06F0);
+      } else {
+        out.writeCharCode(r);
+      }
+    }
+    return out.toString();
+  }
+
+  @override
+  String datePickerYear(int yearIndex) => _w(_base.datePickerYear(yearIndex));
+  @override
+  String datePickerMonth(int monthIndex) =>
+      _w(_base.datePickerMonth(monthIndex));
+  @override
+  String datePickerStandaloneMonth(int monthIndex) =>
+      _w(_base.datePickerStandaloneMonth(monthIndex));
+  @override
+  String datePickerDayOfMonth(int dayIndex, [int? weekDay]) =>
+      _w(_base.datePickerDayOfMonth(dayIndex, weekDay));
+  @override
+  String datePickerMediumDate(DateTime date) =>
+      _w(_base.datePickerMediumDate(date));
+  @override
+  String datePickerHour(int hour) => _w(_base.datePickerHour(hour));
+  @override
+  String datePickerHourSemanticsLabel(int hour) =>
+      _base.datePickerHourSemanticsLabel(hour) ??
+      _w(_base.datePickerHour(hour));
+  @override
+  String datePickerMinute(int minute) => _w(_base.datePickerMinute(minute));
+  @override
+  String datePickerMinuteSemanticsLabel(int minute) =>
+      _base.datePickerMinuteSemanticsLabel(minute) ??
+      _w(_base.datePickerMinute(minute));
+  @override
+  DatePickerDateOrder get datePickerDateOrder => _base.datePickerDateOrder;
+  @override
+  DatePickerDateTimeOrder get datePickerDateTimeOrder =>
+      _base.datePickerDateTimeOrder;
+  @override
+  String get anteMeridiemAbbreviation => _base.anteMeridiemAbbreviation;
+  @override
+  String get postMeridiemAbbreviation => _base.postMeridiemAbbreviation;
+  @override
+  String get todayLabel => _base.todayLabel;
+}
+
+class _Delegate extends LocalizationsDelegate<CupertinoLocalizations> {
+  const _Delegate(this.base);
+
+  final CupertinoLocalizations base;
+
+  @override
+  bool isSupported(Locale locale) => true;
+
+  @override
+  Future<CupertinoLocalizations> load(Locale locale) =>
+      SynchronousFuture(_WesternDigitsCupertino(base));
+
+  @override
+  bool shouldReload(_Delegate old) => old.base != base;
 }
 
 class _PickerFrame extends StatelessWidget {

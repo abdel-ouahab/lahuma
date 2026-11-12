@@ -76,13 +76,9 @@ class AyahAudioNotifier extends StateNotifier<AyahPlayback?> {
     );
 
     try {
-      await player.setAudioSource(
-        ConcatenatingAudioSource(
-          children: [
-            for (final a in queue) AudioSource.uri(Uri.parse(urlFor(a.number))),
-          ],
-        ),
-      );
+      await player.setAudioSources([
+        for (final a in queue) AudioSource.uri(Uri.parse(urlFor(a.number))),
+      ]);
       unawaited(player.play());
     } catch (e) {
       state = null;

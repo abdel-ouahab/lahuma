@@ -317,4 +317,19 @@ void main() {
     expect(AdhanReliability.makerOf('samsung'), PhoneMaker.samsung);
     expect(AdhanReliability.makerOf('Google'), PhoneMaker.other);
   });
+
+  test('hiding from Recents is offered where a swipe stops the app', () {
+    AdhanReliability of(Map<String, Object> m) => AdhanReliability.fromMap(m);
+    expect(of({'manufacturer': 'OnePlus'}).offerHideFromRecents, isTrue);
+    expect(of({'manufacturer': 'Google'}).offerHideFromRecents, isFalse);
+    // Any phone where a launch found the adhans cancelled.
+    expect(
+        of({'manufacturer': 'Google', 'seenCleared': true})
+            .offerHideFromRecents,
+        isTrue);
+    // Kept while on, so it can be turned off.
+    final hidden = of({'manufacturer': 'Google', 'hiddenFromRecents': true});
+    expect(hidden.hiddenFromRecents, isTrue);
+    expect(hidden.offerHideFromRecents, isTrue);
+  });
 }

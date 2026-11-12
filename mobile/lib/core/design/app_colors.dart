@@ -114,6 +114,7 @@ class AppColors {
     color: Color(0xFF15302A),
     darkColor: Color(0xFFF3F1EA),
   );
+
   /// Supporting text. Reads at WCAG AA (4.5:1 or more) on every surface it
   /// sits on: at least 4.6:1 in light mode (ivory, cells, wells, bars,
   /// accent-tinted rows, the introduction's tinted washes) and 4.8:1 at
@@ -471,6 +472,37 @@ class AppColors {
   static const Color bookmarkActive = Color(0xFFC49A3C);
   static const Color bookmarkInactive = Color(0xFF6F807A);
   static const Color error = Color(0xFFE5484D);
+
+  // ─── Mushaf pages ────────────────────────────────────────────────────────
+  // The Mushaf has its own white / paper / night setting, so these are fixed
+  // per page style rather than following the app theme.
+
+  /// White page: the brand's green ink, ayah markers in a deep gold that
+  /// still reads on white (the light [gold] is too pale to carry digits).
+  static const Color mushafWhitePage = Color(0xFFFFFFFF);
+  static const Color mushafWhiteInk = Color(0xFF15302A);
+  static const Color mushafWhiteMarker = Color(0xFF8A6420);
+
+  /// Paper page: warm ivory, brown-black ink.
+  static const Color mushafPaperPage = Color(0xFFF6EEDB);
+  static const Color mushafPaperInk = Color(0xFF2B2418);
+  static const Color mushafPaperMarker = Color(0xFF85601E);
+
+  /// Night page: the app's green-black, warm ivory ink (softer than
+  /// [textDark] for long reading), gold ayah markers.
+  static const Color mushafNightPage = Color(0xFF0E1714);
+  static const Color mushafNightInk = Color(0xFFECE5D2);
+  static const Color mushafNightMarker = Color(0xFFD9B565);
+
+  /// Night surah header: the cream frame redrawn as gold engraving on a
+  /// deep green panel. [mushafNightFrameLine] replaces the frame's darkest
+  /// strokes, [mushafNightFramePanel] its cream fill.
+  static const Color mushafNightFrameLine = Color(0xFFD9B565);
+  static const Color mushafNightFramePanel = Color(0xFF152E26);
+
+  /// The long-pressed ayah's wash.
+  static const Color mushafLightHighlight = Color(0x4DC8A15A);
+  static const Color mushafNightHighlight = Color(0x38D9B565);
 }
 
 /// Semantic colours resolved for the current brightness / contrast.

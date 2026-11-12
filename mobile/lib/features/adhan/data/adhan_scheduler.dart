@@ -135,6 +135,7 @@ class AdhanScheduler {
         body: s.reminder
             ? reminderBody(s.leadMinutes, arabic)
             : adhanBody(s.prayer, muezzinName, arabic),
+        category: categoryLabel(arabic),
         alarmClock: true,
       );
     }
@@ -189,10 +190,14 @@ class AdhanScheduler {
       route: playRouteFor(prayer),
       title: adhanTitle(prayer, arabic),
       body: adhanBody(prayer, muezzinName, arabic),
+      category: categoryLabel(arabic),
       alarmClock: true,
     );
     return false;
   }
+
+  /// Beside the app name in the notification header.
+  static String categoryLabel(bool arabic) => arabic ? 'الصلاة' : 'Prayer';
 
   static String adhanTitle(PrayerKind p, bool arabic) =>
       arabic ? 'حان الآن وقت صلاة ${p.ar}' : "It's time for ${p.en}";

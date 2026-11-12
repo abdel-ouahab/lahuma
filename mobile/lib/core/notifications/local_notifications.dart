@@ -81,6 +81,13 @@ class LocalNotifications {
       : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   final FlutterLocalNotificationsPlugin _plugin;
+
+  /// The status-bar glyph (the app's hilal, `res/drawable/ic_stat_ihsan`).
+  static const String statusBarIcon = 'ic_stat_ihsan';
+
+  /// The accent Android paints the glyph and app name in: mosque green.
+  static const Color accent = Color(0xFF0F5A4A);
+
   final _taps = StreamController<String>.broadcast();
   Future<void>? _init;
   String? _launchRoute;
@@ -125,7 +132,9 @@ class LocalNotifications {
   Future<void> _initPlugin() async {
     await _plugin.initialize(
       settings: const InitializationSettings(
-        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        // A white-on-transparent glyph: Android tints it, and a full-colour
+        // launcher icon there shows as a blank square.
+        android: AndroidInitializationSettings(statusBarIcon),
         // Permissions are requested in context, never at launch.
         iOS: DarwinInitializationSettings(
           requestAlertPermission: false,
@@ -220,6 +229,8 @@ class LocalNotifications {
     required NotificationChannelSpec channel,
     String? route,
     bool alarmClock = false,
+    String? category,
+    RepeatInterval? repeat,
   }) async {
     await init();
     if (!_supported) return;
@@ -230,6 +241,11 @@ class LocalNotifications {
       title: title,
       body: body,
       payload: route,
+      matchDateTimeComponents: switch (repeat) {
+        RepeatInterval.daily => DateTimeComponents.time,
+        RepeatInterval.weekly => DateTimeComponents.dayOfWeekAndTime,
+        _ => null,
+      },
       androidScheduleMode: !exact
           ? AndroidScheduleMode.inexactAllowWhileIdle
           : alarmClock
@@ -240,6 +256,12 @@ class LocalNotifications {
           channel.id,
           channel.name,
           channelDescription: channel.description,
+          icon: statusBarIcon,
+          color: accent,
+          // Shown beside the app name: "أذكار", "قرآن", "صلاة".
+          subText: category,
+          // The whole body when expanded, never cut at one line.
+          styleInformation: BigTextStyleInformation(body),
           importance: channel._importance,
           priority: channel.timeSensitive || channel.alarm
               ? Priority.high

@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/design/design.dart';
 import '../../../core/localization/tr.dart';
+import '../../adhkar/presentation/screens/adhkar_screen.dart';
+import '../../bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../khatma/presentation/screens/khatma_screen.dart';
 import '../../qibla/presentation/screens/qibla_screen.dart';
@@ -98,13 +100,19 @@ List<List<_Place>> _groups(BuildContext context) => [
           context.tr('الأذكار', 'Adhkar'),
           CupertinoIcons.moon_stars_fill,
           AppColors.tileIndigo,
-          (r) => r.go('/home/adhkar'),
+          (r) => r.go(AdhkarScreen.path),
         ),
         _Place(
           context.tr('التسبيح', 'Tasbih'),
           CupertinoIcons.circle_grid_hex_fill,
           AppColors.tileTeal,
           (r) => r.push(TasbihScreen.path),
+        ),
+        _Place(
+          context.tr('العلامات', 'Bookmarks'),
+          CupertinoIcons.bookmark_fill,
+          AppColors.tileBlue,
+          (r) => r.go(BookmarksScreen.path),
         ),
       ],
     ];

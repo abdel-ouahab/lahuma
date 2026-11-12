@@ -50,23 +50,32 @@ data class AdhanAlarmSlot(
 }
 
 /** Texts sent from Flutter (the app language is an in-app setting). */
-data class AdhanStrings(val stop: String, val channel: String, val fallbackChannel: String) {
+data class AdhanStrings(
+    val stop: String,
+    val channel: String,
+    val fallbackChannel: String,
+    /** The fallback notification's text: the adhan is not playing. */
+    val tapToListen: String,
+) {
     fun toJson(): JSONObject = JSONObject()
         .put("stop", stop).put("channel", channel).put("fallbackChannel", fallbackChannel)
+        .put("tapToListen", tapToListen)
 
     companion object {
-        val DEFAULT = AdhanStrings("إيقاف", "الأذان", "وقت الصلاة")
+        val DEFAULT = AdhanStrings("إيقاف", "الأذان", "وقت الصلاة", "اضغط للاستماع إلى الأذان")
 
         fun fromMap(m: Map<*, *>?) = if (m == null) DEFAULT else AdhanStrings(
             stop = m["stop"] as? String ?: DEFAULT.stop,
             channel = m["channel"] as? String ?: DEFAULT.channel,
             fallbackChannel = m["fallbackChannel"] as? String ?: DEFAULT.fallbackChannel,
+            tapToListen = m["tapToListen"] as? String ?: DEFAULT.tapToListen,
         )
 
         fun fromJson(o: JSONObject?) = if (o == null) DEFAULT else AdhanStrings(
             stop = o.optString("stop", DEFAULT.stop),
             channel = o.optString("channel", DEFAULT.channel),
             fallbackChannel = o.optString("fallbackChannel", DEFAULT.fallbackChannel),
+            tapToListen = o.optString("tapToListen", DEFAULT.tapToListen),
         )
     }
 }

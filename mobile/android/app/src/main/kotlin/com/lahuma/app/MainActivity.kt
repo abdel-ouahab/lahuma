@@ -1,15 +1,19 @@
 package com.lahuma.app
 
 import android.content.Intent
+import android.os.Bundle
 import com.lahuma.app.adhan.AdhanAlarmChannel
+import com.lahuma.app.adhan.AdhanRecents
 import com.lahuma.app.adhan.AdhanSoundChannel
 import com.lahuma.app.fajrcall.FajrCallChannel
 import com.lahuma.app.fajrcall.FajrNotify
 import com.lahuma.app.qibla.QiblaChannel
-import io.flutter.embedding.android.FlutterActivity
+import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 
-class MainActivity : FlutterActivity() {
+// AudioServiceActivity keeps one cached Flutter engine shared with the
+// recitation media session (lock screen / notification controls).
+class MainActivity : AudioServiceActivity() {
     private var fajrCall: FajrCallChannel? = null
     private var adhanSound: AdhanSoundChannel? = null
     private var adhanAlarm: AdhanAlarmChannel? = null
@@ -36,6 +40,13 @@ class MainActivity : FlutterActivity() {
         qibla?.dispose()
         qibla = null
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // The "hide from Recents" choice belongs to the task: set it on
+        // each new one.
+        AdhanRecents.apply(this)
     }
 
     override fun onNewIntent(intent: Intent) {

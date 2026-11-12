@@ -1,194 +1,158 @@
-import 'dart:convert';
-import 'package:dio/dio.dart';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lahuma/features/adhkar/data/adhkar_service.dart';
 import 'package:lahuma/features/adhkar/domain/dhikr.dart';
-import 'helpers/adhkar_fakes.dart';
+import 'package:lahuma/features/quran/mushaf/domain/mushaf_meta.dart';
 
-/// Letters only: no whitespace, no harakat, no tatweel.
+/// The dataset as bundled with the app.
+final String bundled = File('assets/data/adhkar.json').readAsStringSync();
+
+AdhkarCollection parse(String raw) =>
+    AdhkarService.parse(raw, verse: MushafMeta.ayahText);
+
+/// Letters only: no harakat, tatweel, Quranic marks or punctuation.
 String letters(String s) =>
-    s.replaceAll(RegExp(r'[\s\u064B-\u0652\u0640]'), '');
+    s.replaceAll(RegExp('[ٱآأإ]'), 'ا').replaceAll(RegExp('[^ء-غف-ي]'), '');
 
 void main() {
-  group('parse (real dataset)', () {
-    final collection = AdhkarService.parse(fixture);
-    final source = jsonDecode(fixture) as Map<String, dynamic>;
+  final collection = parse(bundled);
 
-    test('reads 25 morning and 25 evening adhkar in source order', () {
-      for (final p in AdhkarPeriod.values) {
-        final list = collection.of(p);
-        expect(list, hasLength(25));
-        expect(list.map((d) => d.index), List.generate(25, (i) => i));
-      }
-    });
-
-    test('never changes a letter of the source text', () {
-      for (final p in AdhkarPeriod.values) {
-        final raw = (source[p.sourceKey] as List).cast<Map<String, dynamic>>();
-        for (final d in collection.of(p)) {
-          expect(letters(d.text), letters(raw[d.index]['content'] as String),
-              reason: d.id);
-        }
-      }
-    });
-
-    test('parses zero-padded counts', () {
-      final m = collection.of(AdhkarPeriod.morning);
-      final e = collection.of(AdhkarPeriod.evening);
-      expect(m[0].count, 1);
-      expect(m[4].count, 7);
-      expect(m[22].count, 100);
-      expect(e[0].count, 1); // "01"
-      expect(e[5].count, 7); // "07"
-      expect(e[24].count, 100);
-    });
-
-    test('removes the harakah stranded after a space', () {
-      expect(
-          (source['أذكار الصباح'] as List)[3]['content'], contains(' \u064F '));
-      for (final p in AdhkarPeriod.values) {
-        for (final d in collection.of(p)) {
-          expect(RegExp(r'\s[\u064B-\u0652]').hasMatch(d.text), isFalse,
-              reason: d.id);
-        }
-      }
-    });
-
-    test('keeps source virtues verbatim, minus the withheld ones', () {
-      final m = collection.of(AdhkarPeriod.morning);
-      final e = collection.of(AdhkarPeriod.evening);
-      expect(m[1].virtue,
-          'من قالها موقنا بها حين يمسى ومات من ليلته دخل الجنة وكذلك حين يصبح.');
-
-      // Withheld: misattributed (istighfar) and misquoted (bismillah).
-      expect(m[24].text, 'أسْتَغْفِرُ اللهَ وَأتُوبُ إلَيْهِ');
-      expect(m[24].virtue, isNull);
-      expect(m[5].virtue, isNull);
-      expect(e[6].virtue, isNull);
-
-      // The correct virtue of the tahlil 100 times stays.
-      expect(m[22].virtue, startsWith('كانت له عدل عشر رقاب'));
-      expect(m.where((d) => d.virtue != null), hasLength(7));
-      expect(e.where((d) => d.virtue != null), hasLength(8));
-    });
-
-    test('has no references for morning / evening (the source gives none)', () {
-      for (final p in AdhkarPeriod.values) {
-        expect(collection.of(p).every((d) => d.reference == null), isTrue);
-      }
-    });
+  test('has every category the Adhkar screen lists', () {
+    expect(collection.categories.map((c) => c.id), [
+      'morning', 'evening', 'after_prayer', 'sleep', 'waking', 'home',
+      'mosque', 'wudu', 'food', 'travel', 'riding', 'distress', 'istikhara',
+      'weather', 'sick', 'quran', 'prophetic', //
+    ]);
+    for (final c in collection.categories) {
+      expect(c.items, isNotEmpty, reason: c.id);
+      expect(c.title, isNotEmpty);
+      expect(c.titleEn, isNotEmpty);
+    }
   });
 
-  group('parse (bad input)', () {
-    Matcher fails(AdhkarFailure f) =>
-        throwsA(isA<AdhkarException>().having((e) => e.failure, 'failure', f));
+  test('Hisn al-Muslim texts keep their tashkeel and cite a reference', () {
+    for (final c in collection.categories) {
+      for (final d in c.items) {
+        expect(d.count, greaterThanOrEqualTo(1));
+        expect(d.text, matches(RegExp('[ً-ْ]')),
+            reason: '${d.id} has no diacritics');
+        expect(d.reference, isNotNull, reason: '${d.id} has no reference');
+        expect(d.text, isNot(contains('  ')));
+      }
+    }
+  });
 
-    String entry(String content, {String count = '1'}) => jsonEncode({
-          'category': '',
-          'count': count,
-          'description': '',
-          'reference': '',
-          'content': content,
-        });
+  test('counts follow the book, including ones stated in the text', () {
+    Dhikr find(String category, String start) => collection
+        .category(category)!
+        .items
+        .firstWhere((d) => letters(d.text).contains(letters(start)));
+    expect(find('morning', 'سبحان الله وبحمده مائة').count, 100);
+    expect(find('morning', 'حسبي الله لا إله إلا هو').count, 7);
+    expect(find('after_prayer', 'وله الحمد يحيي ويميت').count, 10);
+    expect(find('sick', 'أسأل الله العظيم').count, 7);
+  });
 
-    test('invalid JSON is malformed', () {
-      expect(() => AdhkarService.parse('{"أذكار الصباح": ['),
-          fails(AdhkarFailure.malformed));
-      expect(() => AdhkarService.parse('404: Not Found'),
-          fails(AdhkarFailure.malformed));
+  test('morning and evening differ only where the book says so', () {
+    final morning = collection.of(AdhkarPeriod.morning).map((d) => d.text);
+    final evening = collection.of(AdhkarPeriod.evening).map((d) => d.text);
+    final onlyMorning = morning.where((t) => !evening.contains(t)).toList();
+    final onlyEvening = evening.where((t) => !morning.contains(t)).toList();
+    expect(onlyMorning, hasLength(3));
+    expect(onlyMorning.every((t) => t.contains('إذا أصبحَ')), isTrue);
+    expect(onlyEvening, hasLength(1));
+    expect(onlyEvening.single, contains('إذا أمسى'));
+  });
+
+  test('a virtue is never attached to the wrong dhikr', () {
+    // al-Bukhari 3293 / Muslim 2691: the virtue of tahlil said 100 times.
+    final istighfar = collection.of(AdhkarPeriod.morning).firstWhere((d) =>
+        letters(d.text) == letters('أستغفر الله وأتوب إليه مائة مرة في اليوم'));
+    expect(istighfar.virtue, isNull);
+    // Abu Dawud 5088: «لم يضره شيء», without "من الله".
+    final bismillah = collection
+        .of(AdhkarPeriod.morning)
+        .firstWhere((d) => letters(d.text).contains(letters('لا يضر مع اسمه')));
+    expect(bismillah.virtue, contains('لم يضره شيء'));
+    expect(bismillah.virtue, isNot(contains('من الله')));
+  });
+
+  test('Quranic duas are read from the Mushaf text, verse by verse', () {
+    final quran = collection.category('quran')!.items;
+    expect(quran, hasLength(34));
+    for (final d in quran) {
+      expect(d.quran, isTrue);
+      expect(d.reference, startsWith('سورة '));
+      // Every one of them calls on Allah as Lord, or is Yunus's dua.
+      final text = letters(d.text);
+      expect(text.contains('رب') || text.contains('لاالهالاانتسبحنك'), isTrue,
+          reason: '${d.reference}: ${d.text}');
+    }
+    final rabbana = quran.firstWhere((d) => d.reference == 'سورة البقرة، 201');
+    expect(rabbana.text, '${MushafMeta.ayahText(2, 201).trim()} ﴿٢٠١﴾');
+    final sharh = quran.firstWhere((d) => d.reference == 'سورة طه، 25–28');
+    expect('﴿'.allMatches(sharh.text), hasLength(4));
+  });
+
+  test('categories that gather several chapters name each one', () {
+    final travel = collection.category('travel')!.items;
+    expect(travel.first.occasion, 'دعاء السفر');
+    expect(travel.map((d) => d.occasion), contains('ذكر الرجوع من السفر'));
+    expect(collection.category('istikhara')!.items.single.occasion, isNull);
+  });
+
+  test('ids are stable per category and position', () {
+    final d = collection.category('travel')!.items.first;
+    expect(d.id, 'travel-0');
+    expect(collection.byId('travel-0'), d);
+    expect(
+        collection.of(AdhkarPeriod.morning).first.period, AdhkarPeriod.morning);
+    expect(d.period, isNull);
+  });
+
+  group('parse', () {
+    String verse(int s, int a) => 'آية $s:$a';
+
+    test('rejects invalid JSON and a missing category list', () {
+      expect(
+          () => AdhkarService.parse('{oops', verse: verse),
+          throwsA(isA<AdhkarException>()
+              .having((e) => e.failure, 'failure', AdhkarFailure.malformed)));
+      expect(
+          () => AdhkarService.parse('{"x": []}', verse: verse),
+          throwsA(isA<AdhkarException>()
+              .having((e) => e.failure, 'failure', AdhkarFailure.malformed)));
     });
 
-    test('wrong shape is malformed', () {
-      expect(() => AdhkarService.parse('[]'), fails(AdhkarFailure.malformed));
-      expect(() => AdhkarService.parse('{"أذكار الصباح": []}'),
-          fails(AdhkarFailure.malformed));
-      expect(
-          () => AdhkarService.parse('{"أذكار الصباح": {}, "أذكار المساء": []}'),
-          fails(AdhkarFailure.malformed));
-    });
-
-    test('no usable entries is empty', () {
-      expect(
-          () => AdhkarService.parse('{"أذكار الصباح": [], "أذكار المساء": []}'),
-          fails(AdhkarFailure.empty));
+    test('an empty dataset is an error', () {
       expect(
           () => AdhkarService.parse(
-              '{"أذكار الصباح": [${entry('  ')}, 3, null], "أذكار المساء": []}'),
-          fails(AdhkarFailure.empty));
+              '{"categories": [{"id": "a", "items": []}]}',
+              verse: verse),
+          throwsA(isA<AdhkarException>()
+              .having((e) => e.failure, 'failure', AdhkarFailure.empty)));
     });
 
-    test('skips bad entries and defaults bad counts to 1', () {
-      final c = AdhkarService.parse('{"أذكار الصباح": ['
-          '${entry('سُبْحَانَ اللَّهِ', count: 'abc')}, "x", '
-          '${entry('الحَمْدُ لِلَّهِ', count: '0')}'
-          '], "أذكار المساء": []}');
-      final m = c.of(AdhkarPeriod.morning);
-      expect(m.map((d) => d.index), [0, 2]);
-      expect(m.map((d) => d.count), [1, 1]);
-      expect(c.of(AdhkarPeriod.evening), isEmpty);
+    test('skips broken items and defaults the count', () {
+      final c = AdhkarService.parse('''
+        {"categories": [{"id": "a", "group": "travel", "items": [
+          {"text": "  ذِكْرٌ  ", "count": 0},
+          {"count": 3},
+          "nope",
+          {"quran": {"surah": 2, "from": 5, "to": 4}},
+          {"quran": {"surah": 1, "from": 2, "to": 3}, "reference": "الفاتحة"}
+        ]}]}''', verse: verse);
+      final items = c.category('a')!.items;
+      expect(c.category('a')!.group, AdhkarGroup.travel);
+      expect(items.map((d) => d.text), ['ذِكْرٌ', 'آية 1:2 ﴿٢﴾ آية 1:3 ﴿٣﴾']);
+      expect(items.first.count, 1);
+      expect(items.map((d) => d.index), [0, 1]);
     });
   });
 
-  group('load', () {
-    test('fetches, then caches the raw dataset', () async {
-      final adapter = FakeAdapter(body: fixture);
-      final cache = MemoryCache();
-      final c = await service(adapter, cache).load();
-      expect(c.of(AdhkarPeriod.morning), hasLength(25));
-      expect(cache.value, fixture);
-      expect(adapter.calls, 1);
-    });
-
-    test('works offline from the cache without touching the network', () async {
-      final adapter = FakeAdapter(error: DioExceptionType.connectionError);
-      final c = await service(adapter, MemoryCache(fixture)).load();
-      expect(c.of(AdhkarPeriod.evening), hasLength(25));
-      expect(adapter.calls, 0);
-    });
-
-    test('offline with no cache reports offline', () async {
-      final adapter = FakeAdapter(error: DioExceptionType.connectionTimeout);
-      await expectLater(
-        service(adapter, MemoryCache()).load(),
-        throwsA(isA<AdhkarException>()
-            .having((e) => e.failure, 'failure', AdhkarFailure.offline)),
-      );
-    });
-
-    test('a server error with no cache is generic', () async {
-      final adapter = FakeAdapter(error: DioExceptionType.badResponse);
-      await expectLater(
-        service(adapter, MemoryCache()).load(),
-        throwsA(isA<AdhkarException>()
-            .having((e) => e.failure, 'failure', AdhkarFailure.generic)),
-      );
-    });
-
-    test('never caches a malformed response', () async {
-      final cache = MemoryCache();
-      await expectLater(
-        service(FakeAdapter(body: '<html>'), cache).load(),
-        throwsA(isA<AdhkarException>()
-            .having((e) => e.failure, 'failure', AdhkarFailure.malformed)),
-      );
-      expect(cache.value, isNull);
-    });
-
-    test('replaces a corrupt cache with a fresh download', () async {
-      final adapter = FakeAdapter(body: fixture);
-      final cache = MemoryCache('{broken');
-      final c = await service(adapter, cache).load();
-      expect(c.of(AdhkarPeriod.morning), hasLength(25));
-      expect(cache.value, fixture);
-      expect(adapter.calls, 1);
-    });
-
-    test('refresh falls back to the cache when offline', () async {
-      final adapter = FakeAdapter(error: DioExceptionType.connectionError);
-      final c =
-          await service(adapter, MemoryCache(fixture)).load(refresh: true);
-      expect(c.of(AdhkarPeriod.morning), hasLength(25));
-      expect(adapter.calls, 1);
-    });
+  test('loads through the injected source', () async {
+    final service =
+        AdhkarService(load: () async => bundled, verse: MushafMeta.ayahText);
+    expect((await service.load()).categories, hasLength(17));
   });
 }

@@ -55,7 +55,7 @@ class AdhanPlayback extends StateNotifier<AdhanPlaybackState> {
       );
     });
     // A failure while playing (not while loading) only arrives here.
-    _errors = _player.playbackEventStream.listen((_) {}, onError: (Object e) {
+    _errors = _player.errorStream.listen((e) {
       debugPrint('Adhan: playback error: $e');
       if (mounted) state = AdhanPlaybackState(key: state.key, failed: true);
     });
@@ -64,7 +64,7 @@ class AdhanPlayback extends StateNotifier<AdhanPlaybackState> {
   final Future<void> Function() _beforePlay;
   final AudioPlayer _player;
   StreamSubscription<PlayerState>? _sub;
-  StreamSubscription<PlaybackEvent>? _errors;
+  StreamSubscription<PlayerException>? _errors;
 
   /// Plays a local [file], else streams [url], else the bundled [asset].
   /// Tapping the same [key] again while it plays stops it.

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import '../domain/muezzin.dart';
 import 'adhan_sound_platform.dart';
@@ -82,10 +83,17 @@ class AdhanAudioStore {
         final url = m.url(kind);
         final path = '${dir.path}/${kind.name}${_ext(url, kind)}';
         final part = '$path.part';
-        await _dio.download(url, part, onReceiveProgress: (got, total) {
-          if (total > 0) onProgress?.call((i + got / total) / kinds.length);
-        });
-        // A wrong MEDIA_BASE_URL can answer 200 with an HTML page.
+        if (url.startsWith('asset:')) {
+          // Bundled with the app (the iOS short clips).
+          final bytes = await rootBundle.load(url.substring('asset:'.length));
+          await File(part).writeAsBytes(bytes.buffer
+              .asUint8List(bytes.offsetInBytes, bytes.lengthInBytes));
+        } else {
+          await _dio.download(url, part, onReceiveProgress: (got, total) {
+            if (total > 0) onProgress?.call((i + got / total) / kinds.length);
+          });
+        }
+        // A wrong URL can answer 200 with an HTML page.
         if (!await _looksLikeAudio(File(part))) {
           throw FormatException('Not an audio file: $url');
         }

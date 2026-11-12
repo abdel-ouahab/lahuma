@@ -525,7 +525,9 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
                           ),
                           onTap: () => setState(() => _advanced = !_advanced),
                         ),
-                        if (_advanced) ..._advancedRows(accounts),
+                        if (_advanced)
+                          ..._advancedRows(accounts,
+                              callLog: state.permissions.callLog),
                       ],
                     ),
                   ],
@@ -593,32 +595,51 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
     );
   }
 
-  List<Widget> _advancedRows(List<PhoneAccountOption> accounts) => [
-        AppListTile(
-          title: context.tr(
-              'إنهاء المكالمة تلقائيًا', 'End the call automatically'),
-          subtitle: _draft.autoHangUp
-              ? context.tr('من لحظة الاتصال، رُدّ عليها أم لا',
-                  'Counted from dialling, answered or not')
-              : context.tr('تستمر حتى يُنهيها الطرف الآخر',
-                  'Runs until the other side hangs up'),
-          trailing: AppSwitch(
-            value: _draft.autoHangUp,
-            onChanged: (v) => _update(_draft.copyWith(autoHangUp: v)),
-          ),
+  List<Widget> _advancedRows(List<PhoneAccountOption> accounts,
+      {required bool callLog}) {
+    final several = _draft.contacts.length > 1;
+    // Without automatic hang-up (and without the call log) every call ends
+    // on the other side, so "no answer" is never known: only calls that
+    // could not be placed are retried.
+    final noAnswerKnown = _draft.autoHangUp || callLog;
+    final retryNote = noAnswerKnown
+        ? null
+        : context.tr(
+            'دون «إنهاء المكالمة تلقائيًا» لا يُعرف من لم يردّ، فيُعاد فقط الاتصال الذي تعذّر.',
+            'Without "End the call automatically" the app cannot tell who did not answer, so only calls that failed are retried.');
+    return [
+      AppListTile(
+        title:
+            context.tr('إنهاء المكالمة تلقائيًا', 'End the call automatically'),
+        subtitle: _draft.autoHangUp
+            ? context.tr('يُحسب من لحظة الاتصال، سواء رُدّ عليها أم لا',
+                'Counted from dialling, answered or not')
+            : context.tr('تستمر حتى يُنهيها الطرف الآخر',
+                'Runs until the other side hangs up'),
+        trailing: AppSwitch(
+          value: _draft.autoHangUp,
+          onChanged: (v) => _update(_draft.copyWith(autoHangUp: v)),
         ),
-        if (_draft.autoHangUp)
-          AppSliderRow(
-            title: context.tr('إنهاء بعد', 'End after'),
-            value: _draft.ringTimeoutSec,
-            min: FajrCallList.minRingTimeoutSec,
-            max: FajrCallList.maxRingTimeoutSec,
-            step: 5,
-            label: (s) => seconds(context, s),
-            onChanged: (s) => _update(_draft.copyWith(ringTimeoutSec: s)),
-          ),
+      ),
+      if (_draft.autoHangUp)
+        AppSliderRow(
+          title: context.tr('إنهاء بعد', 'End after'),
+          subtitle: context.tr('إن لم يُنهِها أحد، تُحسب «لم يردّ»',
+              'If nobody ends it first, it counts as no answer'),
+          value: _draft.ringTimeoutSec,
+          min: FajrCallList.minRingTimeoutSec,
+          max: FajrCallList.maxRingTimeoutSec,
+          step: 5,
+          label: (s) => seconds(context, s),
+          onChanged: (s) => _update(_draft.copyWith(ringTimeoutSec: s)),
+        ),
+      // Only used before calling the next person, so it does nothing
+      // with one person or when the loop stops at the first answer.
+      if (several && !_draft.stopAfterFirstAnswer)
         AppSliderRow(
           title: context.tr('الانتظار بعد الرد', 'Wait after an answer'),
+          subtitle: context.tr(
+              'قبل الاتصال بالشخص التالي', 'Before calling the next person'),
           value: _draft.waitAfterAnswerSec,
           min: 0,
           max: FajrCallList.maxWaitAfterAnswerSec,
@@ -626,66 +647,74 @@ class _FajrCallEditScreenState extends ConsumerState<FajrCallEditScreen> {
           label: (s) => seconds(context, s),
           onChanged: (s) => _update(_draft.copyWith(waitAfterAnswerSec: s)),
         ),
-        AppSliderRow(
-          title: context.tr('الفاصل بين الأرقام', 'Gap between numbers'),
-          value: _draft.gapBetweenSec,
-          min: 0,
-          max: FajrCallList.maxGapBetweenSec,
-          label: (s) => seconds(context, s),
-          onChanged: (s) => _update(_draft.copyWith(gapBetweenSec: s)),
-        ),
+      AppSliderRow(
+        title: context.tr('الفاصل بين الأرقام', 'Gap between numbers'),
+        subtitle: context.tr(
+            'بعد مكالمة لم يُردّ عليها', 'After a call nobody answered'),
+        value: _draft.gapBetweenSec,
+        min: 0,
+        max: FajrCallList.maxGapBetweenSec,
+        label: (s) => seconds(context, s),
+        onChanged: (s) => _update(_draft.copyWith(gapBetweenSec: s)),
+      ),
+      if (several)
         AppListTile(
           title: context.tr('توقّف عند أول رد', 'Stop after the first answer'),
+          subtitle: context.tr('لا يُتّصل بالباقين بعد أول من يردّ',
+              'Nobody else is called once someone answers'),
           trailing: AppSwitch(
             value: _draft.stopAfterFirstAnswer,
             onChanged: (v) => _update(_draft.copyWith(stopAfterFirstAnswer: v)),
           ),
         ),
-        AppListTile(
-          title: context.tr('أعد الاتصال بمن لم يرد', 'Retry if no answer'),
-          trailing: AppSwitch(
-            value: _draft.retryOnNoAnswer,
-            onChanged: (v) => _update(_draft.copyWith(retryOnNoAnswer: v)),
-          ),
+      AppListTile(
+        title: context.tr('أعد الاتصال بمن لم يرد', 'Retry if no answer'),
+        subtitle: _draft.retryOnNoAnswer ? retryNote : null,
+        trailing: AppSwitch(
+          value: _draft.retryOnNoAnswer,
+          onChanged: (v) => _update(_draft.copyWith(retryOnNoAnswer: v)),
         ),
-        if (_draft.retryOnNoAnswer)
-          AppStepperRow(
-            title: context.tr('عدد المحاولات', 'Retries'),
-            value: _draft.maxRetries,
-            min: 1,
-            max: FajrCallList.maxRetriesLimit,
-            label: (n) => ltr('$n'),
-            onChanged: (n) => _update(_draft.copyWith(maxRetries: n)),
-          ),
-        AppListTile(
-          title: context.tr('كرّر القائمة كاملة', 'Repeat the whole list'),
-          trailing: AppSwitch(
-            value: _draft.repeatWholeLoop,
-            onChanged: (v) => _update(_draft.copyWith(repeatWholeLoop: v)),
-          ),
+      ),
+      if (_draft.retryOnNoAnswer)
+        AppStepperRow(
+          title: context.tr('عدد المحاولات', 'Retries'),
+          value: _draft.maxRetries,
+          min: 1,
+          max: FajrCallList.maxRetriesLimit,
+          label: (n) => ltr('$n'),
+          onChanged: (n) => _update(_draft.copyWith(maxRetries: n)),
         ),
-        if (_draft.repeatWholeLoop)
-          AppStepperRow(
-            title: context.tr('مرات التكرار', 'Extra rounds'),
-            value: _draft.loopRepeats,
-            min: 1,
-            max: FajrCallList.maxLoopRepeats,
-            label: (n) => ltr('$n'),
-            onChanged: (n) => _update(_draft.copyWith(loopRepeats: n)),
-          ),
-        if (accounts.length > 1)
-          AppListTile(
-            title: context.tr('الاتصال من', 'Call from'),
-            value: _draft.phoneAccountId == null
-                ? context.tr('الشريحة الافتراضية', 'Default SIM')
-                : accounts
-                        .where((a) => a.id == _draft.phoneAccountId)
-                        .map((a) => a.label)
-                        .firstOrNull ??
-                    context.tr('الشريحة الافتراضية', 'Default SIM'),
-            onTap: () => _pickSim(accounts),
-          ),
-      ];
+      AppListTile(
+        title: context.tr('كرّر القائمة كاملة', 'Repeat the whole list'),
+        subtitle: _draft.repeatWholeLoop ? retryNote : null,
+        trailing: AppSwitch(
+          value: _draft.repeatWholeLoop,
+          onChanged: (v) => _update(_draft.copyWith(repeatWholeLoop: v)),
+        ),
+      ),
+      if (_draft.repeatWholeLoop)
+        AppStepperRow(
+          title: context.tr('مرات التكرار', 'Extra rounds'),
+          value: _draft.loopRepeats,
+          min: 1,
+          max: FajrCallList.maxLoopRepeats,
+          label: (n) => ltr('$n'),
+          onChanged: (n) => _update(_draft.copyWith(loopRepeats: n)),
+        ),
+      if (accounts.length > 1)
+        AppListTile(
+          title: context.tr('الاتصال من', 'Call from'),
+          value: _draft.phoneAccountId == null
+              ? context.tr('الشريحة الافتراضية', 'Default SIM')
+              : accounts
+                      .where((a) => a.id == _draft.phoneAccountId)
+                      .map((a) => a.label)
+                      .firstOrNull ??
+                  context.tr('الشريحة الافتراضية', 'Default SIM'),
+          onTap: () => _pickSim(accounts),
+        ),
+    ];
+  }
 }
 
 /// The people on the list, as an inset-grouped card: drag the handle to

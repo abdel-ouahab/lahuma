@@ -23,6 +23,7 @@ class StorageKeys {
   static const String dailyCount = 'wird.count';
   static const String dailyStreak = 'wird.streak';
   static const String dailyLastGoalDate = 'wird.lastGoalDate';
+  static const String dailyHistory = 'wird.history';
 
   static const String dedicationTarget = 'dedication.target';
   static const String dedicationNames = 'dedication.names';
@@ -33,6 +34,7 @@ class StorageKeys {
   static const String adhkarProgress = 'adhkar.progress';
   static const String adhkarFavorites = 'adhkar.favorites';
   static const String adhkarCompletions = 'adhkar.completions';
+  static const String adhkarFontSize = 'adhkar.fontSize';
 
   static const String tasbihState = 'tasbih.state';
   static const String tasbihSettings = 'tasbih.settings';
@@ -49,18 +51,18 @@ class StorageKeys {
   static const String prayerTimesCache = 'prayerTimes.cache';
 
   static const String adhanSettings = 'adhan.settings';
-  static const String adhanMuezzins = 'adhan.muezzins';
   static const String adhanDownload = 'adhan.download';
 
   /// Id of the last adhan the app played itself, so it plays once.
   static const String adhanLastPlayed = 'adhan.lastPlayed';
 
-  /// When the "adhans were cancelled" notice was last shown (ms).
-  static const String adhanClearedNoticeAt = 'adhan.clearedNoticeAt';
-
   static const String khatmaActive = 'khatma.active';
   static const String khatmaHistory = 'khatma.history';
   static const String khatmaLogs = 'khatma.logs';
+  static const String reminderFrequency = 'reminders.frequency';
+
+  /// The prayer-times banner in the notification shade (on by default).
+  static const String prayerBannerEnabled = 'prayerBanner.enabled';
 
   static const String mushafLastPage = 'mushaf.lastPage';
   static const String mushafBookmarks = 'mushaf.bookmarks';
@@ -71,5 +73,4 @@ class StorageKeys {
 
   static const String bookmarksBox = 'bookmarks_box';
   static const String quranCacheBox = 'quran_cache_box';
-  static const String adhkarCacheBox = 'adhkar_cache_box';
 }

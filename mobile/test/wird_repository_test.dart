@@ -67,4 +67,30 @@ void main() {
     state = await repo.addRead(state, 20);
     expect(state.fraction, 1);
   });
+
+  test('keeps earlier days in the history for the week strip', () async {
+    var state = await repo.setGoal(await repo.load(), 10);
+    state = await repo.addRead(state, 7);
+
+    clock = DateTime(2026, 3, 11, 9);
+    state = await repo.load();
+    expect(state.countOn(DateTime(2026, 3, 10)), 7);
+    expect(state.countOn(DateTime(2026, 3, 11)), 0);
+
+    state = await repo.addRead(state, 4);
+    expect(state.countOn(DateTime(2026, 3, 11)), 4);
+
+    // Read without reloading first: the rollover still files yesterday.
+    clock = DateTime(2026, 3, 12, 9);
+    state = await repo.addRead(state, 2);
+    expect(state.countOn(DateTime(2026, 3, 11)), 4);
+    expect((await repo.load()).countOn(DateTime(2026, 3, 10)), 7);
+  });
+
+  test('drops history older than two weeks', () async {
+    var state = await repo.addRead(await repo.load(), 3);
+    clock = DateTime(2026, 3, 30, 9);
+    state = await repo.load();
+    expect(state.history, isEmpty);
+  });
 }

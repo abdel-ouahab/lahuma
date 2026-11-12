@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/design/design.dart';
 import '../../../../core/localization/tr.dart';
+import '../../../../core/widgets/shortcut_tile.dart';
 import '../../domain/khatma.dart';
 import '../../domain/khatma_planner.dart';
 import '../../domain/quran_pages.dart';
@@ -24,7 +25,19 @@ class KhatmaHomeCard extends ConsumerWidget {
     final (lead, line, from) = _status(context, k, today);
     final percent =
         k == null ? 0 : (k.lastPageRead * 100 / QuranPages.total).floor();
+    // Painted like the other shortcuts: an open Mushaf on its rahl.
+    const ink = ShortcutTile.onScene;
+    final inkDim = ink.withValues(alpha: 0.82);
+    final tone = AppColors.tileGreen.color;
     return AppCard(
+      color: TileScenePainter.baseFor(tone),
+      borderColor:
+          AppColors.gold.color.withValues(alpha: c.isDark ? 0.35 : 0.5),
+      ornament: TileScenePainter(
+        scene: TileScene.openMushaf,
+        tone: tone,
+        textDirection: Directionality.of(context),
+      ),
       onTap: () => context.push(KhatmaScreen.path),
       semanticLabel: [title, lead, line, if (from != null) from].join('، '),
       padding: const EdgeInsetsDirectional.all(AppSpacing.ms + 2),
@@ -35,22 +48,24 @@ class KhatmaHomeCard extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(title,
-                    style: AppTypography.headline.copyWith(color: c.label)),
+                    style: AppTypography.headline.copyWith(color: ink)),
               ),
               AppDirectionalIcon(CupertinoIcons.chevron_forward,
-                  size: 16, color: c.tertiaryLabel),
+                  size: 16, color: ink.withValues(alpha: 0.7)),
             ],
           ),
           const SizedBox(height: AppSpacing.ms),
           KhatmaRing(
             lastPageRead: k?.lastPageRead ?? 0,
             size: 76,
+            onScene: true,
             center: k == null
-                ? Icon(CupertinoIcons.add, size: 26, color: c.accent)
+                ? const Icon(CupertinoIcons.add,
+                    size: 26, color: AppColors.lanternFlame)
                 : Text(
                     ltr('$percent%'),
                     style: AppTypography.tabular(AppTypography.subheadline)
-                        .copyWith(color: c.label, fontWeight: FontWeight.w600),
+                        .copyWith(color: ink, fontWeight: FontWeight.w600),
                   ),
           ),
           const Spacer(),
@@ -59,20 +74,22 @@ class KhatmaHomeCard extends ConsumerWidget {
             lead,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.title3.copyWith(color: c.label),
+            style: AppTypography.title3.copyWith(color: ink),
           ),
           Text(
             line,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppTypography.footnote.copyWith(color: c.secondaryLabel),
+            style: AppTypography.footnote.copyWith(color: inkDim),
           ),
           if (from != null)
             Text(
               from,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.footnote.copyWith(color: c.accent),
+              style: AppTypography.footnote
+                  .weight(FontWeight.w600)
+                  .copyWith(color: AppColors.lanternFlame),
             ),
         ],
       ),

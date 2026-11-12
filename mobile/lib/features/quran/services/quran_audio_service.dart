@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import '../domain/reciter.dart';
 import '../domain/surah_audio.dart';
@@ -38,6 +39,9 @@ class QuranAudioService {
   Stream<Duration> get positionStream => _player.positionStream;
   Stream<Duration?> get durationStream => _player.durationStream;
 
+  /// The underlying player, for the system's Now Playing card.
+  AudioPlayer get player => _player;
+
   // Convenience getters for current cached values
   Duration get position => _player.position;
   Duration? get duration => _player.duration;
@@ -75,6 +79,9 @@ class QuranAudioService {
       try {
         await _player.setUrl(audioPath);
       } catch (e) {
+        // Development only: the emulator reaches the host as 10.0.2.2, the
+        // iOS simulator as localhost. Release URLs are the real domain.
+        if (!kDebugMode) rethrow;
         final altUrl = audioPath.contains('10.0.2.2')
             ? audioPath.replaceAll('10.0.2.2', 'localhost')
             : audioPath.replaceAll('localhost', '10.0.2.2');

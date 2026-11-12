@@ -22,20 +22,10 @@ export interface Surah {
 
 export interface DashboardMetrics {
   totalUsers: number;
-  activeToday: number;
-  totalBookmarks: number;
-  totalSurahs: number;
-  apiStatus: 'healthy' | 'degraded' | 'offline';
-  dbLatencyMs: number;
-  uptimeSeconds: number;
-}
-
-export interface ActivityLog {
-  id: string;
-  user: string;
-  action: string;
-  type: 'info' | 'success' | 'warning' | 'error';
-  timestamp: string;
+  totalAdmins: number;
+  totalReciters: number;
+  uploadedSurahs: number;
+  apiStatus: 'healthy' | 'offline';
 }
 
 export interface AuthState {

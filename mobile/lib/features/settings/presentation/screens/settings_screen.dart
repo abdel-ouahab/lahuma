@@ -12,12 +12,17 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../adhan/presentation/adhan_providers.dart';
 import '../../../adhan/presentation/screens/adhan_settings_screen.dart';
 import '../../../auth/presentation/auth_providers.dart';
+import '../../../bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../../dedication/presentation/dedication_labels.dart';
 import '../../../dedication/presentation/dedication_providers.dart';
 import '../../../dedication/presentation/dedication_sheet.dart';
 import '../../../fajr_call/presentation/fajr_call_providers.dart';
 import '../../../fajr_call/presentation/widgets/prayer_settings_sheet.dart';
+import '../../../reminders/domain/reminder_plan.dart';
+import '../../../reminders/presentation/reminder_providers.dart';
+import '../../../reminders/presentation/reminders_settings_screen.dart';
 import '../../../onboarding/presentation/screens/onboarding_screen.dart';
+import '../../../prayer_banner/presentation/prayer_banner_providers.dart';
 import '../../../wird/presentation/goal_sheet.dart';
 import '../../../wird/presentation/wird_providers.dart';
 import '../../data/settings_repository.dart';
@@ -38,6 +43,8 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(authProvider);
     final prayer = ref.watch(fajrCallProvider.select((s) => s.prayer));
     final adhan = ref.watch(adhanProvider.select((s) => s.settings));
+    final reminders =
+        ref.watch(reminderProvider.select((s) => s.frequency));
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final background =
         isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
@@ -89,6 +96,14 @@ class SettingsScreen extends ConsumerWidget {
             _Card(
               isDark: isDark,
               children: [
+                _NavTile(
+                  icon: Icons.bookmark_outline_rounded,
+                  label: context.tr('العلامات', 'Bookmarks'),
+                  detail: context.tr('آياتك المحفوظة', 'Saved ayahs'),
+                  isDark: isDark,
+                  onTap: () => context.go(BookmarksScreen.path),
+                ),
+                _Divider(isDark: isDark),
                 _NavTile(
                   icon: Icons.favorite_outline_rounded,
                   label: context.tr('نية القراءة', 'Reading intention'),
@@ -157,6 +172,26 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // ── Prayer ───────────────────────────────────────────────────
+            // ── Reminders ────────────────────────────────────────────────
+            _SectionHeader(title: context.tr('التذكير', 'Reminders')),
+            _Card(
+              isDark: isDark,
+              children: [
+                _NavTile(
+                  icon: Icons.notifications_none_rounded,
+                  label: context.tr(
+                      'التذكير بالأذكار والسور', 'Adhkar & surah reminders'),
+                  detail: reminders == ReminderFrequency.off
+                      ? context.tr('متوقف', 'Off')
+                      : '${RemindersSettingsScreen.frequencyLabel(context, reminders)}، '
+                          '${RemindersSettingsScreen.summary(context, reminders)}',
+                  isDark: isDark,
+                  onTap: () => context.push(RemindersSettingsScreen.path),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.lg),
+
             _SectionHeader(title: context.tr('الصلاة', 'Prayer')),
             _Card(
               isDark: isDark,
@@ -195,6 +230,39 @@ class SettingsScreen extends ConsumerWidget {
                   isDark: isDark,
                   onTap: () => context.go('/home/fajr-call'),
                 ),
+                if (ref.read(prayerBannerProvider.notifier).supported) ...[
+                  _Divider(isDark: isDark),
+                  SwitchListTile(
+                    value: ref.watch(
+                        prayerBannerProvider.select((s) => s.enabled)),
+                    onChanged: (v) =>
+                        ref.read(prayerBannerProvider.notifier).setEnabled(v),
+                    secondary: const Icon(Icons.push_pin_outlined,
+                        size: 20, color: AppColors.primary),
+                    title: Text(
+                      context.tr('مواقيت الصلاة في الإشعارات',
+                          'Prayer times in notifications'),
+                      style: GoogleFonts.cairo(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: text),
+                    ),
+                    subtitle: Text(
+                      Theme.of(context).platform == TargetPlatform.iOS
+                          ? context.tr(
+                              'على شاشة القفل. يتجدّد عند فتح التطبيق.',
+                              'On the lock screen. Refreshes when you open the app.')
+                          : context.tr(
+                              'إشعار ثابت بالصلاة القادمة وما بقي لها',
+                              'A fixed notification with the next prayer and the time left'),
+                      style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.subtextDark
+                              : AppColors.subtextLight),
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: AppSpacing.lg),

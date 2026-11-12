@@ -34,6 +34,11 @@ class AdhanReliabilityScreen extends ConsumerWidget {
       }
     }
 
+    Future<void> hideFromRecents(bool hidden) async {
+      await native.setHiddenFromRecents(hidden);
+      ref.invalidate(adhanPermissionsProvider);
+    }
+
     Future<void> openMaker(PhoneMaker m) async {
       final opened = await native.openMakerSettings(m);
       if (!opened && context.mounted) {
@@ -88,6 +93,32 @@ class AdhanReliabilityScreen extends ConsumerWidget {
             ],
           ),
         ),
+        if (perms?.reliability.offerHideFromRecents ?? false)
+          SliverToBoxAdapter(
+            child: AppListSection(
+              header: context.tr('التطبيقات الأخيرة', 'Recent apps'),
+              hasLeading: true,
+              footer: context.tr(
+                'على هواتف أوبو وريلمي وون بلس، سحب «إحسان» من التطبيقات الأخيرة يوقفه بالكامل ويلغي كل أذان حتى تفتحه من جديد، ولو كان الأذان يُرفع. حتى مع الإخفاء يظهر «إحسان» فيها إن فتحتها وأنت داخله، فاخرج منه إلى الشاشة الرئيسية بدل سحبه. وافتحه من أيقونته.',
+                'On Oppo, Realme and OnePlus phones, swiping Ihsan away from recent apps fully stops it and cancels every adhan until you open it again, even while one is playing. Even when hidden, Ihsan shows there if you open them from inside it, so leave it by going to the Home screen instead of swiping it. Open it from its icon.',
+              ),
+              children: [
+                AppListTile(
+                  leading: const AppIconTile(
+                      icon: CupertinoIcons.rectangle_stack_fill,
+                      color: AppColors.tileIndigo),
+                  title: context.tr(
+                      'إخفاء من التطبيقات الأخيرة', 'Hide from recent apps'),
+                  subtitle: context.tr('كي لا يوقفه «مسح الكل»',
+                      "So Clear all doesn't stop it"),
+                  trailing: AppSwitch(
+                    value: perms!.reliability.hiddenFromRecents,
+                    onChanged: hideFromRecents,
+                  ),
+                ),
+              ],
+            ),
+          ),
         for (final m in makers)
           SliverToBoxAdapter(
             child: AppListSection(
@@ -106,10 +137,17 @@ class AdhanReliabilityScreen extends ConsumerWidget {
           ),
         SliverToBoxAdapter(
           child: AppListSection(
-            footer: context.tr(
-              'للتأكد: من صفحة الأذان جرّب الأذان، ثم أغلق التطبيق من قائمة التطبيقات الأخيرة وانتظر.',
-              'To check: test the adhan from the adhan page, then close the app from Recents and wait.',
-            ),
+            // On Oppo phones a swipe from Recents always stops the adhan, so
+            // the check there is leaving with Home.
+            footer: maker == PhoneMaker.oppo
+                ? context.tr(
+                    'للتأكد: من صفحة الأذان جرّب الأذان، ثم اخرج إلى الشاشة الرئيسية واقفل الشاشة وانتظر.',
+                    'To check: test the adhan from the adhan page, then go to the Home screen, lock the phone and wait.',
+                  )
+                : context.tr(
+                    'للتأكد: من صفحة الأذان جرّب الأذان، ثم أغلق التطبيق من قائمة التطبيقات الأخيرة وانتظر.',
+                    'To check: test the adhan from the adhan page, then close the app from Recents and wait.',
+                  ),
             children: [
               AppListTile(
                 title: context.tr('إعدادات التطبيق', 'App settings'),
@@ -154,8 +192,8 @@ class AdhanReliabilityScreen extends ConsumerWidget {
                 'في التطبيقات الأخيرة، اضغط ⋮ على «إحسان» واختر «قفل». لا يمكن القفل و«وضع توفير الطاقة» مفعّل.',
                 'In Recents, tap ⋮ on Ihsan and choose Lock. Apps can\'t be locked while Power saving mode is on.'),
             context.tr(
-                'لا تسحب «إحسان» لإغلاقه من التطبيقات الأخيرة: هذا يوقفه بالكامل فلا يُرفع الأذان حتى تفتحه من جديد.',
-                'Don\'t swipe Ihsan away from Recents: that fully stops it, and no adhan plays until you open it again.'),
+                'لا تسحب «إحسان» لإغلاقه من التطبيقات الأخيرة، ولو بعد استخدامه مباشرة: هذا يوقفه بالكامل فلا يُرفع الأذان حتى تفتحه من جديد. اخرج منه إلى الشاشة الرئيسية.',
+                'Don\'t swipe Ihsan away from Recents, even right after using it: that fully stops it, and no adhan plays until you open it again. Leave it by going to the Home screen.'),
           ],
         PhoneMaker.huawei => [
             context.tr(

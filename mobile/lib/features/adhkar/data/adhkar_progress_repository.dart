@@ -46,12 +46,15 @@ class AdhkarCompletions {
 
   int countOf(AdhkarPeriod period) => counts[period] ?? 0;
 
-  /// Counts [dhikr] for [day]; returns this unchanged if already counted.
+  /// Counts [dhikr] for [day]; returns this unchanged if already counted or
+  /// if it is not a morning / evening dhikr.
   AdhkarCompletions record(Dhikr dhikr, String day) {
+    final period = dhikr.period;
+    if (period == null) return this;
     final counted = date == day ? countedToday : const <String>{};
     if (counted.contains(dhikr.id)) return this;
     return AdhkarCompletions(
-      counts: {...counts, dhikr.period: countOf(dhikr.period) + 1},
+      counts: {...counts, period: countOf(period) + 1},
       date: day,
       countedToday: {...counted, dhikr.id},
     );
@@ -83,8 +86,12 @@ class AdhkarCompletions {
   }
 }
 
-/// On-device counters and favourite adhkar (SharedPreferences).
+/// On-device counters, favourite adhkar and text size (SharedPreferences).
 class AdhkarProgressRepository {
+  static const double defaultFontSize = 24;
+  static const double minFontSize = 18;
+  static const double maxFontSize = 36;
+
   AdhkarProgressRepository({DateTime Function()? now})
       : _now = now ?? DateTime.now;
 
@@ -143,5 +150,18 @@ class AdhkarProgressRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
         StorageKeys.adhkarCompletions, jsonEncode(completions.toJson()));
+  }
+
+  Future<double> loadFontSize() async {
+    final prefs = await SharedPreferences.getInstance();
+    final size = prefs.getDouble(StorageKeys.adhkarFontSize);
+    return size == null
+        ? defaultFontSize
+        : size.clamp(minFontSize, maxFontSize).toDouble();
+  }
+
+  Future<void> saveFontSize(double size) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(StorageKeys.adhkarFontSize, size);
   }
 }

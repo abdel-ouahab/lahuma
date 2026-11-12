@@ -5,10 +5,8 @@ import 'package:lahuma/features/adhkar/domain/dhikr.dart';
 import 'package:lahuma/features/adhkar/presentation/adhkar_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const thrice =
-    Dhikr(period: AdhkarPeriod.morning, index: 2, text: 'نص', count: 3);
-const once =
-    Dhikr(period: AdhkarPeriod.evening, index: 0, text: 'نص', count: 1);
+const thrice = Dhikr(categoryId: 'morning', index: 2, text: 'نص', count: 3);
+const once = Dhikr(categoryId: 'evening', index: 0, text: 'نص', count: 1);
 
 void main() {
   late DateTime clock;
@@ -126,14 +124,27 @@ void main() {
   });
 
   test('today shows finished adhkar of a period out of all of them', () async {
-    const single =
-        Dhikr(period: AdhkarPeriod.morning, index: 0, text: 'نص', count: 1);
+    const single = Dhikr(categoryId: 'morning', index: 0, text: 'نص', count: 1);
     final container = ProviderContainer(overrides: [
       adhkarProgressRepositoryProvider.overrideWithValue(repo),
-      adhkarProvider.overrideWith((ref) async => const AdhkarCollection({
-            AdhkarPeriod.morning: [single, thrice],
-            AdhkarPeriod.evening: [once],
-          })),
+      adhkarProvider.overrideWith((ref) async => const AdhkarCollection([
+            AdhkarCategory(
+                id: 'morning',
+                group: AdhkarGroup.day,
+                title: 'أذكار الصباح',
+                titleEn: 'Morning adhkar',
+                icon: 'sunrise',
+                tone: 'yellow',
+                items: [single, thrice]),
+            AdhkarCategory(
+                id: 'evening',
+                group: AdhkarGroup.day,
+                title: 'أذكار المساء',
+                titleEn: 'Evening adhkar',
+                icon: 'moon',
+                tone: 'indigo',
+                items: [once]),
+          ])),
     ]);
     addTearDown(container.dispose);
     container.listen(adhkarTodayProvider(AdhkarPeriod.morning), (_, __) {});
@@ -151,9 +162,31 @@ void main() {
 
     // The app invalidates it on resume, so a new day starts from nothing.
     clock = DateTime(2026, 10, 20, 7);
-    container.invalidate(adhkarTodayProvider);
+    container.invalidate(adhkarCategoryTodayProvider);
     expect(container.read(adhkarTodayProvider(AdhkarPeriod.morning)),
         (done: 0, total: 2),
         reason: 'yesterday does not count');
+  });
+
+  test('only morning and evening adhkar count towards completions', () {
+    const travel = Dhikr(categoryId: 'travel', index: 0, text: 'نص', count: 1);
+    const c = AdhkarCompletions();
+    expect(identical(c.record(travel, '2026-10-19'), c), isTrue);
+    expect(c.record(once, '2026-10-19').countOf(AdhkarPeriod.evening), 1);
+  });
+
+  test('text size is clamped and kept', () async {
+    final n = AdhkarFontSizeNotifier(repo);
+    await Future<void>.delayed(Duration.zero);
+    expect(n.state, AdhkarProgressRepository.defaultFontSize);
+    for (var i = 0; i < 20; i++) {
+      n.grow();
+    }
+    expect(n.state, AdhkarProgressRepository.maxFontSize);
+    expect(n.canGrow, isFalse);
+    n.shrink();
+    await Future<void>.delayed(Duration.zero);
+    expect(await repo.loadFontSize(),
+        AdhkarProgressRepository.maxFontSize - AdhkarFontSizeNotifier.step);
   });
 }

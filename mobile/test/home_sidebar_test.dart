@@ -32,11 +32,11 @@ void main() {
             ),
           ),
           routes: [
-            GoRoute(path: 'adhkar', builder: (_, s) => page(s)),
+            GoRoute(path: 'bookmarks', builder: (_, s) => page(s)),
             GoRoute(path: 'fajr-call', builder: (_, s) => page(s)),
           ],
         ),
-        for (final path in ['/quran', '/mushaf', '/qibla', '/tasbih'])
+        for (final path in ['/quran', '/mushaf', '/qibla', '/tasbih', '/adhkar'])
           GoRoute(path: path, builder: (_, s) => page(s)),
       ],
     );
@@ -66,8 +66,9 @@ void main() {
     ('المصحف الشريف', '/mushaf'),
     ('القبلة', '/qibla'),
     ('نداء الفجر', '/home/fajr-call'),
-    ('الأذكار', '/home/adhkar'),
+    ('الأذكار', '/adhkar'),
     ('التسبيح', '/tasbih'),
+    ('العلامات', '/home/bookmarks'),
   ];
 
   testWidgets('lists the seven places in order', (tester) async {

@@ -12,7 +12,14 @@ import '../../../core/network/api_exception.dart';
 /// has opened once can be read again without a connection.
 class QuranRemoteDataSource {
   QuranRemoteDataSource({Dio? dio, Box<String>? cache})
-      : _dio = dio ?? Dio(BaseOptions(baseUrl: 'https://api.alquran.cloud/v1')),
+      : _dio = dio ??
+            Dio(BaseOptions(
+              baseUrl: 'https://api.alquran.cloud/v1',
+              // A weak connection gives up in seconds and falls back to
+              // the cached copy instead of leaving the reader spinning.
+              connectTimeout: const Duration(seconds: 10),
+              receiveTimeout: const Duration(seconds: 20),
+            )),
         _cache = cache;
 
   final Dio _dio;

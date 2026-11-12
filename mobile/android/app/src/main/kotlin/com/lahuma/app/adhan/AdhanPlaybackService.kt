@@ -29,7 +29,10 @@ import java.io.File
  *
  * Stops on Stop, a swipe of the notification, the end of the recording,
  * a playback error, losing audio focus (an incoming call), or after
- * [MAX_MS] whatever happens.
+ * [MAX_MS] whatever happens. Unless the user stopped it, the prayer's
+ * notification then stays in the shade ([AdhanNotify.fallback], silent):
+ * with the phone on silent the adhan plays unheard, and without it the
+ * prayer would leave no trace.
  */
 class AdhanPlaybackService : Service() {
 
@@ -37,6 +40,9 @@ class AdhanPlaybackService : Service() {
     private var player: MediaPlayer? = null
     private var focus: AudioFocusRequest? = null
     private val stopAfter = Runnable { finish() }
+
+    /** The adhan playing, for the notification left behind. */
+    private var slot: AdhanAlarmSlot? = null
 
     private val attributes: AudioAttributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_NOTIFICATION)
@@ -59,6 +65,9 @@ class AdhanPlaybackService : Service() {
                     stopSelf()
                     return START_NOT_STICKY
                 }
+                // A new adhan cuts one still playing: leave that one's notice.
+                this.slot?.takeIf { it.id != slot.id }?.let { AdhanNotify.fallback(this, it, quiet = true) }
+                this.slot = slot
                 // First, within the 5 s Android allows after the start.
                 val strings = AdhanAlarmStore(this).strings
                 ServiceCompat.startForeground(
@@ -70,7 +79,8 @@ class AdhanPlaybackService : Service() {
                 )
                 play(slot.file)
             }
-            ACTION_STOP -> finish()
+            // Stop, or the notification swiped away: the user has seen it.
+            ACTION_STOP -> finish(leaveNotice = false)
             else -> stopSelf()
         }
         // Killed by the system: don't replay an adhan later.
@@ -146,11 +156,18 @@ class AdhanPlaybackService : Service() {
         player = null
     }
 
-    private fun finish() {
+    /**
+     * [leaveNotice]: replace the player's notification with the prayer's
+     * (silent, dismissable), so the prayer is still there when the phone is
+     * picked up. False when the user stopped it.
+     */
+    private fun finish(leaveNotice: Boolean = true) {
         handler.removeCallbacks(stopAfter)
         release()
         abandonFocus()
         ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+        if (leaveNotice) slot?.let { AdhanNotify.fallback(this, it, quiet = true) }
+        slot = null
         stopSelf()
     }
 

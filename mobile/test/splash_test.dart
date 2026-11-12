@@ -22,7 +22,7 @@ Future<void> _launch(WidgetTester tester,
     {List<Override> overrides = const []}) async {
   await tester.pumpWidget(ProviderScope(overrides: [
     // Home reads today's adhkar progress; none are loaded in tests.
-    adhkarProvider.overrideWith((ref) async => const AdhkarCollection({})),
+    adhkarProvider.overrideWith((ref) async => const AdhkarCollection([])),
     ...overrides,
   ], child: const LahumaApp()));
 }

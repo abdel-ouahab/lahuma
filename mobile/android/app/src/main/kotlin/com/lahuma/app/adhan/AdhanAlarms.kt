@@ -31,8 +31,11 @@ import com.lahuma.app.MainActivity
 object AdhanAlarms {
     const val ACTION_FIRE = "com.lahuma.app.adhan.FIRE"
 
-    /** An alarm delivered later than this (phone off, inexact) is skipped. */
+    /** An alarm delivered later than this (inexact, held back) doesn't play the adhan… */
     const val MAX_LATE_MS = 10L * 60 * 1000
+
+    /** …and later than this (the phone was off) it shows nothing at all. */
+    const val MAX_NOTIFY_LATE_MS = 90L * 60 * 1000
 
     private fun alarmManager(context: Context) =
         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager

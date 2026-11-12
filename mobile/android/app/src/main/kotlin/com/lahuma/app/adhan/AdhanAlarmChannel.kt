@@ -36,6 +36,7 @@ class AdhanAlarmChannel(
     private var cleared = onDone == null && AdhanAlarms.wereCleared(this.context)
 
     init {
+        if (cleared) AdhanRecents.markCleared(this.context)
         channel.setMethodCallHandler(this)
     }
 
@@ -60,6 +61,18 @@ class AdhanAlarmChannel(
                 AdhanAlarms.rescheduleAll(context)
                 result.success(true)
             }
+            "bannerSync" -> {
+                val days = call.argument<List<List<Number>>>("days").orEmpty()
+                    .map { d -> d.map { it.toLong() } }
+                    .filter { it.size == PrayerBanner.PRAYERS }
+                PrayerBanner.sync(
+                    context,
+                    enabled = call.argument<Boolean>("enabled") == true,
+                    days = days,
+                    strings = PrayerBannerStrings.fromMap(call.argument<Map<*, *>>("strings")),
+                )
+                result.success(true)
+            }
             "stop" -> {
                 AdhanPlaybackService.stop(context)
                 result.success(null)
@@ -78,8 +91,14 @@ class AdhanAlarmChannel(
                     "ignoringBatteryOptimizations" to ignoringBatteryOptimizations(),
                     "manufacturer" to Build.MANUFACTURER,
                     "sdk" to Build.VERSION.SDK_INT,
+                    "hiddenFromRecents" to AdhanRecents.isHidden(context),
+                    "seenCleared" to AdhanRecents.seenCleared(context),
                 ),
             )
+            "setHiddenFromRecents" -> {
+                AdhanRecents.setHidden(context, call.argument<Boolean>("hidden") == true)
+                result.success(null)
+            }
             "requestIgnoreBatteryOptimizations" -> {
                 requestIgnoreBatteryOptimizations()
                 result.success(null)

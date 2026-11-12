@@ -1,70 +1,110 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../core/constants/storage_keys.dart';
-import '../../../core/network/api_client.dart';
-import '../../../core/network/api_exception.dart';
 import '../domain/muezzin.dart';
 
-/// The muezzin list from the backend (`GET /muezzins`), cached on the
-/// device so the picker works offline after the first load.
+/// The muezzins, bundled with the app: no backend involved.
+///
+/// The full adhans download straight from the Kiwifu/adhan-mp3 repository,
+/// pinned to one commit so a file can never change under a [Muezzin.version].
+/// That repository has no ≤ 30 s clips, so the iOS notification sounds ship
+/// in `assets/audio/adhan/` (`asset:` URLs, copied by AdhanAudioStore).
+///
+/// The ids are the ones the backend used, so a saved choice stays selected.
 class MuezzinRepository {
-  MuezzinRepository([ApiClient? client]) : _client = client ?? ApiClient();
+  MuezzinRepository();
 
-  final ApiClient _client;
+  Future<List<Muezzin>> cached() async => catalogue;
 
-  Uri get _base => Uri.parse(_client.dio.options.baseUrl);
+  Future<List<Muezzin>> refresh() async => catalogue;
 
-  /// The last list fetched, or empty before the first load.
-  Future<List<Muezzin>> cached() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(StorageKeys.adhanMuezzins);
-    if (raw == null) return const [];
-    try {
-      return parse({'muezzins': jsonDecode(raw)}, base: _base);
-    } catch (_) {
-      return const [];
-    }
-  }
+  static const _source = 'https://raw.githubusercontent.com/Kiwifu/adhan-mp3/'
+      'b9180a2bb769f74cff8e378ef2cc7aaf8db5cd5b/';
 
-  /// Fetches the active muezzins (already in `sortOrder`) and caches them.
-  Future<List<Muezzin>> refresh() async {
-    final List<Muezzin> list;
-    try {
-      final res = await _client.dio.get<Object?>('/muezzins');
-      list = parse(res.data, base: _base);
-    } on FormatException {
-      rethrow;
-    } catch (e) {
-      throw ApiException.fromDioError(e);
-    }
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(StorageKeys.adhanMuezzins,
-        jsonEncode([for (final m in list) m.toJson()]));
-    return list;
-  }
+  static String _file(String name) => '$_source${Uri.encodeComponent(name)}';
 
-  static const _urlKeys = [
-    'regularUrl',
-    'fajrUrl',
-    'regularShortUrl',
-    'fajrShortUrl',
-  ];
+  static Muezzin _muezzin({
+    required String id,
+    required String slug,
+    required String nameAr,
+    required String nameFr,
+    required String country,
+    required String regular,
+    required String fajr,
+    required int sortOrder,
+    required int version,
+  }) =>
+      Muezzin(
+        id: id,
+        nameAr: nameAr,
+        nameFr: nameFr,
+        country: country,
+        regularUrl: _file(regular),
+        fajrUrl: _file(fajr),
+        regularShortUrl: 'asset:assets/audio/adhan/${slug}_regular_short.caf',
+        fajrShortUrl: 'asset:assets/audio/adhan/${slug}_fajr_short.caf',
+        sortOrder: sortOrder,
+        version: version,
+      );
 
-  /// A relative file URL ("/adhan/…") is resolved against [base], the API's
-  /// origin: a backend may return one, and neither Dio nor just_audio can
-  /// fetch it as is.
-  static List<Muezzin> parse(Object? body, {Uri? base}) {
-    final list = body is Map ? body['muezzins'] : null;
-    if (list is! List) throw const FormatException('Unexpected muezzins');
-    return [
-      for (final m in list)
-        Muezzin.fromJson({
-          ...Map<String, dynamic>.from(m as Map),
-          if (base != null)
-            for (final k in _urlKeys)
-              if (m[k] is String && (m[k] as String).startsWith('/'))
-                k: base.resolve(m[k] as String).toString(),
-        }),
-    ];
-  }
+  /// In display order.
+  static final List<Muezzin> catalogue = List.unmodifiable([
+    _muezzin(
+      id: '00000000-0000-4000-8000-000000000003',
+      slug: 'algeria',
+      nameAr: 'أذان الجزائر',
+      nameFr: "Adhan d'Algérie",
+      country: 'DZ',
+      regular: 'Riad_Al_Djazairi_-_Algeria_(رياض_الجزائري_-_الجزائر).mp3',
+      fajr: 'Adhan_Fajr_Algeria_(أذان_الفجر_الجزائر).mp3',
+      sortOrder: 0,
+      version: 2,
+    ),
+    _muezzin(
+      id: '00000000-0000-4000-8000-000000000004',
+      slug: 'alafasy',
+      nameAr: 'مشاري راشد العفاسي',
+      nameFr: 'Mishary Rashid Alafasy',
+      country: 'KW',
+      regular:
+          'Mishary_Rashid_Alafasy_1_-_Kuwait_(مشاري_راشد_العفاسي_-_الكويت).mp3',
+      fajr:
+          'Mishary_Rashid_Alafasy_3_-_Fajr_Kuwait_(مشاري_راشد_العفاسي_-_فجر_الكويت).mp3',
+      sortOrder: 1,
+      version: 1,
+    ),
+    _muezzin(
+      id: '00000000-0000-4000-8000-000000000001',
+      slug: 'makkah',
+      nameAr: 'أذان الحرم المكي',
+      nameFr: 'Adhan de La Mecque',
+      country: 'SA',
+      regular:
+          'Ali_Ibn_Ahmad_Mala_1_-_Al_Haram_Al_Maki_(علي_بن_أحمد_ملا_-_الحرم_المكي).mp3',
+      fajr: 'Adhan_Fajr_Al_Haram_Al_Maki_(أذان_الفجر_الحرم_المكي).mp3',
+      sortOrder: 2,
+      version: 2,
+    ),
+    _muezzin(
+      id: '00000000-0000-4000-8000-000000000002',
+      slug: 'madinah',
+      nameAr: 'أذان المسجد النبوي',
+      nameFr: 'Adhan de Médine',
+      country: 'SA',
+      regular:
+          'Adhan_Al_Haram_Al_Madani_-_Al_Madinah_1_(أذان_الحرم_المدني_-_المدينة_المنورة).mp3',
+      fajr: 'Adhan_Fajr_Al_Haram_Al_Madani_(أذان_الفجر_الحرم_المدني).mp3',
+      sortOrder: 3,
+      version: 2,
+    ),
+    _muezzin(
+      id: '00000000-0000-4000-8000-000000000005',
+      slug: 'abdulbasit',
+      nameAr: 'عبد الباسط عبد الصمد',
+      nameFr: 'Abdulbasit Abdusamad',
+      country: 'EG',
+      regular: 'Abdulbasit_Abdusamad_1_-_Egypt_(عبد_الباسط_عبد_الصمد_-_مصر).mp3',
+      fajr:
+          'Abdulbasit_Abdusamad_7_-_Fajr_Egypt_(عبد_الباسط_عبد_الصمد_-_فجر_مصر).mp3',
+      sortOrder: 4,
+      version: 1,
+    ),
+  ]);
 }
