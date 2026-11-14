@@ -16,6 +16,10 @@ class DedicationSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      // Open above the shell so the floating tab bar does not cover the sheet.
+      useRootNavigator: true,
+      useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => const DedicationSheet(),
     );
   }
@@ -54,12 +58,18 @@ class _DedicationSheetState extends ConsumerState<DedicationSheet> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final text = isDark ? AppColors.textDark : AppColors.textLight;
 
+    final media = MediaQuery.of(context);
+    // Keyboard when open, otherwise the system gesture/nav bar.
+    final bottomInset = media.viewInsets.bottom > 0
+        ? media.viewInsets.bottom
+        : media.viewPadding.bottom;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
+        0, // the drag handle already provides top spacing
         AppSpacing.lg,
-        AppSpacing.lg,
-        AppSpacing.lg + MediaQuery.of(context).viewInsets.bottom,
+        AppSpacing.lg + bottomInset,
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -104,11 +114,13 @@ class _DedicationSheetState extends ConsumerState<DedicationSheet> {
               decoration: InputDecoration(
                 labelText: context.tr('الاسم (اختياري)', 'Name (optional)'),
                 hintText: context.tr('مثال: أبي محمد', 'For example: Muhammad'),
+                counterText: '', // still capped at 60; the counter was clutter
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
+              height: 48,
               child: FilledButton(
                 onPressed: _save,
                 child: Text(context.tr('حفظ النية', 'Save dedication')),
