@@ -1,4 +1,4 @@
-// Renders the Ihsan wordmark (إحسان and "Ihsan" in Aref Ruqaa Bold, OFL) to
+// Renders the Mathabah wordmark (مثابة and "Mathabah" in Aref Ruqaa Bold, OFL) to
 // white-on-transparent PNGs that generate.py colours and lays out. Dart is
 // used because it shapes Arabic; Pillow on this machine cannot.
 //
@@ -25,13 +25,13 @@ void main() {
             ..addFont(Future.value(ByteData.sublistView(bytes))))
           .load();
     });
-    await tester.binding.setSurfaceSize(const Size(4200, 2400));
+    await tester.binding.setSurfaceSize(const Size(6400, 2400));
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetDevicePixelRatio);
 
     for (final (text, file) in [
-      ('إحسان', 'wordmark_ar.png'),
-      ('Ihsan', 'wordmark_en.png'),
+      ('مثابة', 'wordmark_ar.png'),
+      ('Mathabah', 'wordmark_en.png'),
     ]) {
       final key = GlobalKey();
       await tester.pumpWidget(Directionality(
@@ -40,7 +40,7 @@ void main() {
           child: RepaintBoundary(
             key: key,
             child: SizedBox(
-              width: 4200,
+              width: 6400,
               height: 2400,
               child: Center(
                 child: Text(

@@ -1,8 +1,8 @@
-"""The Ihsan (إحسان) app icon and logo.
+"""The Mathabah (مثابة) app icon and logo.
 
-A wordmark: إحسان in Aref Ruqaa Bold (SIL OFL, see OFL.txt) with "Ihsan"
+A wordmark: مثابة in Aref Ruqaa Bold (SIL OFL, see OFL.txt) with "Mathabah"
 under it, in gold on the app's deep green. The name is from
-«وَبِالْوَالِدَيْنِ إِحْسَانًا» (al-Isra 17:23).
+«وَإِذْ جَعَلْنَا الْبَيْتَ مَثَابَةً لِلنَّاسِ وَأَمْنًا» (al-Baqarah 2:125).
 
     flutter test tools/generate_icon/wordmark_test.dart   # only if the text changes
     python tools/generate_icon/generate.py

@@ -21,7 +21,7 @@ class SplashLayout {
   static const double wordmarkWidth = 160;
 
   /// Height over width of [wordmarkAsset].
-  static const double wordmarkAspect = 407 / 640;
+  static const double wordmarkAspect = 589 / 640;
 
   /// The shamsa's scalloped ring around the wordmark; smaller on narrow
   /// phones, so its rays (to [ShamsaPainter.reach] radii) stay on screen.
@@ -215,7 +215,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     const gold = AppColors.splashGold;
 
     return Semantics(
-      label: context.tr('إحسان، جارٍ فتح التطبيق', 'Ihsan, opening the app'),
+      label: context.tr('مثابة، جارٍ فتح التطبيق', 'Mathabah, opening the app'),
       liveRegion: true,
       child: ColoredBox(
         color: background,
@@ -319,7 +319,7 @@ class _Wordmark extends StatelessWidget {
       color: AppColors.splashGold,
       colorBlendMode: BlendMode.srcIn,
       filterQuality: FilterQuality.medium,
-      semanticLabel: context.tr('إحسان', 'Ihsan'),
+      semanticLabel: context.tr('مثابة', 'Mathabah'),
     );
     final light = Color.lerp(AppColors.splashGold, AppColors.onAccent, 0.7)!;
     return AnimatedBuilder(

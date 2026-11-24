@@ -8,6 +8,7 @@ import '../../../core/localization/tr.dart';
 import '../../adhkar/presentation/screens/adhkar_screen.dart';
 import '../../bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
+import '../../islamic_calendar/presentation/screens/islamic_calendar_screen.dart';
 import '../../khatma/presentation/screens/khatma_screen.dart';
 import '../../qibla/presentation/screens/qibla_screen.dart';
 import '../../quran/mushaf/presentation/screens/mushaf_screen.dart';
@@ -93,6 +94,12 @@ List<List<_Place>> _groups(BuildContext context) => [
           CupertinoIcons.sunrise_fill,
           AppColors.tileOrange,
           (r) => r.go(FajrCallListsScreen.path),
+        ),
+        _Place(
+          context.tr('التقويم الهجري', 'Hijri calendar'),
+          CupertinoIcons.calendar,
+          AppColors.tilePurple,
+          (r) => r.push(IslamicCalendarScreen.path),
         ),
       ],
       [
@@ -285,8 +292,8 @@ class _SidebarPanel extends StatelessWidget {
   }
 }
 
-/// The niche with a gilded hilal and the app's name, and under it the dua
-/// it is named after (al-Isra 17:23).
+/// The niche with a gilded hilal and the app's name, and under it the verse
+/// it is named after (al-Baqarah 2:125).
 class _Masthead extends StatelessWidget {
   const _Masthead();
 
@@ -314,7 +321,7 @@ class _Masthead extends StatelessWidget {
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
-                      'إحسان',
+                      'مثابة',
                       textDirection: TextDirection.rtl,
                       style: AppTypography.title1
                           .copyWith(color: AppColors.onAccent, height: 1.2),
@@ -329,7 +336,7 @@ class _Masthead extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Text(
-            '﴿وَبِالْوَالِدَيْنِ إِحْسَانًا﴾',
+            '﴿وَإِذْ جَعَلْنَا الْبَيْتَ مَثَابَةً لِّلنَّاسِ وَأَمْنًا﴾',
             textAlign: TextAlign.center,
             textDirection: TextDirection.rtl,
             style: AppTypography.quran(size: 19, height: 1.7)

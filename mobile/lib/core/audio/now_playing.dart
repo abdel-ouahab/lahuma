@@ -206,7 +206,8 @@ Future<Uri?>? _fallbackArt;
 Future<Uri?> _copyFallbackArt() async {
   try {
     final dir = await getApplicationSupportDirectory();
-    final file = File('${dir.path}/now_playing_v1.png');
+    // Bump the version whenever the artwork changes (v2: Mathabah).
+    final file = File('${dir.path}/now_playing_v2.png');
     if (!await file.exists()) {
       final data = await rootBundle.load('assets/images/now_playing.png');
       await file.writeAsBytes(data.buffer.asUint8List(), flush: true);

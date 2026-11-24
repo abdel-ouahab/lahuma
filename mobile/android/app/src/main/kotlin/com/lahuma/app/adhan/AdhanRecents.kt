@@ -5,7 +5,7 @@ import android.content.Context
 import android.util.Log
 
 /**
- * Optionally keeps Ihsan out of the Recents list. On ColorOS (OnePlus,
+ * Optionally keeps Mathabah out of the Recents list. On ColorOS (OnePlus,
  * Oppo, Realme) a swipe there force-stops the app, which cancels every
  * adhan until it is opened again. A playing adhan doesn't prevent it: its
  * foreground service was stopped too (OnePlus PJX110, Android 14,
@@ -13,8 +13,8 @@ import android.util.Log
  * "the adhan was stopped" notice.
  *
  * This only partly helps. Recents opened from Home or another app (and its
- * Clear all) leave Ihsan out. But Android always lists the task you are in,
- * so Recents opened from inside Ihsan still shows its card, and swiping it
+ * Clear all) leave Mathabah out. But Android always lists the task you are in,
+ * so Recents opened from inside Mathabah still shows its card, and swiping it
  * force-stops the app all the same (seen 2026-11-09). Leaving the hidden
  * task with Home is safe: trimming it from Recents didn't stop the app.
  *

@@ -4,7 +4,7 @@
 
 ---
 
-You are working in **Ihsan (إحسان)**, formerly Lahuma, a Quran app. The Adhan feature is already built end to end (read `docs/adhan.md` first):
+You are working in **Mathabah (مثابة)**, formerly Lahuma, a Quran app. The Adhan feature is already built end to end (read `docs/adhan.md` first):
 
 - **Backend:** `Muezzin` model in `backend/prisma/schema.prisma`, `GET /api/muezzins` in `backend/src/modules/muezzins/`, and `resolveMediaUrl` in `muezzins.service.ts`, which prefixes paths starting with `/` with `MEDIA_BASE_URL`.
 - **Seed:** `backend/prisma/seed.ts` only has **3 placeholder muezzins whose files don't exist**.

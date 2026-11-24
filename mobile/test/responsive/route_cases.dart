@@ -13,6 +13,8 @@ final outsideShellCases = <ScreenCase>[
   const ScreenCase('khatma', route: '/khatma'),
   const ScreenCase('khatma_setup', route: '/khatma/setup'),
   const ScreenCase('qibla', route: '/qibla'),
+  const ScreenCase('calendar', route: '/calendar'),
+  const ScreenCase('calendar_settings', route: '/calendar/settings'),
   ScreenCase('fajr_wake_list', route: '/fajr-call/wake/l1', prefs: fajrPrefs),
   const ScreenCase('adhan_player', route: '/adhan/play?prayer=maghrib'),
   const ScreenCase('account', route: '/account', hasInput: true),

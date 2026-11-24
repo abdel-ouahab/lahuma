@@ -334,7 +334,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
 
             // ── About ────────────────────────────────────────────────────
-            _SectionHeader(title: context.tr('عن إحسان', 'About Ihsan')),
+            _SectionHeader(title: context.tr('عن مثابة', 'About Mathabah')),
             LahumaCard(
               color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
               padding: const EdgeInsets.all(AppSpacing.lg),
@@ -342,7 +342,7 @@ class SettingsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'إحسان',
+                    'مثابة',
                     style: GoogleFonts.scheherazadeNew(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -363,8 +363,8 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     context.tr(
-                      'إحسان تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.',
-                      'Ihsan is a Quran app made as an ongoing charity for parents.',
+                      'مثابة تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.',
+                      'Mathabah is a Quran app made as an ongoing charity for parents.',
                     ),
                     style: GoogleFonts.cairo(
                       fontSize: 13,
@@ -385,8 +385,8 @@ class SettingsScreen extends ConsumerWidget {
                   icon: Icons.auto_stories_outlined,
                   label: context.tr(
                       'عرض المقدمة مرة أخرى', 'Show the introduction again'),
-                  detail: context.tr('جولة قصيرة في ميزات إحسان',
-                      'A short tour of what Ihsan does'),
+                  detail: context.tr('جولة قصيرة في ميزات مثابة',
+                      'A short tour of what Mathabah does'),
                   isDark: isDark,
                   onTap: () => context.push(OnboardingScreen.replayPath),
                 ),

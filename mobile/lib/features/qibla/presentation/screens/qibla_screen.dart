@@ -506,36 +506,30 @@ class _LocationPrompt extends ConsumerWidget {
         ),
     };
 
-    // Centred when it fits, scrollable under large text sizes.
-    return LayoutBuilder(
-      builder: (context, box) => SingleChildScrollView(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(minHeight: box.maxHeight),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
-              child: AppEmptyState(
-                icon: icon,
-                title: title,
-                message: message,
-                action: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppButton.filled(
-                        label: action, onPressed: notifier.enableLocation),
-                    const SizedBox(height: AppSpacing.sm),
-                    AppButton.plain(
-                      label: context.tr('اختر مدينتك', 'Pick your city'),
-                      onPressed: () async {
-                        await PrayerSettingsSheet.show(context);
-                        notifier.refresh();
-                      },
-                    ),
-                  ],
-                ),
+    // AppEmptyState centres itself and scrolls under large text sizes; it
+    // needs a bounded height, so it must not sit inside another scroll view.
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: AppEmptyState(
+          icon: icon,
+          title: title,
+          message: message,
+          action: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AppButton.filled(
+                  label: action, onPressed: notifier.enableLocation),
+              const SizedBox(height: AppSpacing.sm),
+              AppButton.plain(
+                label: context.tr('اختر مدينتك', 'Pick your city'),
+                onPressed: () async {
+                  await PrayerSettingsSheet.show(context);
+                  notifier.refresh();
+                },
               ),
-            ),
+            ],
           ),
         ),
       ),

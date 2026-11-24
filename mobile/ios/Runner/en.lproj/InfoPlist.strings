@@ -1,6 +1,6 @@
 /* Home-screen name (English and fallback). */
-"CFBundleDisplayName" = "Ihsan";
-"CFBundleName" = "Ihsan";
+"CFBundleDisplayName" = "Mathabah";
+"CFBundleName" = "Mathabah";
 
 /* Location: prayer times, city name, Qibla and Fajr Call. */
-"NSLocationWhenInUseUsageDescription" = "Ihsan uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.";
+"NSLocationWhenInUseUsageDescription" = "Mathabah uses your approximate location to show prayer times and your city, find the Qibla direction, and set the Fajr time for Fajr Call. The Qibla is calculated on your phone; for prayer times, your approximate location is sent to the Aladhan prayer-times service.";

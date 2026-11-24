@@ -18,10 +18,10 @@ List<AdhanClearedChoice> adhanClearedChoices({required bool hidden}) => [
 /// Android: when this launch found the adhan alarms cancelled (the app was
 /// force-stopped, on ColorOS by a swipe from Recents), says so over Home,
 /// each time it happens: the adhans due since then didn't play. Asks the
-/// user to leave Ihsan with Home rather than swiping it, and offers to hide
+/// user to leave Mathabah with Home rather than swiping it, and offers to hide
 /// it from Recents and the reliability steps. Hiding only keeps it out of
 /// Recents opened elsewhere (and Clear all): Android still lists the app
-/// you're in, so a swipe from inside Ihsan stops it all the same (seen on
+/// you're in, so a swipe from inside Mathabah stops it all the same (seen on
 /// ColorOS). The launch sync has already re-armed them.
 Future<void> showAdhanClearedNoticeIfNeeded(
     GoRouter router, AdhanAlarmPlatform platform) async {
@@ -36,12 +36,12 @@ Future<void> showAdhanClearedNoticeIfNeeded(
     title: context.tr('توقّف الأذان', 'The adhan was stopped'),
     message: hidden
         ? context.tr(
-            'أوقف هاتفك تطبيق «إحسان» بالكامل، غالباً لأنه سُحب من التطبيقات الأخيرة وأنت داخله، فلم يُرفع الأذان منذ ذلك الحين. أعدنا تفعيله الآن. «إحسان» مخفي من التطبيقات الأخيرة، لكنه يظهر فيها إن فتحتها وأنت داخله. لكي لا يتكرر هذا، اخرج منه إلى الشاشة الرئيسية ولا تسحبه.',
-            'Your phone fully stopped Ihsan, usually because it was swiped away from recent apps while you were in it, so no adhan has played since. It is back on now. Ihsan is hidden from recent apps, but it still shows there when you open them from inside Ihsan. To keep this from happening, leave it by going to the Home screen, not by swiping it away.',
+            'أوقف هاتفك تطبيق «مثابة» بالكامل، غالباً لأنه سُحب من التطبيقات الأخيرة وأنت داخله، فلم يُرفع الأذان منذ ذلك الحين. أعدنا تفعيله الآن. «مثابة» مخفي من التطبيقات الأخيرة، لكنه يظهر فيها إن فتحتها وأنت داخله. لكي لا يتكرر هذا، اخرج منه إلى الشاشة الرئيسية ولا تسحبه.',
+            'Your phone fully stopped Mathabah, usually because it was swiped away from recent apps while you were in it, so no adhan has played since. It is back on now. Mathabah is hidden from recent apps, but it still shows there when you open them from inside Mathabah. To keep this from happening, leave it by going to the Home screen, not by swiping it away.',
           )
         : context.tr(
-            'أوقف هاتفك تطبيق «إحسان» بالكامل، غالباً لأنه سُحب من التطبيقات الأخيرة، فلم يُرفع الأذان منذ ذلك الحين. أعدنا تفعيله الآن. لكي لا يتكرر هذا، اخرج من «إحسان» إلى الشاشة الرئيسية ولا تسحبه. وإخفاؤه من التطبيقات الأخيرة يحميه أيضاً من «مسح الكل».',
-            'Your phone fully stopped Ihsan, usually because it was swiped away from recent apps, so no adhan has played since. It is back on now. To keep this from happening, leave Ihsan by going to the Home screen, not by swiping it away. Hiding it from recent apps also keeps it out of Clear all.',
+            'أوقف هاتفك تطبيق «مثابة» بالكامل، غالباً لأنه سُحب من التطبيقات الأخيرة، فلم يُرفع الأذان منذ ذلك الحين. أعدنا تفعيله الآن. لكي لا يتكرر هذا، اخرج من «مثابة» إلى الشاشة الرئيسية ولا تسحبه. وإخفاؤه من التطبيقات الأخيرة يحميه أيضاً من «مسح الكل».',
+            'Your phone fully stopped Mathabah, usually because it was swiped away from recent apps, so no adhan has played since. It is back on now. To keep this from happening, leave Mathabah by going to the Home screen, not by swiping it away. Hiding it from recent apps also keeps it out of Clear all.',
           ),
     actions: [
       for (final c in choices)

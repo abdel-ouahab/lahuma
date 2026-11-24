@@ -90,9 +90,9 @@ class AdhanReliability {
   final String manufacturer;
   final int sdk;
 
-  /// The user chose to keep Ihsan out of Recents, where a swipe force-stops
+  /// The user chose to keep Mathabah out of Recents, where a swipe force-stops
   /// it on ColorOS and cancels every adhan. Recents opened from inside
-  /// Ihsan still lists it, so this doesn't cover a swipe from there.
+  /// Mathabah still lists it, so this doesn't cover a swipe from there.
   final bool hiddenFromRecents;
 
   /// A launch has found the adhans cancelled by a force-stop at least once.
@@ -218,7 +218,7 @@ class AdhanAlarmPlatform {
 
   Future<void> openAppSettings() => _invoke<void>('openAppSettings');
 
-  /// Keeps Ihsan out of Recents (or shows it again). Applies to the open
+  /// Keeps Mathabah out of Recents (or shows it again). Applies to the open
   /// task now and to every later one.
   Future<void> setHiddenFromRecents(bool hidden) =>
       _invoke<void>('setHiddenFromRecents', {'hidden': hidden});

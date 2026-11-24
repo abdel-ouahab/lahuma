@@ -181,8 +181,8 @@ final overlayCases = <ScreenCase>[
           (c) => showAppDialog<bool>(c,
                   title: c.tr('العمل في الخلفية', 'Run in the background'),
                   message: c.tr(
-                    'ليُرفع الأذان والتطبيق مغلق، يحتاج تطبيق «إحسان» أن يعمل في الخلفية: في وقت كل صلاة يظهر إشعار ويُرفع الأذان بصوت الإشعارات. اختر «السماح» في النافذة التالية. لا يزيد هذا من استهلاك البطارية إلا وقت الأذان.',
-                    'To play the adhan with the app closed, Ihsan needs to run in the background: at each prayer time a notification appears and the adhan plays at notification volume. Choose "Allow" in the next window. The app only wakes at prayer times.',
+                    'ليُرفع الأذان والتطبيق مغلق، يحتاج تطبيق «مثابة» أن يعمل في الخلفية: في وقت كل صلاة يظهر إشعار ويُرفع الأذان بصوت الإشعارات. اختر «السماح» في النافذة التالية. لا يزيد هذا من استهلاك البطارية إلا وقت الأذان.',
+                    'To play the adhan with the app closed, Mathabah needs to run in the background: at each prayer time a notification appears and the adhan plays at notification volume. Choose "Allow" in the next window. The app only wakes at prayer times.',
                   ),
                   actions: [
                     AppDialogAction(label: c.tr('لاحقًا', 'Later'), value: false),

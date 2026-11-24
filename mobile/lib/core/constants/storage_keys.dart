@@ -64,6 +64,14 @@ class StorageKeys {
   /// The prayer-times banner in the notification shade (on by default).
   static const String prayerBannerEnabled = 'prayerBanner.enabled';
 
+  /// The Islamic calendar: occasion reminders and the Hijri adjustment.
+  static const String calendarRemindersOn = 'calendar.remindersOn';
+  static const String calendarReminderTiming = 'calendar.reminderTiming';
+
+  /// Names of the reminded occasions; absent until first changed.
+  static const String calendarReminderEvents = 'calendar.reminderEvents';
+  static const String calendarHijriAdjustment = 'calendar.hijriAdjustment';
+
   static const String mushafLastPage = 'mushaf.lastPage';
   static const String mushafBookmarks = 'mushaf.bookmarks';
   static const String mushafTheme = 'mushaf.theme';

@@ -51,15 +51,15 @@ extension OnboardingText on BuildContext {
 const List<OnboardingPage> onboardingPages = [
   OnboardingPage(
     id: OnboardingPageId.welcome,
-    title: ('إحسان', 'Ihsan'),
+    title: ('مثابة', 'Mathabah'),
     body: (
       'اجعل تلاوتك صدقةً جاريةً لوالديك؛ كلُّ آيةٍ تقرؤها تُهدى لهما.',
       'Make your recitation a lasting charity for your parents. Every ayah '
           'you read is a gift to them.',
     ),
     art: (
-      'شعار إحسان داخل نجمة ذهبية، وعدّاد للآيات المُهداة للوالدين',
-      'The Ihsan logo inside a gold star, with a count of ayahs gifted to '
+      'شعار مثابة داخل نجمة ذهبية، وعدّاد للآيات المُهداة للوالدين',
+      'The Mathabah logo inside a gold star, with a count of ayahs gifted to '
           'your parents',
     ),
     tint: AppColors.gold,

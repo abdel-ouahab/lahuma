@@ -1,10 +1,10 @@
-# Prompt for Claude Code: Animated Splash + Onboarding for Ihsan (إحسان)
+# Prompt for Claude Code: Animated Splash + Onboarding for Mathabah (مثابة)
 
 > Paste everything below the line into Claude Code, opened at the root of the repo.
 
 ---
 
-You are working in **Ihsan (إحسان)**, formerly Lahuma. It's a Quran app built as ongoing charity (sadaqah jariyah) for the user's parents. The Flutter app is in `mobile/`. This task is **mobile only**: don't touch `backend/` or `client/`.
+You are working in **Mathabah (مثابة)**, formerly Lahuma. It's a Quran app built as ongoing charity (sadaqah jariyah) for the user's parents. The Flutter app is in `mobile/`. This task is **mobile only**: don't touch `backend/` or `client/`.
 
 Your job is to build two things to a professional, App Store–feature standard:
 
@@ -46,7 +46,7 @@ Use a single `AnimationController` with `Interval`s (or `flutter_animate` sequen
 1. **0–500 ms**: a thin gold 8-point star outline **draws itself** around the logo position (stroke path animation with `PathMetric`). The geometric background pattern fades in to about 6% opacity.
 2. **300–900 ms**: the logo scales from 0.86 to 1.0 with `AppMotion.spring` and fades in, then settles into the star.
 3. **800–1200 ms**: a soft gold **light sweep** (a shimmer gradient masked to the logo) passes across it once.
-4. **900–1400 ms**: the name **إحسان** (Scheherazade New, large) and the tagline *قرآنٌ يُتلى، وأجرٌ يُهدى* rise 12 px and fade in, staggered by 120 ms.
+4. **900–1400 ms**: the name **مثابة** (Scheherazade New, large) and the tagline *قرآنٌ يُتلى، وأجرٌ يُهدى* rise 12 px and fade in, staggered by 120 ms.
 5. **Loading indicator**: below the tagline, a slim, elegant indicator, for example a gold arc or three slow-breathing dots in the geometry style. **It reflects real start-up work, not a fake timer.**
 
 ### 3.3 Real start-up work
@@ -90,7 +90,7 @@ Send this copy to me for review and polish it. Keep it short.
 
 | # | Arabic title | Arabic body | English title | English body |
 |---|---|---|---|---|
-| 1 | إحسان | اجعل تلاوتك صدقةً جاريةً لوالديك؛ كلُّ آيةٍ تقرؤها تُهدى لهما. | Ihsan | Make your recitation a lasting charity for your parents. Every ayah you read is a gift to them. |
+| 1 | مثابة | اجعل تلاوتك صدقةً جاريةً لوالديك؛ كلُّ آيةٍ تقرؤها تُهدى لهما. | Mathabah | Make your recitation a lasting charity for your parents. Every ayah you read is a gift to them. |
 | 2 | اقرأ واستمع | مصحفٌ واضح مع التفسير والترجمة، وتلاوات كبار القرّاء. | Read and listen | A clear Mushaf with tafsir and translation, and recitations from great reciters. |
 | 3 | ختمتك في موعدها | خطّة ختمة تناسب وقتك، وورد يومي يذكّرك بلطف. | Finish your khatma | A khatma plan that fits your time, with a daily wird and gentle reminders. |
 | 4 | صلاتك في وقتها | مواقيت دقيقة حسب موقعك، أذانٌ في وقته، وقبلةٌ أينما كنت. | Pray on time | Accurate prayer times for where you are, the adhan on time, and the qibla wherever you go. |
