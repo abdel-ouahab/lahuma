@@ -29,6 +29,8 @@ import '../../features/fajr_call/presentation/screens/fajr_call_lists_screen.dar
 import '../../features/fajr_call/presentation/screens/fajr_call_log_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_call_permissions_screen.dart';
 import '../../features/fajr_call/presentation/screens/fajr_wake_list_screen.dart';
+import '../../features/islamic_calendar/presentation/screens/calendar_settings_screen.dart';
+import '../../features/islamic_calendar/presentation/screens/islamic_calendar_screen.dart';
 import '../../features/khatma/presentation/screens/khatma_complete_screen.dart';
 import '../../features/khatma/presentation/screens/khatma_screen.dart';
 import '../../features/khatma/presentation/screens/khatma_setup_screen.dart';
@@ -155,6 +157,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: QiblaScreen.path,
         pageBuilder: (context, state) => _page(state, const QiblaScreen()),
+      ),
+
+      // ── Hijri calendar (outside shell — opened from its reminders) ──────
+      GoRoute(
+        path: IslamicCalendarScreen.path,
+        pageBuilder: (context, state) =>
+            _page(state, const IslamicCalendarScreen()),
+        routes: [
+          GoRoute(
+            path: 'settings',
+            pageBuilder: (context, state) =>
+                _page(state, const CalendarSettingsScreen()),
+          ),
+        ],
       ),
 
       // ── Fajr wake list (outside shell — opened from the Fajr notification)

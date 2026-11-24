@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appName => 'إحسان';
+  String get appName => 'مثابة';
 
   @override
   String get appTagline => 'قرآنٌ يُتلى، وأجرٌ يُهدى.';
@@ -66,11 +66,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get themeSystem => 'تلقائي';
 
   @override
-  String get about => 'عن إحسان';
+  String get about => 'عن مثابة';
 
   @override
   String get aboutBody =>
-      'إحسان تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.';
+      'مثابة تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.';
 
   @override
   String get arabic => 'العربية';

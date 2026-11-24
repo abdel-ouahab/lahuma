@@ -21,6 +21,7 @@ import 'features/adhan/presentation/adhan_providers.dart';
 import 'features/fajr_call/data/fajr_call_platform.dart';
 import 'features/fajr_call/presentation/fajr_call_providers.dart';
 import 'features/adhkar/presentation/adhkar_providers.dart';
+import 'features/islamic_calendar/presentation/calendar_providers.dart';
 import 'features/khatma/presentation/khatma_providers.dart';
 import 'features/settings/presentation/settings_providers.dart';
 import 'features/splash/splash_screen.dart';
@@ -107,6 +108,8 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     ref.read(reminderProvider);
     // Puts up (or refreshes) the prayer-times banner.
     ref.read(prayerBannerProvider);
+    // Loads the calendar settings and tops up the occasion reminders.
+    ref.read(calendarProvider);
     // The adhan plays in the app at prayer time, only while it is open.
     ref.read(adhanForegroundProvider).setActive(true);
     ref.read(fajrCallPlatformProvider).setHandlers(
@@ -134,6 +137,9 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
       ref.read(khatmaProvider.notifier).refresh();
       ref.read(reminderProvider.notifier).reschedule();
       ref.read(prayerBannerProvider.notifier).refresh();
+      // A new day: the next occasions move, and their reminders with them.
+      ref.read(calendarProvider.notifier).reschedule();
+      ref.invalidate(upcomingOccasionsProvider);
       // A new day: Home's adhkar progress starts again from nothing.
       ref.invalidate(adhkarCategoryTodayProvider);
       ref.invalidate(adhkarTodayProvider);
@@ -156,7 +162,7 @@ class _LahumaAppState extends ConsumerState<LahumaApp>
     return ThemeProvider(
       initTheme: AppTheme.light,
       child: MaterialApp.router(
-        title: 'إحسان',
+        title: 'مثابة',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

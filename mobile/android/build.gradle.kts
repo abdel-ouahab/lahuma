@@ -28,6 +28,16 @@ subprojects {
     }
 }
 
+// Release builds run lint's "vital" checks on every plugin, and the lint
+// bundled with this AGP crashes on JDK 17 (NoSuchMethodError on
+// List.removeLast, a JDK 21 API) while analysing url_launcher_android.
+// They are an optional safety net, not part of the build: skip them.
+subprojects {
+    tasks.matching { it.name.startsWith("lintVital") }.configureEach {
+        enabled = false
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

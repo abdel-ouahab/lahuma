@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/design/app_colors.dart';
 import '../../../core/design/widgets/app_ornaments.dart';
 
-/// The recitation artwork: the app's mark, the gold إحسان wordmark inside
+/// The recitation artwork: the app's mark, the gold مثابة wordmark inside
 /// the shamsa (the medallion that opens an illuminated Mushaf, as on the
 /// splash), on a deep green tile.
 ///
@@ -33,7 +33,7 @@ class RecitationArtwork extends StatefulWidget {
   static const String wordmarkAsset = 'assets/images/wordmark.png';
 
   /// Height over width of [wordmarkAsset].
-  static const double wordmarkAspect = 407 / 640;
+  static const double wordmarkAspect = 589 / 640;
 
   static const double _shamsaMinSize = 96;
 

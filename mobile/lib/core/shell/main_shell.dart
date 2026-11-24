@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' show Icons;
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../audio/now_playing_sync.dart';
@@ -83,12 +84,16 @@ class MainShell extends ConsumerWidget {
                 : null;
 
     return AppTabScaffold(
-      body: Stack(
-        children: [
-          navigationShell,
-          // Mirrors the mini player on the lock screen and in notifications.
-          const NowPlayingSync(),
-        ],
+      // Inside the body so the toast it shows clears the tab bar.
+      body: _BackToExit(
+        navigationShell: navigationShell,
+        child: Stack(
+          children: [
+            navigationShell,
+            // Mirrors the mini player on the lock screen and in notifications.
+            const NowPlayingSync(),
+          ],
+        ),
       ),
       accessory: miniPlayer,
       accessoryHeight: AppMiniPlayerBar.reservedHeight,
@@ -109,4 +114,54 @@ class MainShell extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Android back on a tab's first screen, where nothing is left to pop:
+/// another tab goes back to Home; on Home the first press warns and a second
+/// one within [_window] closes the app. Pages pushed on a tab, or over the
+/// shell, still pop as usual: the router only reaches this when they're gone.
+class _BackToExit extends StatefulWidget {
+  const _BackToExit({required this.navigationShell, required this.child});
+
+  final StatefulNavigationShell navigationShell;
+  final Widget child;
+
+  @override
+  State<_BackToExit> createState() => _BackToExitState();
+}
+
+class _BackToExitState extends State<_BackToExit> {
+  static const _window = Duration(seconds: 2);
+
+  DateTime? _lastPress;
+
+  void _onBack(bool didPop, Object? _) {
+    if (didPop) return;
+    final shell = widget.navigationShell;
+    if (shell.currentIndex != 0) {
+      _lastPress = null;
+      shell.goBranch(0);
+      return;
+    }
+    final now = DateTime.now();
+    final last = _lastPress;
+    if (last != null && now.difference(last) < _window) {
+      AppToast.dismiss();
+      SystemNavigator.pop();
+      return;
+    }
+    _lastPress = now;
+    AppToast.show(
+      context,
+      context.tr('اضغط رجوع مرة أخرى للخروج', 'Press back again to exit'),
+      duration: _window,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => PopScope(
+        canPop: false,
+        onPopInvokedWithResult: _onBack,
+        child: widget.child,
+      );
 }

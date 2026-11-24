@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
@@ -304,6 +305,18 @@ class AppTabBar extends StatelessWidget {
             curve: AppMotion.curve,
             builder: (context, notchX, _) => Stack(
               children: [
+                // The page shows through the notch round the raised
+                // circle; a soft blur keeps it from competing with the icon.
+                Positioned.fill(
+                  top: _rise,
+                  child: ClipPath(
+                    clipper: _NotchClipper(notchX),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                      child: const SizedBox.expand(),
+                    ),
+                  ),
+                ),
                 Positioned.fill(
                   top: _rise,
                   child: CustomPaint(
@@ -445,23 +458,24 @@ class _NotchedBarPainter extends CustomPainter {
 
   static const double _radius = 16;
 
+  /// The curved notch cut from the bar's top edge, centred on [x].
+  static Path notch(double x) => Path()
+    ..moveTo(x - 46, -1)
+    ..lineTo(x - 46, 0)
+    ..cubicTo(x - 37.16, 0, x - 30.34, 7.65, x - 25.84, 15.25)
+    ..cubicTo(x - 20.62, 24.08, x - 11, 30, x, 30)
+    ..cubicTo(x + 11, 30, x + 20.62, 24.08, x + 25.84, 15.25)
+    ..cubicTo(x + 30.34, 7.65, x + 37.16, 0, x + 46, 0)
+    ..lineTo(x + 46, -1)
+    ..close();
+
   @override
   void paint(Canvas canvas, Size size) {
-    final x = notchX;
     final body = Path()
       ..addRRect(RRect.fromRectAndRadius(
           Offset.zero & size, const Radius.circular(_radius)));
-    final notch = Path()
-      ..moveTo(x - 46, -1)
-      ..lineTo(x - 46, 0)
-      ..cubicTo(x - 37.16, 0, x - 30.34, 7.65, x - 25.84, 15.25)
-      ..cubicTo(x - 20.62, 24.08, x - 11, 30, x, 30)
-      ..cubicTo(x + 11, 30, x + 20.62, 24.08, x + 25.84, 15.25)
-      ..cubicTo(x + 30.34, 7.65, x + 37.16, 0, x + 46, 0)
-      ..lineTo(x + 46, -1)
-      ..close();
     canvas.drawPath(
-      Path.combine(PathOperation.difference, body, notch),
+      Path.combine(PathOperation.difference, body, notch(notchX)),
       Paint()..color = color,
     );
   }
@@ -469,6 +483,20 @@ class _NotchedBarPainter extends CustomPainter {
   @override
   bool shouldRepaint(_NotchedBarPainter old) =>
       old.notchX != notchX || old.color != color;
+}
+
+/// Clips to the bar's notch, where the page shows through round the
+/// selected tab's circle.
+class _NotchClipper extends CustomClipper<Path> {
+  const _NotchClipper(this.notchX);
+
+  final double notchX;
+
+  @override
+  Path getClip(Size size) => _NotchedBarPainter.notch(notchX);
+
+  @override
+  bool shouldReclip(_NotchClipper old) => old.notchX != notchX;
 }
 
 /// Tab shell: [body] fills the screen and scrolls under the translucent

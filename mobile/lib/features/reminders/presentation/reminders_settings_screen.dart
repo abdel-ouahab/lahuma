@@ -270,7 +270,7 @@ class _NotificationPreview extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(context.tr('إحسان', 'Ihsan'),
+                        Text(context.tr('مثابة', 'Mathabah'),
                             style: meta.copyWith(
                                 color: c.accent, fontWeight: FontWeight.w600)),
                         const SizedBox(width: AppSpacing.xs + 2),

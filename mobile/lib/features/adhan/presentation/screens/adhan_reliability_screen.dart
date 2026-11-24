@@ -99,8 +99,8 @@ class AdhanReliabilityScreen extends ConsumerWidget {
               header: context.tr('التطبيقات الأخيرة', 'Recent apps'),
               hasLeading: true,
               footer: context.tr(
-                'على هواتف أوبو وريلمي وون بلس، سحب «إحسان» من التطبيقات الأخيرة يوقفه بالكامل ويلغي كل أذان حتى تفتحه من جديد، ولو كان الأذان يُرفع. حتى مع الإخفاء يظهر «إحسان» فيها إن فتحتها وأنت داخله، فاخرج منه إلى الشاشة الرئيسية بدل سحبه. وافتحه من أيقونته.',
-                'On Oppo, Realme and OnePlus phones, swiping Ihsan away from recent apps fully stops it and cancels every adhan until you open it again, even while one is playing. Even when hidden, Ihsan shows there if you open them from inside it, so leave it by going to the Home screen instead of swiping it. Open it from its icon.',
+                'على هواتف أوبو وريلمي وون بلس، سحب «مثابة» من التطبيقات الأخيرة يوقفه بالكامل ويلغي كل أذان حتى تفتحه من جديد، ولو كان الأذان يُرفع. حتى مع الإخفاء يظهر «مثابة» فيها إن فتحتها وأنت داخله، فاخرج منه إلى الشاشة الرئيسية بدل سحبه. وافتحه من أيقونته.',
+                'On Oppo, Realme and OnePlus phones, swiping Mathabah away from recent apps fully stops it and cancels every adhan until you open it again, even while one is playing. Even when hidden, Mathabah shows there if you open them from inside it, so leave it by going to the Home screen instead of swiping it. Open it from its icon.',
               ),
               children: [
                 AppListTile(
@@ -174,43 +174,43 @@ class AdhanReliabilityScreen extends ConsumerWidget {
   static List<String> _steps(BuildContext context, PhoneMaker m) => switch (m) {
         PhoneMaker.xiaomi => [
             context.tr(
-                'الإعدادات ← التطبيقات ← إحسان ← التشغيل التلقائي: فعّله.',
-                'Settings → Apps → Ihsan → Autostart: on.'),
+                'الإعدادات ← التطبيقات ← مثابة ← التشغيل التلقائي: فعّله.',
+                'Settings → Apps → Mathabah → Autostart: on.'),
             context.tr('ثم «توفير البطارية»: اختر «بلا قيود».',
                 'Then Battery saver: choose "No restrictions".'),
             context.tr(
-                'في التطبيقات الأخيرة، اضغط مطولاً على «إحسان» واختر القفل.',
-                'In Recents, long-press Ihsan and lock it.'),
+                'في التطبيقات الأخيرة، اضغط مطولاً على «مثابة» واختر القفل.',
+                'In Recents, long-press Mathabah and lock it.'),
           ],
         PhoneMaker.oppo => [
             context.tr(
-                'الإعدادات ← البطارية ← إحسان: اسمح بالنشاط في الخلفية والتشغيل التلقائي.',
-                'Settings → Battery → Ihsan: allow background activity and auto launch.'),
-            context.tr('«تحسين استخدام البطارية»: لا تحسّن «إحسان».',
-                'Optimise battery use: don\'t optimise Ihsan.'),
+                'الإعدادات ← البطارية ← مثابة: اسمح بالنشاط في الخلفية والتشغيل التلقائي.',
+                'Settings → Battery → Mathabah: allow background activity and auto launch.'),
+            context.tr('«تحسين استخدام البطارية»: لا تحسّن «مثابة».',
+                'Optimise battery use: don\'t optimise Mathabah.'),
             context.tr(
-                'في التطبيقات الأخيرة، اضغط ⋮ على «إحسان» واختر «قفل». لا يمكن القفل و«وضع توفير الطاقة» مفعّل.',
-                'In Recents, tap ⋮ on Ihsan and choose Lock. Apps can\'t be locked while Power saving mode is on.'),
+                'في التطبيقات الأخيرة، اضغط ⋮ على «مثابة» واختر «قفل». لا يمكن القفل و«وضع توفير الطاقة» مفعّل.',
+                'In Recents, tap ⋮ on Mathabah and choose Lock. Apps can\'t be locked while Power saving mode is on.'),
             context.tr(
-                'لا تسحب «إحسان» لإغلاقه من التطبيقات الأخيرة، ولو بعد استخدامه مباشرة: هذا يوقفه بالكامل فلا يُرفع الأذان حتى تفتحه من جديد. اخرج منه إلى الشاشة الرئيسية.',
-                'Don\'t swipe Ihsan away from Recents, even right after using it: that fully stops it, and no adhan plays until you open it again. Leave it by going to the Home screen.'),
+                'لا تسحب «مثابة» لإغلاقه من التطبيقات الأخيرة، ولو بعد استخدامه مباشرة: هذا يوقفه بالكامل فلا يُرفع الأذان حتى تفتحه من جديد. اخرج منه إلى الشاشة الرئيسية.',
+                'Don\'t swipe Mathabah away from Recents, even right after using it: that fully stops it, and no adhan plays until you open it again. Leave it by going to the Home screen.'),
           ],
         PhoneMaker.huawei => [
             context.tr(
-                'الإعدادات ← البطارية ← تشغيل التطبيقات ← إحسان: اختر الإدارة اليدوية.',
-                'Settings → Battery → App launch → Ihsan: manage manually.'),
+                'الإعدادات ← البطارية ← تشغيل التطبيقات ← مثابة: اختر الإدارة اليدوية.',
+                'Settings → Battery → App launch → Mathabah: manage manually.'),
             context.tr(
                 'فعّل التشغيل التلقائي والتشغيل الثانوي والتشغيل في الخلفية.',
                 'Turn on auto-launch, secondary launch and run in background.'),
             context.tr(
-                'في التطبيقات الأخيرة، اقفل «إحسان».', 'In Recents, lock Ihsan.'),
+                'في التطبيقات الأخيرة، اقفل «مثابة».', 'In Recents, lock Mathabah.'),
           ],
         PhoneMaker.samsung => [
-            context.tr('الإعدادات ← التطبيقات ← إحسان ← البطارية: «غير مقيّد».',
-                'Settings → Apps → Ihsan → Battery: Unrestricted.'),
+            context.tr('الإعدادات ← التطبيقات ← مثابة ← البطارية: «غير مقيّد».',
+                'Settings → Apps → Mathabah → Battery: Unrestricted.'),
             context.tr(
-                'العناية بالجهاز ← البطارية ← حدود الاستخدام في الخلفية: أزل «إحسان» من التطبيقات النائمة، وأضفه إلى «التطبيقات التي لا تنام أبداً».',
-                'Device care → Battery → Background usage limits: remove Ihsan from sleeping apps and add it to "Never sleeping apps".'),
+                'العناية بالجهاز ← البطارية ← حدود الاستخدام في الخلفية: أزل «مثابة» من التطبيقات النائمة، وأضفه إلى «التطبيقات التي لا تنام أبداً».',
+                'Device care → Battery → Background usage limits: remove Mathabah from sleeping apps and add it to "Never sleeping apps".'),
           ],
         PhoneMaker.other => const [],
       };
@@ -225,8 +225,8 @@ Future<bool> askToRunInBackground(
     context,
     title: context.tr('العمل في الخلفية', 'Run in the background'),
     message: context.tr(
-      'ليُرفع الأذان والتطبيق مغلق، يحتاج تطبيق «إحسان» أن يعمل في الخلفية: في وقت كل صلاة يظهر إشعار ويُرفع الأذان بصوت الإشعارات. اختر «السماح» في النافذة التالية. لا يزيد هذا من استهلاك البطارية إلا وقت الأذان.',
-      'To play the adhan with the app closed, Ihsan needs to run in the background: at each prayer time a notification appears and the adhan plays at notification volume. Choose "Allow" in the next window. The app only wakes at prayer times.',
+      'ليُرفع الأذان والتطبيق مغلق، يحتاج تطبيق «مثابة» أن يعمل في الخلفية: في وقت كل صلاة يظهر إشعار ويُرفع الأذان بصوت الإشعارات. اختر «السماح» في النافذة التالية. لا يزيد هذا من استهلاك البطارية إلا وقت الأذان.',
+      'To play the adhan with the app closed, Mathabah needs to run in the background: at each prayer time a notification appears and the adhan plays at notification volume. Choose "Allow" in the next window. The app only wakes at prayer times.',
     ),
     actions: [
       AppDialogAction(label: context.tr('لاحقًا', 'Later'), value: false),

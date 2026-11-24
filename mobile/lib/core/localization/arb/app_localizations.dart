@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In ar, this message translates to:
-  /// **'إحسان'**
+  /// **'مثابة'**
   String get appName;
 
   /// No description provided for @appTagline.
@@ -215,13 +215,13 @@ abstract class AppLocalizations {
   /// No description provided for @about.
   ///
   /// In ar, this message translates to:
-  /// **'عن إحسان'**
+  /// **'عن مثابة'**
   String get about;
 
   /// No description provided for @aboutBody.
   ///
   /// In ar, this message translates to:
-  /// **'إحسان تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.'**
+  /// **'مثابة تطبيق قرآن أُنشئ بنية أن يكون صدقة جارية للوالدين.'**
   String get aboutBody;
 
   /// No description provided for @arabic.

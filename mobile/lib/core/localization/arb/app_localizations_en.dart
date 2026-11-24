@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appName => 'Ihsan';
+  String get appName => 'Mathabah';
 
   @override
   String get appTagline => 'A Quran recited, a reward gifted.';
@@ -66,11 +66,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeSystem => 'System';
 
   @override
-  String get about => 'About Ihsan';
+  String get about => 'About Mathabah';
 
   @override
   String get aboutBody =>
-      'Ihsan is a Quran application created with the intention of being a continuous charity for parents.';
+      'Mathabah is a Quran application created with the intention of being a continuous charity for parents.';
 
   @override
   String get arabic => 'Arabic';

@@ -14,6 +14,7 @@ import '../../adhkar/presentation/screens/adhkar_category_screen.dart';
 import '../../bookmarks/presentation/screens/bookmarks_screen.dart';
 import '../../fajr_call/presentation/screens/fajr_call_lists_screen.dart';
 import '../../fajr_call/presentation/widgets/fajr_call_home_card.dart';
+import '../../islamic_calendar/presentation/widgets/calendar_home_tile.dart';
 import '../../khatma/presentation/widgets/khatma_home_card.dart';
 import '../../prayer_times/presentation/widgets/prayer_times_section.dart';
 import '../../qibla/presentation/widgets/qibla_home_card.dart';
@@ -254,6 +255,8 @@ class HomeScreen extends ConsumerWidget {
                 scene: TileScene.minaret,
                 onTap: () => context.go(FajrCallListsScreen.path),
               ),
+              const SizedBox(height: AppSpacing.ms),
+              const CalendarHomeTile(),
             ],
           ),
           top: 0,
